@@ -1,0 +1,88 @@
+#!/bin/bash
+
+#Display messages
+ msg() {
+    ALL_OFF="\e[1;0m"
+    BOLD="\e[1;1m"
+    GREEN="${BOLD}\e[1;32m"
+      local mesg=$1; shift
+      printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+ }
+
+#Build the 'any' packages on armv7
+if [ $3 == "any" ]; then
+	_ARCH="armv7"
+else
+	_ARCH="$3"
+fi
+
+######## Some globals to set ########
+#Only set this one
+_BUILDDIR=/var/lib/manjaro-arm-tools/pkg
+_LIBDIR=/usr/share/manjaro-arm-tools
+_BUILDPKG="$2"
+
+#Leave these alone
+_ROOTFS=$_BUILDDIR/$_ARCH
+_REPODIR=$_BUILDDIR/repo
+_PKGDIR=/var/cache/manjaro-arm-tools/pkg
+
+
+msg "===== Creating rootfs ====="
+# backup host mirrorlist
+sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
+
+# Create arm mirrorlist
+echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
+sudo mv mirrorlist /etc/pacman.d/mirrorlist
+
+# cd to root_fs
+mkdir -p $_ROOTFS
+cd $_ROOTFS
+
+# basescrap the rootfs filesystem
+basestrap -G -C $_LIBDIR/pacman.conf.default $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring lsb-release parted openssh haveged polkit
+
+# Enable cross architecture Chrooting
+sudo cp /usr/bin/qemu-arm-static $_ROOTFS/usr/bin/
+sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/usr/bin/
+
+#enable qemu binaries
+msg "===== Enabling qemu binaries ====="
+sudo update-binfmts --enable qemu-arm
+sudo update-binfmts --enable qemu-aarch64 
+
+# restore original mirrorlist to host system
+sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
+sudo pacman -Syy
+
+msg "===== Creating rootfs user ====="
+sudo systemd-nspawn -D rootfs_armv7h useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
+
+#cp package to rootfs
+msg "===== Copying build directory {$2} to rootfs ====="
+sudo cp -rp $2/ $_ROOTFS/home/manjaro/build/
+
+#build package
+msg "===== Building {$2} ====="
+sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/ sudo chmod -R 777 build/
+sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
+#read -p "Press [Enter] to continue"
+
+if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
+    #pull package out of rootfs
+    msg "!!!!! +++++ ===== Package Succeeded ===== +++++ !!!!!"
+    msg "===== Extracting finish/home/jenkins/build/ed package out of rootfs ====="
+    cp $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$3/
+
+    #clean up rootfs
+    msg "===== Cleaning rootfs ====="
+    sudo rm -r $_ROOTFS/home/manjaro/build/ > /dev/null
+
+else
+    msg "!!!!! ++++++ ===== Package failed to build ===== +++++ !!!!!"
+    msg "cleaning rootfs"
+    sudo rm -r $_ROOTFS/home/manjaro/build/ > /dev/null
+    exit 1
+fi
+ 
