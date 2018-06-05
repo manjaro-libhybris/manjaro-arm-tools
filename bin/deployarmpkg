@@ -1,0 +1,24 @@
+#! /bin/bash
+
+# Usage: deployarmpkg package architecture repo
+# Example: deployarmpkg filesystem-1.12-armv7h.pkg.tar.xz armv7h core
+
+#Display messages
+ msg() {
+    ALL_OFF="\e[1;0m"
+    BOLD="\e[1;1m"
+    GREEN="${BOLD}\e[1;32m"
+      local mesg=$1; shift
+      printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+ }
+
+# Set globals
+
+# Sign the package with the users gpg key
+msg "Signing [%s] with users GPG key..."
+gpg --detach-sign "$1"
+
+# Upload pkg + signature to repo server
+msg "Uploading package to server..."
+echo "Please use your server login details..."
+scp $1* 159.65.88.73:/opt/repo/mirror/stable/$2/$3/

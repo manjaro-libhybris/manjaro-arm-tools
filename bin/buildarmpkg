@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#Usage: buildarmpkg package architecture.
+#Example: buildarmpkg filesystem armv7h
+
 #Display messages
  msg() {
     ALL_OFF="\e[1;0m"
@@ -10,17 +13,17 @@
  }
 
 #Build the 'any' packages on armv7
-if [ $3 == "any" ]; then
-	_ARCH="armv7"
+if [ $2 == "any" ]; then
+	_ARCH="armv7h"
 else
-	_ARCH="$3"
+	_ARCH="$2"
 fi
 
 ######## Some globals to set ########
 #Only set this one
 _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 _LIBDIR=/usr/share/manjaro-arm-tools
-_BUILDPKG="$2"
+_BUILDPKG="$1"
 
 #Leave these alone
 _ROOTFS=$_BUILDDIR/$_ARCH
@@ -60,11 +63,12 @@ msg "===== Creating rootfs user ====="
 sudo systemd-nspawn -D rootfs_armv7h useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
 
 #cp package to rootfs
-msg "===== Copying build directory {$2} to rootfs ====="
-sudo cp -rp $2/ $_ROOTFS/home/manjaro/build/
+msg "===== Copying build directory {$1} to rootfs ====="
+sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/ mkdir build
+sudo cp -r $1/* $_ROOTFS/home/manjaro/build/
 
 #build package
-msg "===== Building {$2} ====="
+msg "===== Building {$1} ====="
 sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/ sudo chmod -R 777 build/
 sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
 #read -p "Press [Enter] to continue"
@@ -73,7 +77,7 @@ if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
     #pull package out of rootfs
     msg "!!!!! +++++ ===== Package Succeeded ===== +++++ !!!!!"
     msg "===== Extracting finish/home/jenkins/build/ed package out of rootfs ====="
-    cp $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$3/
+    cp $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$2/
 
     #clean up rootfs
     msg "===== Cleaning rootfs ====="
