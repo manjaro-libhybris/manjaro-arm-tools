@@ -15,7 +15,7 @@
 # Set globals
 
 # Sign the package with the users gpg key
-msg "Signing [%s] with users GPG key..."
+msg "Signing [$1] with users GPG key..."
 gpg --detach-sign "$1"
 
 # Upload pkg + signature to repo server
