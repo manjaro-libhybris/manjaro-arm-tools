@@ -22,8 +22,9 @@ fi
 ######## Some globals to set ########
 #Only set this one
 _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
-_LIBDIR=/usr/share/manjaro-arm-tools
+_LIBDIR=/home/strit/git/gitlab/manjaro-arm/applications/manjaro-arm-tools/lib
 _BUILDPKG="$1"
+#_PKGFOLDER=/home/strit/git/gitlab/manjaro-arm/packages/
 
 #Leave these alone
 _ROOTFS=$_BUILDDIR/$_ARCH
@@ -44,7 +45,7 @@ mkdir -p $_ROOTFS
 cd $_ROOTFS
 
 # basescrap the rootfs filesystem
-basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring lsb-release parted openssh haveged polkit
+basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
 
 # Enable cross architecture Chrooting
 sudo cp /usr/bin/qemu-arm-static $_ROOTFS/usr/bin/
@@ -61,11 +62,13 @@ sudo pacman -Syy
 
 msg "===== Creating rootfs user ====="
 sudo systemd-nspawn -D $_ROOTFS useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
+#sudo systemd-nspawn -D $_ROOTFS pkexec chmod a=rx,u+ws /usr/bin/sudo
+
 
 #cp package to rootfs
 msg "===== Copying build directory {$1} to rootfs ====="
 sudo systemd-nspawn -D $_ROOTFS -u manjaro --chdir=/home/manjaro/ mkdir build
-sudo cp -r $1/* $_ROOTFS/home/manjaro/build/
+sudo cp -rp /home/strit/"$1"/* $_ROOTFS/home/manjaro/build/
 
 #build package
 msg "===== Building {$1} ====="
@@ -81,12 +84,12 @@ if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
 
     #clean up rootfs
     msg "===== Cleaning rootfs ====="
-    sudo rm -r $_ROOTFS/home/manjaro/build/ > /dev/null
+    sudo rm -rf $_ROOTFS > /dev/null
 
 else
     msg "!!!!! ++++++ ===== Package failed to build ===== +++++ !!!!!"
     msg "cleaning rootfs"
-    sudo rm -r $_ROOTFS/home/manjaro/build/ > /dev/null
+    sudo rm -rf $_ROOTFS > /dev/null
     exit 1
 fi
  
