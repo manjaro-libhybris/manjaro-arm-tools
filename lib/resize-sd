@@ -4,7 +4,7 @@
 
 # Get device and partition numbers/names
  # Root Partition
-  PART_DEV=`grep -Eo 'root=[[:graph:]]+' /proc/cmdline | cut -d "=" -f 2-`
+  PART_DEV=`findmnt / -o source -n`
  
  # Remove '/dev/' from the name 
   PART_NAME=`echo $PART_DEV | cut -d "/" -f 3`
