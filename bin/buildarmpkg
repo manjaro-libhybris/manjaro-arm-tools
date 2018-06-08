@@ -22,7 +22,8 @@ fi
 ######## Some globals to set ########
 #Only set this one
 _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
-_LIBDIR=/home/strit/git/gitlab/manjaro-arm/applications/manjaro-arm-tools/lib
+#_LIBDIR=/home/strit/git/gitlab/manjaro-arm/applications/manjaro-arm-tools/lib
+_LIBDIR=/usr/share/manjaro-arm-tools/lib
 _BUILDPKG="$1"
 #_PKGFOLDER=/home/strit/git/gitlab/manjaro-arm/packages/
 
@@ -45,7 +46,7 @@ mkdir -p $_ROOTFS
 cd $_ROOTFS
 
 # basescrap the rootfs filesystem
-basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
+basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
 
 # Enable cross architecture Chrooting
 sudo cp /usr/bin/qemu-arm-static $_ROOTFS/usr/bin/
@@ -65,8 +66,11 @@ sudo systemd-nspawn -D $_ROOTFS useradd -m -g users -G wheel,storage,network,pow
 #sudo systemd-nspawn -D $_ROOTFS pkexec chmod a=rx,u+ws /usr/bin/sudo
 
 msg "===== Configuring rootfs for building ====="
-sudo systemd-nspawn -D $_ROOTFS sed -i s/"OPT_LONG=('allsource' 'check' 'clean' 'cleanbuild' 'config:' 'force' 'geninteg'\n'help' 'holdver' 'ignorearch' 'install' 'key:' 'log' 'noarchive' 'nobuild'\n'nocolor' 'nocheck' 'nodeps' 'noextract' 'noprepare' 'nosign' 'pkg:' 'repackage'\n'rmdeps' 'sign' 'skipchecksums' 'skipinteg' 'skippgpcheck' 'source' 'syncdeps'\n'verifysource' 'version')"/"OPT_LONG=('allsource' 'check' 'clean' 'cleanbuild' 'config:' 'force' 'geninteg'\n'help' 'holdver' 'ignorearch' 'install' 'key:' 'log' 'noarchive' 'nobuild'\n'nocolor' 'nocheck' 'nodeps' 'noextract' 'noprepare' 'nosign' 'pkg:' 'repackage'\n'rmdeps' 'sign' 'skipchecksums' 'skipinteg' 'skippgpcheck' 'source' 'syncdeps'\n'verifysource' 'version' 'asroot')"/ /usr/bin/makepkg
-sudo systemd-nspawn -D $_ROOTFS sed -i s/"exit $E_ROOT"/"#exit $E_ROOT"/ /usr/bin/makepkg
+sudo cp $_LIBDIR/makepkg $_ROOTFS/usr/bin/
+sudo systemd-nspawn -D $_ROOTFS chmod +x /usr/bin/makepkg
+sudo systemd-nspawn -D $_ROOTFS systemctl enable haveged
+sudo systemd-nspawn -D $_ROOTFS pacman-key --init
+sudo systemd-nspawn -D $_ROOTFS pacman-key --populate archlinuxarm manjaro manjaro-arm
 
 #cp package to rootfs
 msg "===== Copying build directory {$1} to rootfs ====="
@@ -82,7 +86,8 @@ sudo systemd-nspawn -D $_ROOTFS/ --chdir=/home/manjaro/build/ makepkg -scr --noc
 if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
     #pull package out of rootfs
     msg "!!!!! +++++ ===== Package Succeeded ===== +++++ !!!!!"
-    msg "===== Extracting finish/home/jenkins/build/ed package out of rootfs ====="
+    msg "===== Extracting finished package out of rootfs ====="
+    mkdir -p $_PKGDIR/$2
     cp $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$2/
 
     #clean up rootfs
@@ -91,7 +96,7 @@ if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
 
 else
     msg "!!!!! ++++++ ===== Package failed to build ===== +++++ !!!!!"
-    msg "cleaning rootfs"
+    msg "Cleaning rootfs"
     sudo rm -rf $_ROOTFS > /dev/null
     exit 1
 fi
