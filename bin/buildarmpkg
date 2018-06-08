@@ -26,6 +26,7 @@ _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 _LIBDIR=/usr/share/manjaro-arm-tools/lib
 _BUILDPKG="$1"
 #_PKGFOLDER=/home/strit/git/gitlab/manjaro-arm/packages/
+_PACKAGER=cat /etc/makepkg.conf | grep PACKAGER
 
 #Leave these alone
 _ROOTFS=$_BUILDDIR/$_ARCH
@@ -71,6 +72,7 @@ sudo systemd-nspawn -D $_ROOTFS chmod +x /usr/bin/makepkg
 sudo systemd-nspawn -D $_ROOTFS systemctl enable haveged
 sudo systemd-nspawn -D $_ROOTFS pacman-key --init
 sudo systemd-nspawn -D $_ROOTFS pacman-key --populate archlinuxarm manjaro manjaro-arm
+sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg
 
 #cp package to rootfs
 msg "===== Copying build directory {$1} to rootfs ====="
