@@ -23,7 +23,7 @@ fi
 #Only set this one
 _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 _LIBDIR=/usr/share/manjaro-arm-tools/lib
-_PACKAGER=cat /etc/makepkg.conf | grep PACKAGER
+_PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
 
 #Leave these alone
 _ROOTFS=$_BUILDDIR/$_ARCH
@@ -41,7 +41,6 @@ sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
 # cd to root_fs
 mkdir -p $_ROOTFS
-cd $_ROOTFS
 
 # basescrap the rootfs filesystem
 basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
@@ -68,19 +67,18 @@ sudo systemd-nspawn -D $_ROOTFS chmod +x /usr/bin/makepkg
 sudo systemd-nspawn -D $_ROOTFS systemctl enable haveged
 sudo systemd-nspawn -D $_ROOTFS pacman-key --init
 sudo systemd-nspawn -D $_ROOTFS pacman-key --populate archlinuxarm manjaro manjaro-arm
-sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg
-sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_ROOTFS/etc/makepkg
+sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg.conf
+sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_ROOTFS/etc/makepkg.conf
 
 #cp package to rootfs
 msg "===== Copying build directory {$1} to rootfs ====="
 sudo systemd-nspawn -D $_ROOTFS -u manjaro --chdir=/home/manjaro/ mkdir build
-sudo cp -rp /home/strit/"$1"/* $_ROOTFS/home/manjaro/build/
+sudo cp -rp "$1"/* $_ROOTFS/home/manjaro/build/
 
 #build package
 msg "===== Building {$1} ====="
 sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/ chmod -R 777 build/
 sudo systemd-nspawn -D $_ROOTFS/ --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
-#read -p "Press [Enter] to continue"
 
 if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
     #pull package out of rootfs
@@ -88,6 +86,7 @@ if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
     msg "===== Extracting finished package out of rootfs ====="
     mkdir -p $_PKGDIR/$2
     cp $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$2/
+    msg "+++++ Package saved at $_PKGDIR/$2/$1*.pkg.tar.xz +++++"
 
     #clean up rootfs
     msg "===== Cleaning rootfs ====="
