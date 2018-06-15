@@ -13,7 +13,7 @@
  }
 
 # Set globals
-SERVER='159.65.88.73'
+SERVER='sync.manjaro-arm.org'
 
 # Sign the package with the users gpg key
 msg "Signing [$1] with users GPG key..."
@@ -23,3 +23,9 @@ gpg --detach-sign "$1"
 msg "Uploading package to server..."
 echo "Please use your server login details..."
 scp $1* $SERVER:/opt/repo/mirror/stable/$2/$3/
+
+# Adding package to repo
+msg "Adding [$1] to repo..."
+echo "Please use your server login details..."
+ssh $SERVER repo-add $3.db.tar.gz /opt/repo/mirror/stable/$2/$3/$1
+

@@ -44,7 +44,8 @@ mkdir -p $_ROOTFS
 cd $_ROOTFS
 
 # basescrap the rootfs filesystem
-basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
+#basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
+pacstrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
 
 # Enable cross architecture Chrooting
 sudo cp /usr/bin/qemu-arm-static $_ROOTFS/usr/bin/
