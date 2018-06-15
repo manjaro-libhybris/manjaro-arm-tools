@@ -69,6 +69,7 @@ sudo systemd-nspawn -D $_ROOTFS systemctl enable haveged
 sudo systemd-nspawn -D $_ROOTFS pacman-key --init
 sudo systemd-nspawn -D $_ROOTFS pacman-key --populate archlinuxarm manjaro manjaro-arm
 sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg
+sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_ROOTFS/etc/makepkg
 
 #cp package to rootfs
 msg "===== Copying build directory {$1} to rootfs ====="
