@@ -22,8 +22,8 @@ _ROOTFS="/var/lib/manjaro-arm-tools/img"
 _TMPDIR="/var/lib/manjaro-arm-tools/tmp"
 _IMAGEDIR="/var/cache/manjaro-arm-tools/img"
 _LIBDIR="/usr/share/manjaro-arm-tools/lib"
-_ARCH="$4"
-_SIZE="$5"
+#_ARCH="$4"
+#_SIZE="$5"
 
 
 #Display messages
@@ -253,19 +253,23 @@ else
    	_DEVICE="$1"
 fi
 
-if [ ! -d "$_ROOTFS/rootfs_$4" ]; then
-   echo 'The 'rootfs_$4' directory does not exist'
-   echo 'Please enter a valid rootfs.'
-   exit 2
-else 
-	_ARCH="$4"
+if [[ "$_DEVICE" = "oc2" ]]; then
+    _ARCH='aarch64'
+else
+    _ARCH='armv7h'
 fi
+
+#if [ ! -d "$_ROOTFS/rootfs_$_ARCH" ]; then
+#   echo 'The 'rootfs_$_ARCH' directory does not exist'
+#   echo 'Please enter a valid rootfs.'
+#   exit 2
+#fi
 
 msg "Please ensure that the rootfs is configured and all necessary boot packages are installed"
 
 ##Image set up
 #making blank .img to be used
-sudo dd if=/dev/zero of=$_IMAGEDIR/$_IMGNAME.img bs=1M count=$_SIZE
+sudo dd if=/dev/zero of=$_IMAGEDIR/$_IMGNAME.img bs=1M count=2000
 
 #probing loop into the kernel
 sudo modprobe loop

@@ -13,6 +13,7 @@
  }
 
 # Set globals
+SERVER='159.65.88.73'
 
 # Sign the package with the users gpg key
 msg "Signing [$1] with users GPG key..."
@@ -21,4 +22,4 @@ gpg --detach-sign "$1"
 # Upload pkg + signature to repo server
 msg "Uploading package to server..."
 echo "Please use your server login details..."
-scp $1* 159.65.88.73:/opt/repo/mirror/stable/$2/$3/
+scp $1* $SERVER:/opt/repo/mirror/stable/$2/$3/

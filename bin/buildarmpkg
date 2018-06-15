@@ -22,10 +22,7 @@ fi
 ######## Some globals to set ########
 #Only set this one
 _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
-#_LIBDIR=/home/strit/git/gitlab/manjaro-arm/applications/manjaro-arm-tools/lib
 _LIBDIR=/usr/share/manjaro-arm-tools/lib
-_BUILDPKG="$1"
-#_PKGFOLDER=/home/strit/git/gitlab/manjaro-arm/packages/
 _PACKAGER=cat /etc/makepkg.conf | grep PACKAGER
 
 #Leave these alone
@@ -64,7 +61,6 @@ sudo pacman -Syy
 
 msg "===== Creating rootfs user ====="
 sudo systemd-nspawn -D $_ROOTFS useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-#sudo systemd-nspawn -D $_ROOTFS pkexec chmod a=rx,u+ws /usr/bin/sudo
 
 msg "===== Configuring rootfs for building ====="
 sudo cp $_LIBDIR/makepkg $_ROOTFS/usr/bin/
