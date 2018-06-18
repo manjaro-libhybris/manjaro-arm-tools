@@ -18,6 +18,13 @@ usage="Variable list order:
 Example: rpi2 minimal 18.05 armv7h 1500
 Example2: oc2 server 18.05 aarch64 2000"
 
+   
+if [[ "$_DEVICE" = "oc2" ]]; then
+    _ARCH='aarch64'
+else
+    _ARCH='armv7h'
+fi
+
 _ROOTFS="/var/lib/manjaro-arm-tools/img"
 _TMPDIR="/var/lib/manjaro-arm-tools/tmp"
 _IMAGEDIR="/var/cache/manjaro-arm-tools/img"
@@ -42,12 +49,7 @@ PKG_MATE='base base-devel manjaro-system manjaro-arm-keyring archlinuxarm-keyrin
        printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
    }
 
-   
-if [[ "$_DEVICE" = "oc2" ]]; then
-    _ARCH='aarch64'
-else
-    _ARCH='armv7h'
-fi
+
 
 case $1 in
 rpi2)
@@ -314,7 +316,7 @@ if [[ "$_DEVICE" = "rpi2" ]]; then
 	sudo mount ${LDEV}p1 $_TMPDIR/boot
 	sudo mount ${LDEV}p2 $_TMPDIR/root
 	sudo cp -ra $_ROOTFS/rootfs_armv7h $_TMPDIR/root/
-	sudo mv root/boot/* boot
+	sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
 
 #clean up
 	sudo umount $_TMPDIR/root
@@ -335,12 +337,13 @@ elif [[ "$_DEVICE" = "oc1" ]] || [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "xu
 #	sudo mkfs.ext4 "${LDEV}p1"
 #else
 	sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
-fi
+#fi
 
 #copy rootfs contents over to the FS
-	mkdir $_TMPDIR/root
+	mkdir -p $_TMPDIR/root
+	sudo chmod 777 -R $_TMPDIR/root
 	sudo mount ${LDEV}p1 $_TMPDIR/root
-	sudo cp -ra $_ROOTFS/rootfs_$_ARCH $_TMPDIR/root/
+	sudo cp -ra $_ROOTFS/rootfs_$_ARCH/* $_TMPDIR/root/
 
 #flash bootloader
 	cd $_TMPDIR/root/boot/
@@ -360,5 +363,5 @@ fi
 #zip img
 zip -9 $_IMAGEDIR/$_IMGNAME.zip $_IMAGEDIR/$_IMGNAME.img 
 
-msg "Removing rootfs_$ARCH"
+msg "Removing rootfs_$_ARCH"
 sudo rm -rf $_ROOTFS/rootfs_$_ARCH
