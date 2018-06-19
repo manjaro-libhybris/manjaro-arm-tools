@@ -34,8 +34,8 @@ _LIBDIR="/usr/share/manjaro-arm-tools/lib"
 
 #Package lists
 PKG_RPI2='linux-raspberrypi raspberrypi-bootloader raspberrypi-firmware'
-PKG_OC1='linux-odroid-c1 uboot-odroid-c1'
-PKG_OC2='linux-odroid-c2 uboot-odroid-c2'
+PKG_OC1='linux-odroid-c1 uboot-odroid-c1 fbset'
+PKG_OC2='linux-odroid-c2 uboot-odroid-c2 fbset'
 PKG_MINIMAL='base sudo manjaro-system archlinuxarm-keyring lsb-release parted openssh haveged polkit'
 PKG_LXQT='base base-devel manjaro-system archlinuxarm-keyring lsb-release parted openssh haveged networkmanager-qt xf86-video-fbdev lxqt sddm'
 PKG_MATE='base base-devel manjaro-system manjaro-arm-keyring archlinuxarm-keyring manjaro-release lsb-release pacman-mirrorlist yaourt openssh haveged networkmanager mate mate-tweak lightdm'
@@ -315,7 +315,7 @@ if [[ "$_DEVICE" = "rpi2" ]]; then
 	mkdir -p $_TMPDIR/boot
 	sudo mount ${LDEV}p1 $_TMPDIR/boot
 	sudo mount ${LDEV}p2 $_TMPDIR/root
-	sudo cp -ra $_ROOTFS/rootfs_armv7h $_TMPDIR/root/
+	sudo cp -ra $_ROOTFS/rootfs_$_ARCH/* $_TMPDIR/root/
 	sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
 
 #clean up
@@ -362,6 +362,7 @@ fi
 
 #zip img
 zip -9 $_IMAGEDIR/$_IMGNAME.zip $_IMAGEDIR/$_IMGNAME.img 
+sudo rm $_IMAGEDIR/$_IMGNAME.img
 
 msg "Removing rootfs_$_ARCH"
 sudo rm -rf $_ROOTFS/rootfs_$_ARCH
