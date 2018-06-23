@@ -6,5 +6,9 @@ Contains scripts and files needed to build and manage manjaro-arm packages and i
 
 `deployarmpkg` (working)
 
-`buildarmiso` (not working)
+`buildarmimg` (partly working)
+
+
+## Known issues
+* `buildarmimg` does not create working odroid images
 

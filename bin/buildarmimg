@@ -12,11 +12,9 @@ usage="Variable list order:
 1=Device, 
 2=Edition, 
 3=Version,
-4=Architecture,
-5=size in MB
 
-Example: rpi2 minimal 18.05 armv7h 1500
-Example2: oc2 server 18.05 aarch64 2000"
+Example: rpi2 minimal 18.05
+Example2: oc2 server 18.05"
 
    
 if [[ "$_DEVICE" = "oc2" ]]; then
@@ -33,12 +31,12 @@ _LIBDIR="/usr/share/manjaro-arm-tools/lib"
 #_SIZE="$5"
 
 #Package lists
-PKG_RPI2='linux-raspberrypi raspberrypi-bootloader raspberrypi-firmware'
-PKG_OC1='linux-odroid-c1 uboot-odroid-c1 fbset'
-PKG_OC2='linux-odroid-c2 uboot-odroid-c2 fbset'
-PKG_MINIMAL='base sudo manjaro-system archlinuxarm-keyring lsb-release parted openssh haveged polkit'
-PKG_LXQT='base base-devel manjaro-system archlinuxarm-keyring lsb-release parted openssh haveged networkmanager-qt xf86-video-fbdev lxqt sddm'
-PKG_MATE='base base-devel manjaro-system manjaro-arm-keyring archlinuxarm-keyring manjaro-release lsb-release pacman-mirrorlist yaourt openssh haveged networkmanager mate mate-tweak lightdm'
+PKG_RPI2=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/rpi2)
+PKG_OC1=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/oc1)
+PKG_OC2=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/oc2)
+PKG_MINIMAL=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/minimal)
+PKG_LXQT=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/lxqt)
+PKG_MATE=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/mate)
 
 #Display messages
    msg() {
@@ -117,7 +115,7 @@ sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_armv7h/etc/systemd/network/
 msg "Setting up keyrings..."
 #setup keys
 sudo systemd-nspawn -D rootfs_armv7h pacman-key --init
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --populate archlinux manjaro archlinuxarm manjaro-arm
+sudo systemd-nspawn -D rootfs_armv7h pacman-key --populate manjaro archlinuxarm manjaro-arm
 
 msg "Raspberry Pi $2 rootfs complete"
     ;;
@@ -142,7 +140,7 @@ mkdir -p rootfs_armv7h
     minimal)
     # basescrap the rootfs filesystem
     basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_OC1 $PKG_MINIMAL
-    ;;
+ ;;
     lxqt)
     basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_OC1 $PKG_LXQT
     sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
@@ -160,6 +158,14 @@ mkdir -p rootfs_armv7h
 sudo cp /usr/bin/qemu-arm-static $_ROOTFS/rootfs_armv7h/usr/bin/
 sudo update-binfmts --enable qemu-arm
 
+msg "Enabling services..."
+# Enable services
+sudo systemd-nspawn -D rootfs_armv7h systemctl enable systemd-networkd.service sshd.service getty.target haveged.service dhcpcd.service
+
+# restore original mirrorlist to host system
+sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
+sudo pacman -Syy
+
 msg "Setting up users..."
 #setup users
 sudo systemd-nspawn -D rootfs_armv7h passwd root < $_LIBDIR/pass-root
@@ -170,6 +176,7 @@ msg "Setting up system settings..."
 #system setup
 sudo systemd-nspawn -D rootfs_armv7h chmod u+s /usr/bin/ping
 sudo systemd-nspawn -D rootfs_armv7h update-ca-trust
+#sudo systemd-nspawn -D rootfs_armv7h mkdir -p /etc/sudoers.d
 sudo cp $_LIBDIR/10-installer $_ROOTFS/rootfs_armv7h/etc/sudoers.d/
 sudo cp $_LIBDIR/resize-sd $_ROOTFS/rootfs_armv7h/usr/bin/
 sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_armv7h/etc/systemd/network/
@@ -177,7 +184,8 @@ sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_armv7h/etc/systemd/network/
 msg "Setting up keyrings..."
 #setup keys
 sudo systemd-nspawn -D rootfs_armv7h pacman-key --init
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --populate archlinux manjaro archlinuxarm manjaro-arm
+sudo systemd-nspawn -D rootfs_armv7h pacman-key --populate manjaro archlinuxarm manjaro-arm
+
 
 msg "Odroid-C1 $2 rootfs complete"
     ;;
@@ -220,6 +228,14 @@ mkdir -p rootfs_aarch64
 sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/rootfs_aarch64/usr/bin/
 sudo update-binfmts --enable qemu-aarch64
 
+msg "Enabling services..."
+# Enable services
+sudo systemd-nspawn -D rootfs_aarch64 systemctl enable systemd-networkd.service sshd.service getty.target haveged.service dhcpcd.service
+
+# restore original mirrorlist to host system
+sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
+sudo pacman -Syy
+
 msg "Setting up users..."
 #setup users
 sudo systemd-nspawn -D rootfs_aarch64 passwd root < $_LIBDIR/pass-root
@@ -237,7 +253,7 @@ sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_aarch64/etc/systemd/network/
 msg "Setting up keyrings..."
 #setup keys
 sudo systemd-nspawn -D rootfs_aarch64 pacman-key --init
-sudo systemd-nspawn -D rootfs_aarch64 pacman-key --populate archlinux manjaro archlinuxarm manjaro-arm
+sudo systemd-nspawn -D rootfs_aarch64 pacman-key --populate manjaro archlinuxarm manjaro-arm
 
 msg "Odroid-C2 $2 rootfs complete"
     ;;
@@ -361,7 +377,8 @@ else
 fi
 
 #zip img
-zip -9 $_IMAGEDIR/$_IMGNAME.zip $_IMAGEDIR/$_IMGNAME.img 
+cd $_IMAGEDIR
+zip -9 $_IMGNAME.zip $_IMGNAME.img 
 sudo rm $_IMAGEDIR/$_IMGNAME.img
 
 msg "Removing rootfs_$_ARCH"
