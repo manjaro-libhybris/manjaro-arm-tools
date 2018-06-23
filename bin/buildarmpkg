@@ -64,6 +64,7 @@ sudo systemd-nspawn -D $_ROOTFS useradd -m -g users -G wheel,storage,network,pow
 msg "===== Configuring rootfs for building ====="
 sudo cp $_LIBDIR/makepkg $_ROOTFS/usr/bin/
 sudo systemd-nspawn -D $_ROOTFS chmod +x /usr/bin/makepkg
+sudo systemd-nspawn -D $_ROOTFS update-ca-trust
 sudo systemd-nspawn -D $_ROOTFS systemctl enable haveged
 sudo systemd-nspawn -D $_ROOTFS pacman-key --init
 sudo systemd-nspawn -D $_ROOTFS pacman-key --populate archlinuxarm manjaro manjaro-arm
