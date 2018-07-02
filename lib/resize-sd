@@ -36,7 +36,7 @@ read -s -n 1 -p "Press any key to continue ......"
 echo " "
 
 # resize the partition
-parted -m $DEV u s resizepart $PART_NUM yes $END_SECTOR
+parted -m $DEV u s resizepart $PART_NUM $END_SECTOR
 
 # reload the partitions in the kernel
 partprobe
