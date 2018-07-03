@@ -1,12 +1,4 @@
-#!/bin/bash
-
-# This script assumes the following packages are installed.
-# manjaro-tools-base (repo)
-# qemu (repo)
-# parted (repo)
-# qemu-user-static (aur)
-# binfmt-support-git (aur)
-# binfmt-qemu-static (aur)
+#! /bin/bash
 
 usage="Variable list order: 
 1=Device, 
@@ -17,7 +9,7 @@ Example: rpi2 minimal 18.05
 Example2: oc2 server 18.05"
 
    
-if [[ "$_DEVICE" = "oc2" ]]; then
+if [[ "$1" = "oc2" ]]; then
     _ARCH='aarch64'
 else
     _ARCH='armv7h'
@@ -27,17 +19,12 @@ _ROOTFS="/var/lib/manjaro-arm-tools/img"
 _TMPDIR="/var/lib/manjaro-arm-tools/tmp"
 _IMAGEDIR="/var/cache/manjaro-arm-tools/img"
 _LIBDIR="/usr/share/manjaro-arm-tools/lib"
-#_ARCH="$4"
-#_SIZE="$5"
+_IMGNAME="Manjaro-ARM-$2-$1-$3"
 
 #Package lists
-PKG_RPI2=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/rpi2)
-PKG_OC1=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/oc1)
-PKG_OC2=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/oc2)
-PKG_XU4=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/xu4)
-PKG_MINIMAL=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/minimal)
-PKG_LXQT=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/lxqt)
-PKG_MATE=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/mate)
+PKG_DEVICE=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/$1)
+PKG_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/$2)
+SRV_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/services/$2)
 
 #Display messages
    msg() {
@@ -50,9 +37,7 @@ PKG_MATE=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/mate)
 
 
 
-case $1 in
-rpi2)
-msg "Creating rootfs for Raspberry Pi..."
+msg "Creating rootfs for $1..."
 
 # backup host mirrorlist
 sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
@@ -66,34 +51,25 @@ mkdir -p $_ROOTFS
 cd $_ROOTFS
 
 # create folder for the rootfs
-mkdir -p rootfs_armv7h
+mkdir -p rootfs_$_ARCH
 
-    case $2 in
-    minimal)
-    # basescrap the rootfs filesystem
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_RPI2 $PKG_MINIMAL
-    ;;
-    lxqt)
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_RPI2 $PKG_LXQT 
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable sddm.service
-    ;;
-    mate)
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_RPI2 $PKG_MATE
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
-    ;;
-    *)
-    echo -e "$usage"
-    ;;
-    esac
+# install the rootfs filesystem
+basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
     
 # Enable cross architecture Chrooting
-sudo cp /usr/bin/qemu-arm-static $_ROOTFS/rootfs_armv7h/usr/bin/
-sudo update-binfmts --enable qemu-arm
+if [[ "$1" = "oc2" ]]; then
+    sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/rootfs_$_ARCH/usr/bin/
+    sudo update-binfmts --enable qemu-aarch64
+else
+    sudo cp /usr/bin/qemu-arm-static $_ROOTFS/rootfs_$_ARCH/usr/bin/
+    sudo update-binfmts --enable qemu-arm
+fi
 
 msg "Enabling services..."
 
 # Enable services
-sudo systemd-nspawn -D rootfs_armv7h systemctl enable systemd-networkd.service sshd.service getty.target haveged.service dhcpcd.service
+sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service
+sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION
 
 # restore original mirrorlist to host system
 sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
@@ -101,250 +77,29 @@ sudo pacman -Syy
 
 msg "Setting up users..."
 #setup users
-sudo systemd-nspawn -D rootfs_armv7h passwd root < $_LIBDIR/pass-root
-sudo systemd-nspawn -D rootfs_armv7h useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-sudo systemd-nspawn -D rootfs_armv7h passwd manjaro < $_LIBDIR/pass-manjaro
+sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $_LIBDIR/pass-root
+sudo systemd-nspawn -D rootfs_$_ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
+sudo systemd-nspawn -D rootfs_$_ARCH passwd manjaro < $_LIBDIR/pass-manjaro
 
 msg "Setting up system settings..."
 #system setup
-sudo systemd-nspawn -D rootfs_armv7h chmod u+s /usr/bin/ping
-sudo systemd-nspawn -D rootfs_armv7h update-ca-trust
-sudo cp $_LIBDIR/10-installer $_ROOTFS/rootfs_armv7h/etc/sudoers.d/
-sudo cp $_LIBDIR/resize-sd $_ROOTFS/rootfs_armv7h/usr/bin/
-sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_armv7h/etc/systemd/network/
+sudo systemd-nspawn -D rootfs_$_ARCH chmod u+s /usr/bin/ping
+sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust
+sudo cp $_LIBDIR/10-installer $_ROOTFS/rootfs_$_ARCH/etc/sudoers.d/
+sudo cp $_LIBDIR/resize-sd $_ROOTFS/rootfs_$_ARCH/usr/bin/
+sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_$_ARCH/etc/systemd/network/
 
 msg "Setting up keyrings..."
 #setup keys
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --init
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --populate manjaro archlinuxarm manjaro-arm
+sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --init
+sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm
 
-msg "Raspberry Pi $2 rootfs complete"
-    ;;
-    
-oc1)
-msg "Creating rootfs for Odroid-C1..."
-
-# backup host mirrorlist
-sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-# Create arm mirrlorlist
-echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
-sudo mv mirrorlist /etc/pacman.d/mirrorlist
-
-# cd to root_fs
-cd $_ROOTFS
-
-# create folder for the rootfs
-mkdir -p rootfs_armv7h
-
-    case $2 in
-    minimal)
-    # basescrap the rootfs filesystem
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_OC1 $PKG_MINIMAL
- ;;
-    lxqt)
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_OC1 $PKG_LXQT
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
-    ;;
-    mate)
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_OC1 $PKG_MATE
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
-    ;;
-    *)
-    echo -e "$usage"
-    ;;
-    esac
-    
-# Enable cross architecture Chrooting
-sudo cp /usr/bin/qemu-arm-static $_ROOTFS/rootfs_armv7h/usr/bin/
-sudo update-binfmts --enable qemu-arm
-
-msg "Enabling services..."
-# Enable services
-sudo systemd-nspawn -D rootfs_armv7h systemctl enable systemd-networkd.service sshd.service getty.target haveged.service dhcpcd.service
-
-# restore original mirrorlist to host system
-sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-sudo pacman -Syy
-
-msg "Setting up users..."
-#setup users
-sudo systemd-nspawn -D rootfs_armv7h passwd root < $_LIBDIR/pass-root
-sudo systemd-nspawn -D rootfs_armv7h useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-sudo systemd-nspawn -D rootfs_armv7h passwd manjaro < $_LIBDIR/pass-manjaro
-
-msg "Setting up system settings..."
-#system setup
-sudo systemd-nspawn -D rootfs_armv7h chmod u+s /usr/bin/ping
-sudo systemd-nspawn -D rootfs_armv7h update-ca-trust
-#sudo systemd-nspawn -D rootfs_armv7h mkdir -p /etc/sudoers.d
-sudo cp $_LIBDIR/10-installer $_ROOTFS/rootfs_armv7h/etc/sudoers.d/
-sudo cp $_LIBDIR/resize-sd $_ROOTFS/rootfs_armv7h/usr/bin/
-sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_armv7h/etc/systemd/network/
-
-msg "Setting up keyrings..."
-#setup keys
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --init
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --populate manjaro archlinuxarm manjaro-arm
-
-
-msg "Odroid-C1 $2 rootfs complete"
-    ;;
-
-oc2)
-msg "Creating rootfs for Odroid-C2..."
-
-# backup host mirrorlist
-sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-# Create arm mirrlorlist
-echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
-sudo mv mirrorlist /etc/pacman.d/mirrorlist
-
-# cd to root_fs
-cd $_ROOTFS
-
-# create folder for the rootfs
-mkdir -p rootfs_aarch64
-
-    case $2 in
-    minimal)
-    # basescrap the rootfs filesystem
-    basestrap -G -C $_LIBDIR/pacman.conf.aarch64 $_ROOTFS/rootfs_aarch64 $PKG_OC2 $PKG_MINIMAL
-    ;;
-    lxqt)
-    basestrap -G -C $_LIBDIR/pacman.conf.aarch64 $_ROOTFS/rootfs_aarch64 $PKG_OC2 $PKG_LXQT
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
-    ;;
-    mate)
-    basestrap -G -C $_LIBDIR/pacman.conf.aarch64 $_ROOTFS/rootfs_aarch64 $PKG_OC2 $PKG_MATE
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
-    ;;
-    *)
-    echo -e "$usage"
-    ;;
-    esac
-    
-# Enable cross architecture Chrooting
-sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/rootfs_aarch64/usr/bin/
-sudo update-binfmts --enable qemu-aarch64
-
-msg "Enabling services..."
-# Enable services
-sudo systemd-nspawn -D rootfs_aarch64 systemctl enable systemd-networkd.service sshd.service getty.target haveged.service dhcpcd.service
-
-# restore original mirrorlist to host system
-sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-sudo pacman -Syy
-
-msg "Setting up users..."
-#setup users
-sudo systemd-nspawn -D rootfs_aarch64 passwd root < $_LIBDIR/pass-root
-sudo systemd-nspawn -D rootfs_aarch64 useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-sudo systemd-nspawn -D rootfs_aarch64 passwd manjaro < $_LIBDIR/pass-manjaro
-
-msg "Setting up system settings..."
-#system setup
-sudo systemd-nspawn -D rootfs_aarch64 chmod u+s /usr/bin/ping
-sudo systemd-nspawn -D rootfs_aarch64 update-ca-trust
-sudo cp $_LIBDIR/10-installer $_ROOTFS/rootfs_aarch64/etc/sudoers.d/
-sudo cp $_LIBDIR/resize-sd $_ROOTFS/rootfs_aarch64/usr/bin/
-sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_aarch64/etc/systemd/network/
-
-msg "Setting up keyrings..."
-#setup keys
-sudo systemd-nspawn -D rootfs_aarch64 pacman-key --init
-sudo systemd-nspawn -D rootfs_aarch64 pacman-key --populate manjaro archlinuxarm manjaro-arm
-
-msg "Odroid-C2 $2 rootfs complete"
-    ;;
-    
-xu4)
-msg "Creating rootfs for Odroid-XU4..."
-
-# backup host mirrorlist
-sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-# Create arm mirrlorlist
-echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
-sudo mv mirrorlist /etc/pacman.d/mirrorlist
-
-# cd to root_fs
-cd $_ROOTFS
-
-# create folder for the rootfs
-mkdir -p rootfs_armv7h
-
-    case $2 in
-    minimal)
-    # basescrap the rootfs filesystem
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_XU4 $PKG_MINIMAL
- ;;
-    lxqt)
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_XU4 $PKG_LXQT
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
-    ;;
-    mate)
-    basestrap -G -C $_LIBDIR/pacman.conf.armv7h $_ROOTFS/rootfs_armv7h $PKG_XU4 $PKG_MATE
-    sudo systemd-nspawn -D rootfs_armv7h systemctl enable lightdm.service
-    ;;
-    *)
-    echo -e "$usage"
-    ;;
-    esac
-    
-# Enable cross architecture Chrooting
-sudo cp /usr/bin/qemu-arm-static $_ROOTFS/rootfs_armv7h/usr/bin/
-sudo update-binfmts --enable qemu-arm
-
-msg "Enabling services..."
-# Enable services
-sudo systemd-nspawn -D rootfs_armv7h systemctl enable systemd-networkd.service sshd.service getty.target haveged.service dhcpcd.service
-
-# restore original mirrorlist to host system
-sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-sudo pacman -Syy
-
-msg "Setting up users..."
-#setup users
-sudo systemd-nspawn -D rootfs_armv7h passwd root < $_LIBDIR/pass-root
-sudo systemd-nspawn -D rootfs_armv7h useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-sudo systemd-nspawn -D rootfs_armv7h passwd manjaro < $_LIBDIR/pass-manjaro
-
-msg "Setting up system settings..."
-#system setup
-sudo systemd-nspawn -D rootfs_armv7h chmod u+s /usr/bin/ping
-sudo systemd-nspawn -D rootfs_armv7h update-ca-trust
-#sudo systemd-nspawn -D rootfs_armv7h mkdir -p /etc/sudoers.d
-sudo cp $_LIBDIR/10-installer $_ROOTFS/rootfs_armv7h/etc/sudoers.d/
-sudo cp $_LIBDIR/resize-sd $_ROOTFS/rootfs_armv7h/usr/bin/
-sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_armv7h/etc/systemd/network/
-
-msg "Setting up keyrings..."
-#setup keys
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --init
-sudo systemd-nspawn -D rootfs_armv7h pacman-key --populate manjaro archlinuxarm manjaro-arm
-
-
-msg "Odroid-XU4 $2 rootfs complete"
-    ;;
-    
-*)
-    echo -e "$usage"
-    ;;
-esac
-
+msg "$1 $2 rootfs complete"
 
 msg "Creating image!"
 
 #GLOBALS
-#_ARCH="$4"
-#_DEVICE="$1"
-#_EDITION="$2"
-#_SIZE="$5"
-#_VERSION="$3"
-#_DATE=$(date +"%g.%m-%d-%H%M")
-_IMGNAME="Manjaro-ARM-$2-$1-$3"
+
 
 # Test for device input
 if [[ "$1" != "rpi2" && "$1" != "oc1" && "$1" != "oc2" && "$1" != "xu4" && "$1" != "bbb" && "$1" != "bbxm" ]]; then
@@ -367,7 +122,7 @@ fi
 #   exit 2
 #fi
 
-if [[ "$_EDITION" = "minimal" ]]; then
+if [[ "$2" = "minimal" ]]; then
     _SIZE=1500
 else
     _SIZE=2000
@@ -390,8 +145,8 @@ DEV=`echo $LDEV | cut -d "/" -f 3`
 sudo losetup $LDEV $_IMAGEDIR/$_IMGNAME.img
 
 
-
-if [[ "$_DEVICE" = "rpi2" ]]; then
+# For Raspberry Pi devices
+if [[ "$1" = "rpi2" ]]; then
 #partition with boot and root
 	sudo parted -s $LDEV mklabel msdos
 	sudo parted -s $LDEV mkpart primary fat32 0% 100M
@@ -418,7 +173,8 @@ if [[ "$_DEVICE" = "rpi2" ]]; then
 	sudo rm -r $_TMPDIR/root $_TMPDIR/boot
 	sudo partprobe $LDEV
 
-elif [[ "$_DEVICE" = "oc1" ]] || [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "xu4" ]]; then
+# For Odroid devices
+elif [[ "$1" = "oc1" ]] || [[ "$1" = "oc2" ]] || [[ "$1" = "xu4" ]]; then
 #Clear first 8mb
 	sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
 	
@@ -450,7 +206,7 @@ elif [[ "$_DEVICE" = "oc1" ]] || [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "xu
 	sudo partprobe $LDEV
 
 else
-	echo "The $_DEVICE" has not been set up yet
+	echo "The $1" has not been set up yet
 fi
 
 #zip img
@@ -460,3 +216,4 @@ sudo rm $_IMAGEDIR/$_IMGNAME.img
 
 msg "Removing rootfs_$_ARCH"
 sudo rm -rf $_ROOTFS/rootfs_$_ARCH
+

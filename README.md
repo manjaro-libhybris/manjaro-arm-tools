@@ -6,7 +6,7 @@ Contains scripts and files needed to build and manage manjaro-arm packages and i
 
 `deployarmpkg` (working)
 
-`buildarmimg` (partly working)
+`buildarmimg` (working)
 
 
 ## Known issues
