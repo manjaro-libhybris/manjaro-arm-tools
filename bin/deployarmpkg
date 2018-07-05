@@ -29,3 +29,7 @@ msg "Adding [$1] to repo..."
 echo "Please use your server login details..."
 ssh -T $SERVER sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$2/$3/$3.db.tar.gz /mirror/stable/$2/$3/$1
 
+# remove pkg + sig from cache folder
+msg "Removing local files..."
+rm $1*
+
