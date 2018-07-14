@@ -13,21 +13,29 @@ It assumes you have filled out the PACKAGER section of your `/etc/makepkg.conf`.
 
 **Syntax**
 
-`buildarmpkg package architecture`
+```
+buildarmpkg package architecture
+```
 
 To build an armv7h package, place yourself in the folder, that contains a folder with the PKGBUILD, named as the package you want to build. Then run:
 
-`buildarmpkg package armv7h`
+```
+buildarmpkg package armv7h
+```
 
 This will build the package called "package" for the armv7h architecture.
 
 To build an aarch64 package it's the same, just with
 
-`buildarmpkg package aarch64`
+```
+buildarmpkg package aarch64
+```
 
 You can also build `any` packages, which will use the armv7h architecture to build from.
 
-`buildarmpkg package any`
+```
+buildarmpkg package any
+```
 
 This places the packages created inside `/var/cache/manjaro-arm-tools/pkg/` in either armv7h folder or aarch64 folder.
 
@@ -41,19 +49,27 @@ It will gpg sign and uploud the package you mention to the Manjaro-ARM main serv
 
 **Syntax**
 
-`deployarmpkg package architecture repo`
+```
+deployarmpkg package architecture repo
+```
 
 To upload a package to the armv7h core repo use:
 
-`deployarmpkg package.pkg.tar.xz armv7h core`
+```
+deployarmpkg package.pkg.tar.xz armv7h core
+```
 
 To upload a package to the aarch64 extra repo use:
 
-`deployarmpkg package.pkg.tar.xz aarch64 extra`
+```
+deployarmpkg package.pkg.tar.xz aarch64 extra
+```
 
 To upload an any package to the community repo use:
 
-`deployarmpkg package.pkg.tar.xz any community`
+```
+deployarmpkg package.pkg.tar.xz any community
+```
 
 This should be used after creating a package with `buildarmpkg` and cd'ing to the cache folder. It will sign the package with your default secret GPG key and upload both files
 and remove the local files.
@@ -71,7 +87,7 @@ This script is the most complicated of them and it assumes that you have the fol
 * rpi2
 * oc1
 * oc2
-* xu4
+* xu4 (not tested)
 
 **Supported editions:**
 
@@ -89,12 +105,18 @@ If that happens, just try running the command again. This script will zip up the
 
 **Syntax**
 
-`buildarmimg device edition version`
+```
+buildarmimg device edition version
+```
 
 To build a minimal image version 18.07 for the raspberry pi 2/3:
 
-`buildarmimg rpi2 minimal 18.07`
+```
+buildarmimg rpi2 minimal 18.07
+```
 
 To build a minimal image version 18.08 RC1 for the odroid-c2:
 
-`buildarmimg oc2 minimal 18.08-rc1`
+```
+buildarmimg oc2 minimal 18.08-rc1
+```
