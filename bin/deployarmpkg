@@ -11,6 +11,17 @@
       local mesg=$1; shift
       printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
+ 
+  usage='Syntax: deployarmpkg package architecture repo
+ Example: deployarmpkg filesystem armv7h core'
+ 
+ if [[ -z "$1" ]]; then
+ echo "$usage"
+ elif [[ -z "$2" ]]; then
+ echo "$usage"
+ elif [[ -z "$3" ]]; then
+ echo "$usage"
+ else
 
 # Set globals
 SERVER='sync.manjaro-arm.org'
@@ -36,3 +47,4 @@ ssh $SERVER 'bash -s' < $_LIBDIR/repo-add.sh "$@"
 msg "Removing local files..."
 rm $1*
 
+fi

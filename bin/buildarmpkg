@@ -11,6 +11,15 @@
       local mesg=$1; shift
       printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
+ 
+ usage='Syntax: buildarmpkg package architecture
+ Example: buildarmpkg filesystem armv7h'
+ 
+ if [[ -z "$1" ]]; then
+ echo "$usage"
+ elif [[ -z "$2" ]]; then
+ echo "$usage"
+ else
 
 #Build the 'any' packages on armv7
 if [ $2 == "any" ]; then
@@ -99,4 +108,4 @@ else
     sudo rm -rf $_ROOTFS > /dev/null
     exit 1
 fi
- 
+fi

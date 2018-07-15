@@ -34,6 +34,17 @@ SRV_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/services/$2)
        local mesg=$1; shift
        printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
    }
+   
+usage='Syntax: buildarmimg device edition version
+Example: buildarmimg rpi2 minimal 18.07'
+ 
+if [[ -z "$1" ]]; then
+echo "$usage"
+elif [[ -z "$2" ]]; then
+echo "$usage"
+elif [[ -z "$3" ]]; then
+echo "$usage"
+else
 
 
 
@@ -217,3 +228,4 @@ sudo rm $_IMAGEDIR/$_IMGNAME.img
 msg "Removing rootfs_$_ARCH"
 sudo rm -rf $_ROOTFS/rootfs_$_ARCH
 
+fi
