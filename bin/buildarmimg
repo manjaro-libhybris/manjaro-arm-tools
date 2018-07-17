@@ -82,6 +82,12 @@ msg "Enabling services..."
 sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service
 sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION
 
+if [[ "$1" = "rpi2" ]] || [[ "$1" = "xu4" ]]; then
+echo ""
+else
+sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service
+fi
+
 # restore original mirrorlist to host system
 sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
 sudo pacman -Syy
