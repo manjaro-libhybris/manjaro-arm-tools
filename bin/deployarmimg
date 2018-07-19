@@ -1,0 +1,48 @@
+#! /bin/bash
+
+# Usage: deployarmimg image device edition version
+# Example: deployarmimg Manjaro-ARM-minimal-rpi2-18.07.zip rpi2 minimal 18.07
+
+#Display messages
+ msg() {
+    ALL_OFF="\e[1;0m"
+    BOLD="\e[1;1m"
+    GREEN="${BOLD}\e[1;32m"
+      local mesg=$1; shift
+      printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+ }
+ 
+  usage='Syntax: deployarmimg image device edition version
+ Example: deployarmimg Manjaro-ARM-minimal-rpi2-18.07.zip rpi2 minimal 18.07'
+ 
+ if [[ -z "$1" ]]; then
+ echo "$usage"
+ elif [[ -z "$2" ]]; then
+ echo "$usage"
+ elif [[ -z "$3" ]]; then
+ echo "$usage"
+ elif [[ -z "$4" ]]; then
+ echo "$usage"
+ else
+
+# Set globals
+OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
+IMGDIR='/var/cache/manjaro-arm-tools/img'
+
+# Create checksums for the image
+msg "Creating checksums for [$1]..."
+cd $IMGDIR/
+sha1sum $1 > $1.sha1
+sha256sum $1 > $1.sha256
+
+# Upload image + checksums to image server
+msg "Uploading image and checksums to server..."
+echo "Please use your server login details..."
+rsync -raP $1* $OSDN/$2/$3/$4/
+
+# remove pkg + sig from cache folder
+msg "Removing local files..."
+rm $1*
+
+fi
+ 

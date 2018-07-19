@@ -120,3 +120,18 @@ To build a minimal image version 18.08 RC1 for the odroid-c2:
 ```
 buildarmimg oc2 minimal 18.08-rc1
 ```
+
+## deployarmimg
+This script will create checksums for and upload the newly generated image.
+
+**Syntax**
+
+```
+deployarmimg image device edition version
+```
+
+To upload an image to the raspberry pi minimal 18.07 folder use:
+
+```
+deployarmimg Manjaro-ARM-minimal-rpi2-18.07.zip rpi2 minimal 18.07
+```
