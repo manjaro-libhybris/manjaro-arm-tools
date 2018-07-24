@@ -32,7 +32,7 @@ opt_vars=":p:a:r:"
 while getopts "$opt_vars" arg; do
   case $arg in
     p)
-      package=$OPTARG" >&2
+      package="$OPTARG" >&2
       ;;
     a)
       arch="$OPTARG" >&2
