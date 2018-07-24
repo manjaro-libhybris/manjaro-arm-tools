@@ -12,39 +12,65 @@
       printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
  
-  usage='Syntax: deployarmpkg package architecture repo
- Example: deployarmpkg filesystem armv7h core'
+  usage='Syntax: deployarmpkg -p package -a architecture -r repo
+ Example: deployarmpkg -p filesystem-2018.07-1-armv7h.pkg.tar.xz -a armv7h -p core'
  
- if [[ -z "$1" ]]; then
- echo "$usage"
- elif [[ -z "$2" ]]; then
- echo "$usage"
- elif [[ -z "$3" ]]; then
- echo "$usage"
- else
+# if [[ -z "$1" ]]; then
+# echo "$usage"
+# elif [[ -z "$2" ]]; then
+# echo "$usage"
+# elif [[ -z "$3" ]]; then
+# echo "$usage"
+# else
 
 # Set globals
 SERVER='sync.manjaro-arm.org'
 _LIBDIR=/usr/share/manjaro-arm-tools/lib
 
+opt_vars=":p:a:r:"
+
+while getopts "$opt_vars" arg; do
+  case $arg in
+    p)
+      package=$OPTARG" >&2
+      ;;
+    a)
+      arch="$OPTARG" >&2
+      ;;
+    r)
+      repo="$OPTARG" >&2
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    h|?)
+      echo $usage
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
 # Sign the package with the users gpg key
-msg "Signing [$1] with users GPG key..."
-gpg --detach-sign "$1"
+msg "Signing [$package] with users GPG key..."
+gpg --detach-sign "$package"
 
 # Upload pkg + signature to repo server
 msg "Uploading package to server..."
 echo "Please use your server login details..."
-scp $1* $SERVER:/opt/repo/mirror/stable/$2/$3/
+scp $package* $SERVER:/opt/repo/mirror/stable/$arch/$repo/
 
 # Adding package to repo
-msg "Adding [$1] to repo..."
+msg "Adding [$package] to repo..."
 echo "Please use your server login details..."
-#ssh -T $SERVER sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$2/$3/$3.db.tar.gz /mirror/stable/$2/$3/$1
+#ssh -T $SERVER sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$arch/$repo/$repo.db.tar.gz /mirror/stable/$arch/$repo/$package
 #Not sure if this bit works yet
 ssh $SERVER 'bash -s' < $_LIBDIR/repo-add.sh "$@"
 
 # remove pkg + sig from cache folder
 msg "Removing local files..."
-rm $1*
+rm $package*
 
 fi
