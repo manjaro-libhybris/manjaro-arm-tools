@@ -14,6 +14,7 @@ _ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
 _TMPDIR=/var/lib/manjaro-arm-tools/tmp
 _IMAGEDIR=/var/cache/manjaro-arm-tools/img
 _IMGNAME=Manjaro-ARM-$edition-$device-$version
+PROFILES=/usr/share/manjaro-arm-tools/profiles
 
 
 usage_deploy_pkg() {
@@ -94,7 +95,7 @@ create_rootfs_pkg() {
     sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/usr/bin/
     
     #enable qemu binaries
-    msg "===== Enabling qemu binaries ====="
+    msg "===== Enabling qemu binaries ====="../lib
     sudo update-binfmts --enable qemu-arm
     sudo update-binfmts --enable qemu-aarch64 
 
@@ -115,7 +116,7 @@ create_rootfs_pkg() {
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg.conf
     sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_ROOTFS/etc/makepkg.conf
 
-}
+}../lib
 
 create_rootfs_img() {
     msg "Creating rootfs for $device..."
@@ -331,5 +332,15 @@ export_and_clean() {
         msg "Cleaning rootfs"
         sudo rm -rf $_ROOTFS > /dev/null
         exit 1
+    fi
+}
+
+get_profiles() {
+    if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
+        cd $PROFILES/arm-profiles
+        git pull
+    else
+        cd $PROFILES
+        git clone https://gitlab.com/Strit/arm-profiles.git
     fi
 }

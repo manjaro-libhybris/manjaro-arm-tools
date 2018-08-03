@@ -106,19 +106,19 @@ If that happens, just try running the command again. This script will zip up the
 **Syntax**
 
 ```
-buildarmimg device edition version
+buildarmimg -d device -e edition -v version
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 2/3:
 
 ```
-buildarmimg rpi2 minimal 18.07
+buildarmimg -d rpi2 -e minimal -v 18.07
 ```
 
 To build a minimal image version 18.08 RC1 for the odroid-c2:
 
 ```
-buildarmimg oc2 minimal 18.08-rc1
+buildarmimg -d oc2 -e minimal -v 18.08-rc1
 ```
 
 ## deployarmimg
@@ -135,3 +135,11 @@ To upload an image to the raspberry pi minimal 18.07 folder use:
 ```
 deployarmimg Manjaro-ARM-minimal-rpi2-18.07.zip rpi2 minimal 18.07
 ```
+
+## getarmprofiles
+This script will just clone or update the current profile list in `/usr/share/manjaro-arm-tools/profiles/`.
+So nothing that fancy.
+The plan is to use these profiles for building Manjaro-ARM images, instead of `curl`ing them as we do now.
+
+This would enable users to clone the profiles repository, make any changes they would like to their images and then build them localy.
+So if you made changes to the profiles yourself, don't run `getarmprofiles` and you will still have your edits.

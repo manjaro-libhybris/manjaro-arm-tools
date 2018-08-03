@@ -4,7 +4,7 @@
 _LIBDIR=/usr/share/manjaro-arm-tools/lib
 
 #imports
-source ../lib/functions.sh
+source $_LIBDIR/functions.sh
 
 #Arguments 
 opt=":e:d:v:h"
@@ -46,9 +46,9 @@ else
 fi
 
 #Package lists
-PKG_DEVICE=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/$device)
-PKG_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/$edition)
-SRV_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/services/$edition)
+PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$device)
+PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$edition)
+SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$edition)
 
 create_rootfs_img
 
