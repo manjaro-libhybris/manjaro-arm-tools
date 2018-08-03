@@ -1,237 +1,58 @@
 #! /bin/bash
 
-usage="Variable list order: 
-1=Device, 
-2=Edition, 
-3=Version,
+# Set globals
+_LIBDIR=/usr/share/manjaro-arm-tools/lib
 
-Example: rpi2 minimal 18.05
-Example2: oc2 server 18.05"
+#imports
+source ../lib/functions.sh
+
+#Arguments 
+opt=":e:d:v:h"
+
+while getopts "${opt}" arg; do
+  case $arg in
+    e)
+      edition="${OPTARG}"
+      ;;
+    d)
+      device="${OPTARG}"
+      ;;
+    v)
+      version="${OPTARG}"
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}"
+      exit 1
+      ;;
+    h|?)
+      usage_build_img
+      exit 1
+      ;;
+    :)
+      echo "Option -${OPTARG} requires an argument."
+      exit 1
+      ;;
+  esac
+done
+
+
+_IMGNAME=Manjaro-ARM-$edition-$device-$version
 
    
-if [[ "$1" = "oc2" ]]; then
+if [[ "$device" = "oc2" ]]; then
     _ARCH='aarch64'
 else
     _ARCH='armv7h'
 fi
-
-_ROOTFS="/var/lib/manjaro-arm-tools/img"
-_TMPDIR="/var/lib/manjaro-arm-tools/tmp"
-_IMAGEDIR="/var/cache/manjaro-arm-tools/img"
-_LIBDIR="/usr/share/manjaro-arm-tools/lib"
-_IMGNAME="Manjaro-ARM-$2-$1-$3"
 
 #Package lists
-PKG_DEVICE=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/$1)
-PKG_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/$2)
-SRV_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/services/$2)
+PKG_DEVICE=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/devices/$device)
+PKG_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/editions/$edition)
+SRV_EDITION=$(curl https://gitlab.com/Strit/arm-profiles/raw/master/services/$edition)
 
-#Display messages
-   msg() {
-     ALL_OFF="\e[1;0m"
-     BOLD="\e[1;1m"
-     GREEN="${BOLD}\e[1;32m"
-       local mesg=$1; shift
-       printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
-   }
-   
-usage='Syntax: buildarmimg device edition version
-Example: buildarmimg rpi2 minimal 18.07'
- 
-if [[ -z "$1" ]]; then
-echo "$usage"
-elif [[ -z "$2" ]]; then
-echo "$usage"
-elif [[ -z "$3" ]]; then
-echo "$usage"
-else
+create_rootfs_img
 
+create_img
 
+create_zip
 
-msg "Creating rootfs for $1..."
-
-# backup host mirrorlist
-sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-# Create arm mirrlorlist
-echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
-sudo mv mirrorlist /etc/pacman.d/mirrorlist
-
-# cd to root_fs
-mkdir -p $_ROOTFS
-cd $_ROOTFS
-
-# create folder for the rootfs
-mkdir -p rootfs_$_ARCH
-
-# install the rootfs filesystem
-basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
-    
-# Enable cross architecture Chrooting
-if [[ "$1" = "oc2" ]]; then
-    sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/rootfs_$_ARCH/usr/bin/
-    sudo update-binfmts --enable qemu-aarch64
-else
-    sudo cp /usr/bin/qemu-arm-static $_ROOTFS/rootfs_$_ARCH/usr/bin/
-    sudo update-binfmts --enable qemu-arm
-fi
-
-msg "Enabling services..."
-
-# Enable services
-sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service
-sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION
-
-if [[ "$1" = "rpi2" ]] || [[ "$1" = "xu4" ]]; then
-echo ""
-else
-sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service
-fi
-
-# restore original mirrorlist to host system
-sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-sudo pacman -Syy
-
-msg "Setting up users..."
-#setup users
-sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $_LIBDIR/pass-root
-sudo systemd-nspawn -D rootfs_$_ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-sudo systemd-nspawn -D rootfs_$_ARCH passwd manjaro < $_LIBDIR/pass-manjaro
-
-msg "Setting up system settings..."
-#system setup
-sudo systemd-nspawn -D rootfs_$_ARCH chmod u+s /usr/bin/ping
-sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust
-sudo cp $_LIBDIR/10-installer $_ROOTFS/rootfs_$_ARCH/etc/sudoers.d/
-sudo cp $_LIBDIR/resize-sd $_ROOTFS/rootfs_$_ARCH/usr/bin/
-sudo cp $_LIBDIR/20-wired.network $_ROOTFS/rootfs_$_ARCH/etc/systemd/network/
-
-msg "Setting up keyrings..."
-#setup keys
-sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --init
-sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm
-
-msg "$1 $2 rootfs complete"
-
-msg "Creating image!"
-
-#GLOBALS
-
-
-# Test for device input
-if [[ "$1" != "rpi2" && "$1" != "oc1" && "$1" != "oc2" && "$1" != "xu4" && "$1" != "bbb" && "$1" != "bbxm" ]]; then
-        echo 'Invalid device '$1', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4  '
-	exit 1
-else
-   	_DEVICE="$1"
-fi
-
-if [[ "$_DEVICE" = "oc2" ]]; then
-    _ARCH='aarch64'
-else
-    _ARCH='armv7h'
-fi
-
-#if [ ! -d "$_ROOTFS/rootfs_$_ARCH" ]; then
-#   echo 'The 'rootfs_$_ARCH' directory does not exist'
-#   echo 'Please enter a valid rootfs.'
-#   exit 2
-#fi
-
-if [[ "$2" = "minimal" ]]; then
-    _SIZE=1500
-else
-    _SIZE=2000
-fi
-
-msg "Please ensure that the rootfs is configured and all necessary boot packages are installed"
-
-##Image set up
-#making blank .img to be used
-sudo dd if=/dev/zero of=$_IMAGEDIR/$_IMGNAME.img bs=1M count=$_SIZE
-
-#probing loop into the kernel
-sudo modprobe loop
-
-#set up loop device
-LDEV=`sudo losetup -f`
-DEV=`echo $LDEV | cut -d "/" -f 3`
-
-#mount image to loop device
-sudo losetup $LDEV $_IMAGEDIR/$_IMGNAME.img
-
-
-# For Raspberry Pi devices
-if [[ "$1" = "rpi2" ]]; then
-#partition with boot and root
-	sudo parted -s $LDEV mklabel msdos
-	sudo parted -s $LDEV mkpart primary fat32 0% 100M
-	START=`cat /sys/block/$DEV/${DEV}p1/start`
-	SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-	END_SECTOR=$(expr $START + $SIZE)
-	sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
-	sudo partprobe $LDEV
-	sudo mkfs.vfat "${LDEV}p1"
-	sudo mkfs.ext4 "${LDEV}p2"
-
-#copy rootfs contents over to the FS
-	mkdir -p $_TMPDIR/root
-	mkdir -p $_TMPDIR/boot
-	sudo mount ${LDEV}p1 $_TMPDIR/boot
-	sudo mount ${LDEV}p2 $_TMPDIR/root
-	sudo cp -ra $_ROOTFS/rootfs_$_ARCH/* $_TMPDIR/root/
-	sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
-
-#clean up
-	sudo umount $_TMPDIR/root
-	sudo umount $_TMPDIR/boot
-	sudo losetup -d $LDEV
-	sudo rm -r $_TMPDIR/root $_TMPDIR/boot
-	sudo partprobe $LDEV
-
-# For Odroid devices
-elif [[ "$1" = "oc1" ]] || [[ "$1" = "oc2" ]] || [[ "$1" = "xu4" ]]; then
-#Clear first 8mb
-	sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
-	
-#partition with a single root partition
-	sudo parted -s $LDEV mklabel msdos
-	sudo parted -s $LDEV mkpart primary ext4 0% 100%
-	sudo partprobe $LDEV
-#if [[ "$_DEVICE" = "xu4" ]]; then
-#	sudo mkfs.ext4 "${LDEV}p1"
-#else
-	sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
-#fi
-
-#copy rootfs contents over to the FS
-	mkdir -p $_TMPDIR/root
-	sudo chmod 777 -R $_TMPDIR/root
-	sudo mount ${LDEV}p1 $_TMPDIR/root
-	sudo cp -ra $_ROOTFS/rootfs_$_ARCH/* $_TMPDIR/root/
-
-#flash bootloader
-	cd $_TMPDIR/root/boot/
-	sudo ./sd_fusing.sh $LDEV
-	cd ~
-
-#clean up
-	sudo umount $_TMPDIR/root
-	sudo losetup -d $LDEV
-	sudo rm -r $_TMPDIR/root
-	sudo partprobe $LDEV
-
-else
-	echo "The $1" has not been set up yet
-fi
-
-#zip img
-cd $_IMAGEDIR
-zip -9 $_IMGNAME.zip $_IMGNAME.img 
-sudo rm $_IMAGEDIR/$_IMGNAME.img
-
-msg "Removing rootfs_$_ARCH"
-sudo rm -rf $_ROOTFS/rootfs_$_ARCH
-
-fi
