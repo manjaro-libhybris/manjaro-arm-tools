@@ -38,7 +38,7 @@ usage_build_pkg() {
     exit $1
 }
 
-usage_build_pkg() {
+usage_build_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device [Options = rpi2, oc1, oc2 and xu4]"
     echo "    -e <edition>       Edition to build [Options = minimal]"
@@ -95,7 +95,7 @@ create_rootfs_pkg() {
     sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/usr/bin/
     
     #enable qemu binaries
-    msg "===== Enabling qemu binaries ====="../lib
+    msg "===== Enabling qemu binaries ====="
     sudo update-binfmts --enable qemu-arm
     sudo update-binfmts --enable qemu-aarch64 
 
@@ -116,7 +116,7 @@ create_rootfs_pkg() {
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg.conf
     sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_ROOTFS/etc/makepkg.conf
 
-}../lib
+}
 
 create_rootfs_img() {
     msg "Creating rootfs for $device..."
