@@ -3,109 +3,58 @@
 #Usage: buildarmpkg package architecture.
 #Example: buildarmpkg filesystem armv7h
 
-#Display messages
- msg() {
-    ALL_OFF="\e[1;0m"
-    BOLD="\e[1;1m"
-    GREEN="${BOLD}\e[1;32m"
-      local mesg=$1; shift
-      printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
- }
- 
- usage='Syntax: buildarmpkg package architecture
- Example: buildarmpkg filesystem armv7h'
- 
- if [[ -z "$1" ]]; then
- echo "$usage"
- elif [[ -z "$2" ]]; then
- echo "$usage"
- else
+# Set globals
+_LIBDIR=/usr/share/manjaro-arm-tools/lib
+
+#imports
+source $_LIBDIR/functions.sh
+
+#Arguments 
+opt=":p:a:h"
+
+while getopts "${opt}" arg; do
+  case $arg in
+    p)
+      package="${OPTARG%/}"
+      ;;
+    a)
+      arch="${OPTARG}"
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}"
+      exit 1
+      ;;
+    h|?)
+      usage_build_pkg
+      exit 1
+      ;;
+    :)
+      echo "Option -${OPTARG} requires an argument."
+      exit 1
+      ;;
+  esac
+done
+
+#Need both package and architecture
+if [ "x" == "x$package" ]; then
+  echo "-p [option] is required"
+  exit
+fi
+if [ "x" == "x$arch" ]; then
+  echo "-a [option] is required"
+  exit
+fi
 
 #Build the 'any' packages on armv7
-if [ $2 == "any" ]; then
-	_ARCH="armv7h"
-else
-	_ARCH="$2"
+if [ $arch == "any" ]; then
+	arch="armv7h"
 fi
 
-######## Some globals to set ########
-#Only set this one
-_BUILDDIR=/var/lib/manjaro-arm-tools/pkg
-_LIBDIR=/usr/share/manjaro-arm-tools/lib
-_PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
+#create the rootfs to build in
+create_rootfs_pkg
 
-#Leave these alone
-_ROOTFS=$_BUILDDIR/$_ARCH
-_REPODIR=$_BUILDDIR/repo
-_PKGDIR=/var/cache/manjaro-arm-tools/pkg
+#build the package
+build_pkg
 
-
-msg "===== Creating rootfs ====="
-# backup host mirrorlist
-sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-# Create arm mirrorlist
-echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
-sudo mv mirrorlist /etc/pacman.d/mirrorlist
-
-# cd to root_fs
-mkdir -p $_ROOTFS
-
-# basescrap the rootfs filesystem
-basestrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
-
-# Enable cross architecture Chrooting
-sudo cp /usr/bin/qemu-arm-static $_ROOTFS/usr/bin/
-sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/usr/bin/
-
-#enable qemu binaries
-msg "===== Enabling qemu binaries ====="
-sudo update-binfmts --enable qemu-arm
-sudo update-binfmts --enable qemu-aarch64 
-
-# restore original mirrorlist to host system
-sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-sudo pacman -Syy
-
-msg "===== Creating rootfs user ====="
-sudo systemd-nspawn -D $_ROOTFS useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-
-msg "===== Configuring rootfs for building ====="
-sudo cp $_LIBDIR/makepkg $_ROOTFS/usr/bin/
-sudo systemd-nspawn -D $_ROOTFS chmod +x /usr/bin/makepkg
-sudo systemd-nspawn -D $_ROOTFS update-ca-trust
-sudo systemd-nspawn -D $_ROOTFS systemctl enable haveged
-sudo systemd-nspawn -D $_ROOTFS pacman-key --init
-sudo systemd-nspawn -D $_ROOTFS pacman-key --populate archlinuxarm manjaro manjaro-arm
-sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg.conf
-sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_ROOTFS/etc/makepkg.conf
-
-#cp package to rootfs
-msg "===== Copying build directory {$1} to rootfs ====="
-sudo systemd-nspawn -D $_ROOTFS -u manjaro --chdir=/home/manjaro/ mkdir build
-sudo cp -rp "$1"/* $_ROOTFS/home/manjaro/build/
-
-#build package
-msg "===== Building {$1} ====="
-sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/ chmod -R 777 build/
-sudo systemd-nspawn -D $_ROOTFS/ --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
-
-if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
-    #pull package out of rootfs
-    msg "!!!!! +++++ ===== Package Succeeded ===== +++++ !!!!!"
-    msg "===== Extracting finished package out of rootfs ====="
-    mkdir -p $_PKGDIR/$2
-    cp $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$2/
-    msg "+++++ Package saved at $_PKGDIR/$2/$1*.pkg.tar.xz +++++"
-
-    #clean up rootfs
-    msg "===== Cleaning rootfs ====="
-    sudo rm -rf $_ROOTFS > /dev/null
-
-else
-    msg "!!!!! ++++++ ===== Package failed to build ===== +++++ !!!!!"
-    msg "Cleaning rootfs"
-    sudo rm -rf $_ROOTFS > /dev/null
-    exit 1
-fi
-fi
+#export the package and clean up
+export_and_clean
