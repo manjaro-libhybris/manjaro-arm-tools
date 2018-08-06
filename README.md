@@ -122,18 +122,19 @@ buildarmimg -d oc2 -e minimal -v 18.08-rc1
 ```
 
 ## deployarmimg
-This script will create checksums for and upload the newly generated image.
+This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.
+If you don't, you can't use this.
 
 **Syntax**
 
 ```
-deployarmimg image device edition version
+deployarmimg -i image -d device -e edition -v version
 ```
 
 To upload an image to the raspberry pi minimal 18.07 folder use:
 
 ```
-deployarmimg Manjaro-ARM-minimal-rpi2-18.07.zip rpi2 minimal 18.07
+deployarmimg -i Manjaro-ARM-minimal-rpi2-18.07.zip -d rpi2 -e minimal -v 18.07
 ```
 
 ## getarmprofiles

@@ -12,9 +12,10 @@ _REPODIR=$_BUILDDIR/repo
 _PKGDIR=/var/cache/manjaro-arm-tools/pkg
 _ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
 _TMPDIR=/var/lib/manjaro-arm-tools/tmp
-_IMAGEDIR=/var/cache/manjaro-arm-tools/img
+IMGDIR=/var/cache/manjaro-arm-tools/img
 _IMGNAME=Manjaro-ARM-$edition-$device-$version
 PROFILES=/usr/share/manjaro-arm-tools/profiles
+OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 
 
 usage_deploy_pkg() {
@@ -22,6 +23,18 @@ usage_deploy_pkg() {
     echo "    -a <arch>          Architecture. [Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to upload"
     echo '    -r <repo>          Repository package belongs to. [Options = core, extra or community]'
+    echo '    -h                 This help'
+    echo ''
+    echo ''
+    exit $1
+}
+
+usage_deploy_img() {
+    echo "Usage: ${0##*/} [options]"
+    echo "    -i <image>         Image to upload. Should be a .zip file."
+    echo "    -d <device>        Device the image is for."
+    echo '    -e <edition>       Edition of the image. [Options = minimal]'
+    echo "    -v <version>       Version of the image."
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -61,6 +74,14 @@ usage_build_img() {
     gpg --detach-sign "$package"
 }
 
+checksum_img() {
+    # Create checksums for the image
+    msg "Creating checksums for [$image]..."
+    cd $IMGDIR/
+    sha1sum $image > $image.sha1
+    sha256sum $image > $image.sha256
+}
+
 pkg_upload() {
     msg "Uploading package to server..."
     echo "Please use your server login details..."
@@ -68,6 +89,13 @@ pkg_upload() {
     msg "Adding [$package] to repo..."
     echo "Please use your server login details..."
     ssh $SERVER 'bash -s' < $_LIBDIR/repo-add.sh "$@"
+}
+
+img_upload() {
+    # Upload image + checksums to image server
+    msg "Uploading image and checksums to server..."
+    echo "Please use your server login details..."
+    rsync -raP $image* $OSDN/$device/$edition/$version/
 }
 
 remove_local_files() {
@@ -213,7 +241,7 @@ create_img() {
 
     ##Image set up
     #making blank .img to be used
-    sudo dd if=/dev/zero of=$_IMAGEDIR/$_IMGNAME.img bs=1M count=$_SIZE
+    sudo dd if=/dev/zero of=$IMGDIR/$_IMGNAME.img bs=1M count=$_SIZE
 
     #probing loop into the kernel
     sudo modprobe loop
@@ -223,7 +251,7 @@ create_img() {
     DEV=`echo $LDEV | cut -d "/" -f 3`
 
     #mount image to loop device
-    sudo losetup $LDEV $_IMAGEDIR/$_IMGNAME.img
+    sudo losetup $LDEV $IMGDIR/$_IMGNAME.img
 
 
     # For Raspberry Pi devices
@@ -294,9 +322,9 @@ create_img() {
 
 create_zip() {
     #zip img
-    cd $_IMAGEDIR
+    cd $IMGDIR
     zip -9 $_IMGNAME.zip $_IMGNAME.img 
-    sudo rm $_IMAGEDIR/$_IMGNAME.img
+    sudo rm $IMGDIR/$_IMGNAME.img
 
     msg "Removing rootfs_$_ARCH"
     sudo rm -rf $_ROOTFS_IMG/rootfs_$_ARCH
