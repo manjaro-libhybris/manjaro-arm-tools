@@ -113,14 +113,14 @@ create_rootfs_pkg() {
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
-    mkdir -p $_ROOTFS
+    mkdir -p $_BUILDDIR/$arch
 
     # basescrap the rootfs filesystem
-    basestrap -G -C $_LIBDIR/pacman.conf.$arch $_ROOTFS base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
+    basestrap -G -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
 
     # Enable cross architecture Chrooting
-    sudo cp /usr/bin/qemu-arm-static $_ROOTFS/usr/bin/
-    sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS/usr/bin/
+    sudo cp /usr/bin/qemu-arm-static $_BUILDDIR/$arch/usr/bin/
+    sudo cp /usr/bin/qemu-aarch64-static $_BUILDDIR/$arch/usr/bin/
     
     #enable qemu binaries
     msg "===== Enabling qemu binaries ====="
@@ -132,17 +132,17 @@ create_rootfs_pkg() {
     sudo pacman -Syy
 
     msg "===== Creating rootfs user ====="
-    sudo systemd-nspawn -D $_ROOTFS useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
+    sudo systemd-nspawn -D $_BUILDDIR/$arch useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
 
     msg "===== Configuring rootfs for building ====="
-    sudo cp $_LIBDIR/makepkg $_ROOTFS/usr/bin/
-    sudo systemd-nspawn -D $_ROOTFS chmod +x /usr/bin/makepkg
-    sudo systemd-nspawn -D $_ROOTFS update-ca-trust
-    sudo systemd-nspawn -D $_ROOTFS systemctl enable haveged
-    sudo systemd-nspawn -D $_ROOTFS pacman-key --init
-    sudo systemd-nspawn -D $_ROOTFS pacman-key --populate archlinuxarm manjaro manjaro-arm
-    sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_ROOTFS/etc/makepkg.conf
-    sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_ROOTFS/etc/makepkg.conf
+    sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
+    sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg
+    sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust
+    sudo systemd-nspawn -D $_BUILDDIR/$arch systemctl enable haveged
+    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --init
+    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm
+    sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_BUILDDIR/$arch/etc/makepkg.conf
+    sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_BUILDDIR/$arch/etc/makepkg.conf
 
 }
 
@@ -333,32 +333,32 @@ create_zip() {
 build_pkg() {
     #cp package to rootfs
     msg "===== Copying build directory {$package} to rootfs ====="
-    sudo systemd-nspawn -D $_ROOTFS -u manjaro --chdir=/home/manjaro/ mkdir build
-    sudo cp -rp "$package"/* $_ROOTFS/home/manjaro/build/
+    sudo systemd-nspawn -D $_BUILDDIR/$arch -u manjaro --chdir=/home/manjaro/ mkdir build
+    sudo cp -rp "$package"/* $_BUILDDIR/$arch/home/manjaro/build/
 
     #build package
     msg "===== Building {$package} ====="
-    sudo systemd-nspawn -D $_ROOTFS/ -u manjaro --chdir=/home/manjaro/ chmod -R 777 build/
-    sudo systemd-nspawn -D $_ROOTFS/ --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
+    sudo systemd-nspawn -D $_BUILDDIR/$arch/ -u manjaro --chdir=/home/manjaro/ chmod -R 777 build/
+    sudo systemd-nspawn -D $_BUILDDIR/$arch/ --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
 }
 
 export_and_clean() {
-    if ls $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
+    if ls $_BUILDDIR/$arch/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
         #pull package out of rootfs
         msg "!!!!! +++++ ===== Package Succeeded ===== +++++ !!!!!"
         msg "===== Extracting finished package out of rootfs ====="
         mkdir -p $_PKGDIR/$arch
-        cp $_ROOTFS/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$arch/
+        cp $_BUILDDIR/$arch/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$arch/
         msg "+++++ Package saved at $_PKGDIR/$arch/$package*.pkg.tar.xz +++++"
 
         #clean up rootfs
         msg "===== Cleaning rootfs ====="
-        sudo rm -rf $_ROOTFS > /dev/null
+        sudo rm -rf $_BUILDDIR/$arch > /dev/null
 
     else
         msg "!!!!! ++++++ ===== Package failed to build ===== +++++ !!!!!"
         msg "Cleaning rootfs"
-        sudo rm -rf $_ROOTFS > /dev/null
+        sudo rm -rf $_BUILDDIR/$arch > /dev/null
         exit 1
     fi
 }
