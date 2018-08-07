@@ -7,7 +7,7 @@ _LIBDIR=/usr/share/manjaro-arm-tools/lib
 
 source $_LIBDIR/functions.sh
 
-opt=":p:a:r:h"
+opt=":p:a:r:k:h"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -19,6 +19,9 @@ while getopts "${opt}" arg; do
       ;;
     r)
       repo="${OPTARG}"
+      ;;
+    k)
+      gpgmail="${OPTARG}"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -47,6 +50,10 @@ if [ "x" == "x$repo" ]; then
   echo "-r [option] is required"
   exit
 fi
+if [ "x" == "x$gpgmail" ]; then
+  echo "-k [option] is required"
+  exit
+fi
 
 # Sign the package with the users gpg key
 sign_pkg
@@ -55,4 +62,4 @@ sign_pkg
 pkg_upload
 
 # remove pkg + sig from cache folder
-remove_local_files
+remove_local_pkg

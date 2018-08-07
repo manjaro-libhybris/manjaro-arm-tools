@@ -23,6 +23,7 @@ usage_deploy_pkg() {
     echo "    -a <arch>          Architecture. [Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to upload"
     echo '    -r <repo>          Repository package belongs to. [Options = core, extra or community]'
+    echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -70,8 +71,8 @@ usage_build_img() {
  }
  
  sign_pkg() {
-    msg "Signing [$package] with users GPG key..."
-    gpg --detach-sign "$package"
+    msg "Signing [$package] with GPG key belonging to $gpgmail..."
+    gpg --detach-sign -u $gpgmail "$package"
 }
 
 checksum_img() {
@@ -98,7 +99,7 @@ img_upload() {
     rsync -raP $image* $OSDN/$device/$edition/$version/
 }
 
-remove_local_files() {
+remove_local_pkg() {
     msg "Removing local files..."
     rm $package*
 }
