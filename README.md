@@ -57,25 +57,25 @@ It will gpg sign and uploud the package you mention to the Manjaro-ARM main serv
 **Syntax**
 
 ```
-deployarmpkg -p package -a architecture -r repo
+deployarmpkg -p package -a architecture -r repo -k keyid
 ```
 
 To upload a package to the armv7h core repo use:
 
 ```
-deployarmpkg -p package.pkg.tar.xz -a armv7h -r core
+deployarmpkg -p package.pkg.tar.xz -a armv7h -r core -k email@server.org
 ```
 
 To upload a package to the aarch64 extra repo use:
 
 ```
-deployarmpkg -p package.pkg.tar.xz -a aarch64 -r extra
+deployarmpkg -p package.pkg.tar.xz -a aarch64 -r extra -k email@server.org
 ```
 
 To upload an any package to the community repo use:
 
 ```
-deployarmpkg -p package.pkg.tar.xz -a any -r community
+deployarmpkg -p package.pkg.tar.xz -a any -r community -k email@server.org
 ```
 
 This should be used after creating a package with `buildarmpkg` and cd'ing to the cache folder. It will sign the package with your default secret GPG key and upload both files
