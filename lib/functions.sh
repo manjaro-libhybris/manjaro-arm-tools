@@ -125,23 +125,23 @@ create_rootfs_pkg() {
     
     #enable qemu binaries
     msg "===== Enabling qemu binaries ====="
-    sudo update-binfmts --enable qemu-arm
-    sudo update-binfmts --enable qemu-aarch64 
+    sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
+    sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
 
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
     sudo pacman -Syy
 
     msg "===== Creating rootfs user ====="
-    sudo systemd-nspawn -D $_BUILDDIR/$arch useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
+    sudo systemd-nspawn -D $_BUILDDIR/$arch useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
 
     msg "===== Configuring rootfs for building ====="
     sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
-    sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg
-    sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust
-    sudo systemd-nspawn -D $_BUILDDIR/$arch systemctl enable haveged
-    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --init
-    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm
+    sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $_BUILDDIR/$arch systemctl enable haveged 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --init 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_BUILDDIR/$arch/etc/makepkg.conf
     sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_BUILDDIR/$arch/etc/makepkg.conf
 
@@ -170,22 +170,22 @@ create_rootfs_img() {
     # Enable cross architecture Chrooting
     if [[ "device" = "oc2" ]]; then
         sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
-        sudo update-binfmts --enable qemu-aarch64
+        sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
     else
         sudo cp /usr/bin/qemu-arm-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
-        sudo update-binfmts --enable qemu-arm
+        sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
     fi
 
     msg "Enabling services..."
 
     # Enable services
-    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service
-    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION
+    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
     if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]]; then
         echo ""
     else
-        sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service
+        sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     fi
 
     # restore original mirrorlist to host system
@@ -194,22 +194,22 @@ create_rootfs_img() {
 
     msg "Setting up users..."
     #setup users
-    sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $_LIBDIR/pass-root
-    sudo systemd-nspawn -D rootfs_$_ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro
-    sudo systemd-nspawn -D rootfs_$_ARCH passwd manjaro < $_LIBDIR/pass-manjaro
+    sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $_LIBDIR/pass-root 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$_ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$_ARCH passwd manjaro < $_LIBDIR/pass-manjaro 1> /dev/null 2>&1
 
     msg "Setting up system settings..."
     #system setup
-    sudo systemd-nspawn -D rootfs_$_ARCH chmod u+s /usr/bin/ping
-    sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust
+    sudo systemd-nspawn -D rootfs_$_ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust 1> /dev/null 2>&1
     sudo cp $_LIBDIR/10-installer $_ROOTFS_IMG/rootfs_$_ARCH/etc/sudoers.d/
     sudo cp $_LIBDIR/resize-sd $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
     sudo cp $_LIBDIR/20-wired.network $_ROOTFS_IMG/rootfs_$_ARCH/etc/systemd/network/
 
     msg "Setting up keyrings..."
     #setup keys
-    sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --init
-    sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm
+    sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --init 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
 
     msg "$device $edition rootfs complete"
 }
@@ -334,12 +334,12 @@ create_zip() {
 build_pkg() {
     #cp package to rootfs
     msg "===== Copying build directory {$package} to rootfs ====="
-    sudo systemd-nspawn -D $_BUILDDIR/$arch -u manjaro --chdir=/home/manjaro/ mkdir build
+    sudo systemd-nspawn -D $_BUILDDIR/$arch -u manjaro --chdir=/home/manjaro/ mkdir build 1> /dev/null 2>&1
     sudo cp -rp "$package"/* $_BUILDDIR/$arch/home/manjaro/build/
 
     #build package
     msg "===== Building {$package} ====="
-    sudo systemd-nspawn -D $_BUILDDIR/$arch/ -u manjaro --chdir=/home/manjaro/ chmod -R 777 build/
+    sudo systemd-nspawn -D $_BUILDDIR/$arch/ -u manjaro --chdir=/home/manjaro/ chmod -R 777 build/ 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch/ --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
 }
 
