@@ -5,6 +5,13 @@ This software an all it's dependencies are available in the Manjaro Strit repo's
 
 ## Known issues
 
+## Dependencies
+These scripts rely on certain packages to be able to function. These packages are:
+* qemu (arch repo)
+* parted (arch repo)
+* qemu-user-static (AUR or manjaro-strit repo)
+* binfmt-support-git (AUR or manjaro-strit repo)
+* binfmt-qemu-static (AUR or manjaro-strit repo)
 
 # Usage
 ## buildarmpkg
@@ -75,13 +82,6 @@ This should be used after creating a package with `buildarmpkg` and cd'ing to th
 and remove the local files.
 
 ## buildarmimg
-This script is the most complicated of them and it assumes that you have the following packages (arch package names) installed:
-* manjaro-tools-base (manjaro-repo)
-* qemu (arch repo)
-* parted (arch repo)
-* qemu-user-static (AUR or manjaro-strit repo)
-* binfmt-support-git (AUR or manjaro-strit repo)
-* binfmt-qemu-static (AUR or manjaro-strit repo)
 
 **Supported devices:**
 * rpi2
@@ -96,12 +96,7 @@ minimal
 *more to come*
 
 The script breafly replaces your `/etc/pacman.d/mirrorlist` with that of manjaro-arm to fetch the right packages.
-
-This means that it will place all downloaded packages for the images in your own `/var/cache/pacman/pkg/` including `any` packages.
-
-This is because they are signed by other keys than the ones in regular manjaro/arch repositories. This will create a corrupt signature next time you try to install the packages from the cache.
-
-If that happens, just try running the command again. This script will zip up the image file and place it in `/var/cache/manjaro-arm-tools/img/`
+This script will zip up the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
 **Syntax**
 

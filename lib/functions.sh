@@ -179,7 +179,7 @@ create_rootfs_img() {
     msg "Enabling services..."
 
     # Enable services
-    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service
+    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service
     sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION
 
     if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]]; then
