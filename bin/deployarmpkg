@@ -1,7 +1,5 @@
 #! /bin/bash
 
-
-
 # Set globals
 _LIBDIR=/usr/share/manjaro-arm-tools/lib
 

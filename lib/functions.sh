@@ -7,13 +7,13 @@ _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 _PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
 
 #Leave these alone
-_ROOTFS=$_BUILDDIR/$arch
-_REPODIR=$_BUILDDIR/repo
+#_ROOTFS=$_BUILDDIR/$arch
+#_REPODIR=$_BUILDDIR/repo
 _PKGDIR=/var/cache/manjaro-arm-tools/pkg
 _ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
 _TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
-_IMGNAME=Manjaro-ARM-$edition-$device-$version
+#_IMGNAME=Manjaro-ARM-$edition-$device-$version
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 
@@ -87,9 +87,9 @@ pkg_upload() {
     msg "Uploading package to server..."
     echo "Please use your server login details..."
     scp $package* $SERVER:/opt/repo/mirror/stable/$arch/$repo/
-    msg "Adding [$package] to repo..."
-    echo "Please use your server login details..."
-    ssh $SERVER 'bash -s' < $_LIBDIR/repo-add.sh "$@"
+    #msg "Adding [$package] to repo..."
+    #echo "Please use your server login details..."
+    #ssh $SERVER 'bash -s' < $_LIBDIR/repo-add.sh "$@"
 }
 
 img_upload() {
