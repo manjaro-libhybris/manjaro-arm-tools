@@ -117,7 +117,7 @@ create_rootfs_pkg() {
     mkdir -p $_BUILDDIR/$arch
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
+    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel archlinuxarm-keyring lsb-release haveged
 
     # Enable cross architecture Chrooting
     sudo cp /usr/bin/qemu-arm-static $_BUILDDIR/$arch/usr/bin/
@@ -165,7 +165,7 @@ create_rootfs_img() {
     mkdir -p rootfs_$_ARCH
 
     # install the rootfs filesystem
-    sudo pacstrap -G -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
+    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
     
     # Enable cross architecture Chrooting
     if [[ "device" = "oc2" ]]; then
