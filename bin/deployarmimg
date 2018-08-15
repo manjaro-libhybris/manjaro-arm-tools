@@ -5,13 +5,14 @@
 
 # Set globals
 _LIBDIR=/usr/share/manjaro-arm-tools/lib
+torrent=false
 
 #imports
 source $_LIBDIR/functions.sh
 
 
 #Arguments 
-opt=":i:d:e:v:"
+opt=":i:d:e:v:th"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -27,12 +28,15 @@ while getopts "${opt}" arg; do
     v)
       version="${OPTARG}"
       ;;
+    t)
+      torrent="true"
+      ;;
     \?)
       echo "Invalid option: -${OPTARG}"
       exit 1
       ;;
     h|?)
-      usage_build_img
+      usage_deploy_img
       exit 1
       ;;
     :)
@@ -46,8 +50,15 @@ done
 # Create checksums for the image
 checksum_img
 
+#create torrent for image
+if [[ $torrent = "true" ]]
+then
+create_torrent
+fi
+
 # Upload image + checksums to image server
 img_upload
+
 
 # remove pkg + sig from cache folder
 #msg "Removing local files..."

@@ -4,6 +4,7 @@ This software an all it's dependencies are available in the Manjaro Strit repo's
 
 
 ## Known issues
+`deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
 
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
@@ -123,19 +124,18 @@ If you don't, you can't use this.
 **Syntax**
 
 ```
-deployarmimg -i image -d device -e edition -v version
+deployarmimg -i image -d device -e edition -v version -t
 ```
 
-To upload an image to the raspberry pi minimal 18.07 folder use:
+To upload an image to the raspberry pi minimal 18.07 folder use with torrent:
 
 ```
-deployarmimg -i Manjaro-ARM-minimal-rpi2-18.07.zip -d rpi2 -e minimal -v 18.07
+deployarmimg -i Manjaro-ARM-minimal-rpi2-18.07.zip -d rpi2 -e minimal -v 18.07 -t
 ```
 
 ## getarmprofiles
 This script will just clone or update the current profile list in `/usr/share/manjaro-arm-tools/profiles/`.
 So nothing that fancy.
-The plan is to use these profiles for building Manjaro-ARM images, instead of `curl`ing them as we do now.
 
 This would enable users to clone the profiles repository, make any changes they would like to their images and then build them localy.
 So if you made changes to the profiles yourself, don't run `getarmprofiles` and you will still have your edits.

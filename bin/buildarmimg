@@ -7,7 +7,7 @@ _LIBDIR=/usr/share/manjaro-arm-tools/lib
 source $_LIBDIR/functions.sh
 
 #Arguments 
-opt=":e:d:v:h"
+opt=":e:d:v:th"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -55,4 +55,3 @@ create_rootfs_img
 create_img
 
 create_zip
-

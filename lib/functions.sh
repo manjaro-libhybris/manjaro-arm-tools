@@ -13,7 +13,7 @@ _PKGDIR=/var/cache/manjaro-arm-tools/pkg
 _ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
 _TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
-#_IMGNAME=Manjaro-ARM-$edition-$device-$version
+_IMGNAME=Manjaro-ARM-$edition-$device-$version
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 
@@ -36,6 +36,7 @@ usage_deploy_img() {
     echo "    -d <device>        Device the image is for."
     echo '    -e <edition>       Edition of the image. [Options = minimal]'
     echo "    -v <version>       Version of the image."
+    echo "    -t                 Create a torrent of the image"
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -73,6 +74,12 @@ usage_build_img() {
  sign_pkg() {
     msg "Signing [$package] with GPG key belonging to $gpgmail..."
     gpg --detach-sign -u $gpgmail "$package"
+}
+
+create_torrent() {
+    msg "Creating torrent of $image..."
+    cd $IMGDIR/
+    mktorrent -a udp://mirror.strits.dk:6969 -v -w https://osdn.net/projects/manjaro-arm/storage/$device/$edition/$version/$image.zip -o $image.zip.torrent $image.zip
 }
 
 checksum_img() {
@@ -117,7 +124,7 @@ create_rootfs_pkg() {
     mkdir -p $_BUILDDIR/$arch
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel archlinuxarm-keyring lsb-release haveged
+    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
 
     # Enable cross architecture Chrooting
     sudo cp /usr/bin/qemu-arm-static $_BUILDDIR/$arch/usr/bin/
