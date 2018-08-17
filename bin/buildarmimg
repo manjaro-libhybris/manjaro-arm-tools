@@ -45,10 +45,15 @@ else
     _ARCH='armv7h'
 fi
 
+if [ ! -d "$PROFILES/arm-profiles" ]; then
+    getarmprofiles
+fi
+
 #Package lists
 PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$device)
 PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$edition)
 SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$edition)
+
 
 create_rootfs_img
 
