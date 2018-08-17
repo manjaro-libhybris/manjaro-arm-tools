@@ -240,7 +240,7 @@ create_img() {
     if [[ "$edition" = "minimal" ]]; then
         _SIZE=1500
     else
-        _SIZE=2000
+        _SIZE=2500
     fi
 
     msg "Please ensure that the rootfs is configured and all necessary boot packages are installed"
