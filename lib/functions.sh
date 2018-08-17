@@ -7,8 +7,6 @@ _BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 _PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
 
 #Leave these alone
-#_ROOTFS=$_BUILDDIR/$arch
-#_REPODIR=$_BUILDDIR/repo
 _PKGDIR=/var/cache/manjaro-arm-tools/pkg
 _ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
 _TMPDIR=/var/lib/manjaro-arm-tools/tmp
@@ -209,9 +207,9 @@ create_rootfs_img() {
     #system setup
     sudo systemd-nspawn -D rootfs_$_ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust 1> /dev/null 2>&1
-    sudo cp $_LIBDIR/10-installer $_ROOTFS_IMG/rootfs_$_ARCH/etc/sudoers.d/
-    sudo cp $_LIBDIR/resize-sd $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
-    sudo cp $_LIBDIR/20-wired.network $_ROOTFS_IMG/rootfs_$_ARCH/etc/systemd/network/
+    
+    msg "Applying overlay for $edition..."
+    sudo cp -ap $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
 
     msg "Setting up keyrings..."
     #setup keys
