@@ -92,12 +92,17 @@ and remove the local files.
 
 **Supported editions:**
 
-minimal
+* minimal
+* lxqt (not complete yet, lacks customization)
+* mate (not complete yet, lacks customization)
+* server (not complete yet)
 
 *more to come*
 
 The script breafly replaces your `/etc/pacman.d/mirrorlist` with that of manjaro-arm to fetch the right packages.
 This script will zip up the image file and place it in `/var/cache/manjaro-arm-tools/img/`
+
+Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-profiles) website, so they are easier to fork and create merge requests.
 
 **Syntax**
 
