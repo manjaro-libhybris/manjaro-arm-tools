@@ -209,7 +209,7 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust 1> /dev/null 2>&1
     
     msg "Applying overlay for $edition..."
-    sudo cp -rp $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
+    sudo cp -a $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
 
     msg "Setting up keyrings..."
     #setup keys
