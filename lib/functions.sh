@@ -77,7 +77,7 @@ usage_build_img() {
 create_torrent() {
     msg "Creating torrent of $image..."
     cd $IMGDIR/
-    mktorrent -a udp://mirror.strits.dk:6969 -v -w https://osdn.net/projects/manjaro-arm/storage/$device/$edition/$version/$image.zip -o $image.zip.torrent $image.zip
+    mktorrent -a udp://mirror.strits.dk:6969 -v -w https://osdn.net/projects/manjaro-arm/storage/$device/$edition/$version/$image -o $image.torrent $image
 }
 
 checksum_img() {
@@ -209,7 +209,7 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust 1> /dev/null 2>&1
     
     msg "Applying overlay for $edition..."
-    sudo cp -a $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
+    sudo cp -ap $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
 
     msg "Setting up keyrings..."
     #setup keys
