@@ -10,9 +10,8 @@ This software an all it's dependencies are available in the Manjaro Strit repo's
 These scripts rely on certain packages to be able to function. These packages are:
 * qemu (arch repo)
 * parted (arch repo)
-* qemu-user-static (AUR or manjaro-strit repo)
-* binfmt-support-git (AUR or manjaro-strit repo)
-* binfmt-qemu-static (AUR or manjaro-strit repo)
+
+This package also provides `binfmt-qemu-static`.
 
 # Usage
 ## buildarmpkg
@@ -89,6 +88,7 @@ and remove the local files.
 * oc1
 * oc2
 * xu4 (not tested)
+* pine64 (Work in Progress)
 
 **Supported editions:**
 
