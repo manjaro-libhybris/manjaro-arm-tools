@@ -173,7 +173,7 @@ create_rootfs_img() {
     sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
     
     # Enable cross architecture Chrooting
-    if [[ "device" = "oc2" ]]; then
+    if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
         sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
         sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
     else
@@ -187,7 +187,7 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
-    if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]]; then
+    if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]]; then
         echo ""
     else
         sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
@@ -223,15 +223,15 @@ create_img() {
     msg "Creating image!"
 
     # Test for device input
-    if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" ]]; then
+    if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" && "$device" != "pine64" ]]; then
         echo 'Invalid device '$device', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4  '
+        echo 'rpi2  |  oc1  | oc2  |  xu4 | pine64  '
         exit 1
     else
         _DEVICE="$device"
     fi
 
-    if [[ "$_DEVICE" = "oc2" ]]; then
+    if [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "pine64" ]]; then
         _ARCH='aarch64'
     else
         _ARCH='armv7h'
@@ -289,7 +289,7 @@ create_img() {
         sudo partprobe $LDEV
 
     # For Odroid devices
-    elif [[ "$device" = "oc1" ]] || [[ "$1" = "oc2" ]] || [[ "$1" = "xu4" ]]; then
+    elif [[ "$device" = "oc1" ]] || [[ "$device" = "oc2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]]; then
         #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
 	

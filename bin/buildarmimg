@@ -39,7 +39,7 @@ done
 _IMGNAME=Manjaro-ARM-$edition-$device-$version
 
    
-if [[ "$device" = "oc2" ]]; then
+if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
     _ARCH='aarch64'
 else
     _ARCH='armv7h'
