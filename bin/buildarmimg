@@ -54,9 +54,17 @@ PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$device)
 PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$edition)
 SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$edition)
 
+#start timer
+timer=$(get_timer)
 
+# Creating the rootfs used for the image.
 create_rootfs_img
 
+# Creating the image, from the rootfs created before.
 create_img
 
+# Create the .zip file, from the .img file which will get deleted.
 create_zip
+
+# show timer
+show_elapsed_time "${timer}"
