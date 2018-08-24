@@ -320,6 +320,33 @@ create_img() {
         sudo rm -r $_TMPDIR/root
         sudo partprobe $LDEV
 
+    # For Pine64 device
+    elif [[ "$device" = "pine64" ]]; then
+        #Clear first 8mb
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
+	
+    #partition with a single root partition
+        sudo parted -s $LDEV mklabel msdos
+        sudo parted -s $LDEV mkpart primary ext4 0% 100%
+        sudo partprobe $LDEV
+    #if [[ "$_DEVICE" = "xu4" ]]; then
+    #	sudo mkfs.ext4 "${LDEV}p1"
+    #else
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
+    #fi
+
+    #copy rootfs contents over to the FS
+        mkdir -p $_TMPDIR/root
+        sudo chmod 777 -R $_TMPDIR/root
+        sudo mount ${LDEV}p1 $_TMPDIR/root
+        sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
+
+    #clean up
+        sudo umount $_TMPDIR/root
+        sudo losetup -d $LDEV
+        sudo rm -r $_TMPDIR/root
+        sudo partprobe $LDEV
+
     else
         #Not sure if this IF statement is nesssary anymore
         echo "The $device" has not been set up yet
