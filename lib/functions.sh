@@ -354,6 +354,9 @@ create_img() {
         sudo chmod 777 -R $_TMPDIR/root
         sudo mount ${LDEV}p1 $_TMPDIR/root
         sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
+        
+    #flash bootloader
+        dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=/dev/mmcblk0 bs=8k seek=1
 
     #clean up
         sudo umount $_TMPDIR/root
