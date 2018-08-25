@@ -303,7 +303,7 @@ create_img() {
         sudo partprobe $LDEV
 
     # For Odroid devices
-    elif [[ "$device" = "oc1" ]] || [[ "$device" = "oc2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]]; then
+    elif [[ "$device" = "oc1" ]] || [[ "$device" = "oc2" ]] || [[ "$device" = "xu4" ]]; then
         #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
 	
@@ -356,7 +356,7 @@ create_img() {
         sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
         
     #flash bootloader
-        dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=/dev/mmcblk0 bs=8k seek=1
+        sudo dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
 
     #clean up
         sudo umount $_TMPDIR/root
