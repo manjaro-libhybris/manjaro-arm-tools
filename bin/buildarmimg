@@ -38,6 +38,16 @@ done
 
 _IMGNAME=Manjaro-ARM-$edition-$device-$version
 
+#Need both package and architecture
+if [ "x" == "x$device" ]; then
+  echo "-d [option] is required"
+  exit
+fi
+if [ "x" == "x$edition" ]; then
+  echo "-e [option] is required"
+  exit
+fi
+
    
 if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
     _ARCH='aarch64'
@@ -55,7 +65,7 @@ PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$edition)
 SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$edition)
 
 #start timer
-timer=$(get_timer)
+#timer=$(get_timer)
 
 # Creating the rootfs used for the image.
 create_rootfs_img
@@ -67,4 +77,4 @@ create_img
 create_zip
 
 # show timer
-show_elapsed_time "${timer}"
+#show_elapsed_time

@@ -14,7 +14,14 @@ IMGDIR=/var/cache/manjaro-arm-tools/img
 _IMGNAME=Manjaro-ARM-$edition-$device-$version
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
+version=$(date +'%y'.'%m')
 
+#import conf file
+if [[ -f ~./.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
+source ~./.local/share/manjaro-arm-tools/manjaro-arm-tools.conf 
+else
+source /usr/share/manjaro-arm-tools/manjaro-arm-tools.conf 
+fi
 
 usage_deploy_pkg() {
     echo "Usage: ${0##*/} [options]"
@@ -55,7 +62,7 @@ usage_build_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device [Options = rpi2, oc1, oc2 and xu4]"
     echo "    -e <edition>       Edition to build [Options = minimal]"
-    echo "    -v <version>       Version the resulting image should be named"
+    echo "    -v <version>       Define the version the resulting image should be named. Default is YY.MM"
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -356,6 +363,7 @@ create_img() {
         sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
         
     #flash bootloader
+        sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $_TMPDIR/root/boot/boot.scr
         sudo dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
 
     #clean up
