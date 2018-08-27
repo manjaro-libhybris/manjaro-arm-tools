@@ -150,9 +150,9 @@ create_rootfs_pkg() {
     sudo cp /usr/bin/qemu-aarch64-static $_BUILDDIR/$arch/usr/bin/
     
     #enable qemu binaries
-    msg "===== Enabling qemu binaries ====="
-    sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
-    sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
+    #msg "===== Enabling qemu binaries ====="
+    #sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
+    #sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
 
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
