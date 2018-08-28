@@ -17,8 +17,8 @@ OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 version=$(date +'%y'.'%m')
 
 #import conf file
-if [[ -f ~./.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
-source ~./.local/share/manjaro-arm-tools/manjaro-arm-tools.conf 
+if [[ -f ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
+source ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf 
 else
 source /etc/manjaro-arm-tools/manjaro-arm-tools.conf 
 fi
