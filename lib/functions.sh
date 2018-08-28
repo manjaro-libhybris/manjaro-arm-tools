@@ -20,7 +20,7 @@ version=$(date +'%y'.'%m')
 if [[ -f ~./.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
 source ~./.local/share/manjaro-arm-tools/manjaro-arm-tools.conf 
 else
-source /usr/share/manjaro-arm-tools/manjaro-arm-tools.conf 
+source /etc/manjaro-arm-tools/manjaro-arm-tools.conf 
 fi
 
 usage_deploy_pkg() {
@@ -261,7 +261,7 @@ create_img() {
     if [[ "$edition" = "minimal" ]]; then
         _SIZE=1500
     else
-        _SIZE=2500
+        _SIZE=4000
     fi
 
     msg "Please ensure that the rootfs is configured and all necessary boot packages are installed"
