@@ -145,8 +145,8 @@ create_rootfs_pkg() {
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
     sudo pacman -Syy
 
-    msg "===== Creating rootfs user ====="
-    sudo systemd-nspawn -D $_BUILDDIR/$arch useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
+    #msg "===== Creating rootfs user ====="
+    #sudo systemd-nspawn -D $_BUILDDIR/$arch useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
 
     msg "===== Configuring rootfs for building ====="
     sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
@@ -378,22 +378,22 @@ create_zip() {
 build_pkg() {
     #cp package to rootfs
     msg "===== Copying build directory {$package} to rootfs ====="
-    sudo systemd-nspawn -D $_BUILDDIR/$arch -u manjaro --chdir=/home/manjaro/ mkdir build 1> /dev/null 2>&1
-    sudo cp -rp "$package"/* $_BUILDDIR/$arch/home/manjaro/build/
+    sudo systemd-nspawn -D $_BUILDDIR/$arch mkdir build 1> /dev/null 2>&1
+    sudo cp -rp "$package"/* $_BUILDDIR/$arch/build/
 
     #build package
     msg "===== Building {$package} ====="
-    sudo systemd-nspawn -D $_BUILDDIR/$arch/ -u manjaro --chdir=/home/manjaro/ chmod -R 777 build/ 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $_BUILDDIR/$arch/ --chdir=/home/manjaro/build/ makepkg -scr --noconfirm
+    sudo systemd-nspawn -D $_BUILDDIR/$arch/ chmod -R 777 build/ 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $_BUILDDIR/$arch/ --chdir=/build/ makepkg -sc --noconfirm
 }
 
 export_and_clean() {
-    if ls $_BUILDDIR/$arch/home/manjaro/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
+    if ls $_BUILDDIR/$arch/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
         #pull package out of rootfs
         msg "!!!!! +++++ ===== Package Succeeded ===== +++++ !!!!!"
         msg "===== Extracting finished package out of rootfs ====="
         mkdir -p $_PKGDIR/$arch
-        cp $_BUILDDIR/$arch/home/manjaro/build/*.pkg.tar.xz* $_PKGDIR/$arch/
+        cp $_BUILDDIR/$arch/build/*.pkg.tar.xz* $_PKGDIR/$arch/
         msg "+++++ Package saved at $_PKGDIR/$arch/$package*.pkg.tar.xz +++++"
 
         #clean up rootfs
