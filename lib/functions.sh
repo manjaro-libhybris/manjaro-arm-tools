@@ -68,6 +68,7 @@ usage_build_img() {
     echo ''
     exit $1
 }
+
  msg() {
     ALL_OFF="\e[1;0m"
     BOLD="\e[1;1m"
@@ -75,20 +76,6 @@ usage_build_img() {
       local mesg=$1; shift
       printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
- 
- get_timer(){
-    echo $(date +%s)
-}
-
-# $1: start timer
-elapsed_time(){
-    echo $(echo $1 $(get_timer) | awk '{ printf "%0.2f",($2-$1)/60 }')
-}
-
-show_elapsed_time(){
-    info "Time %s: %s minutes" "$1" "$(elapsed_time $2)"
-}
-
  
  sign_pkg() {
     msg "Signing [$package] with GPG key belonging to $gpgmail..."
