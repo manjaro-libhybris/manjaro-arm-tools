@@ -16,7 +16,6 @@ PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 version=$(date +'%y'.'%m')
 arch='armv7h'
-device='rpi2'
 
 #import conf file
 if [[ -f ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
@@ -207,6 +206,9 @@ create_rootfs_img() {
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
     sudo pacman -Syy
 
+    msg "Applying overlay for $edition..."
+    sudo cp -ap $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
+    
     msg "Setting up users..."
     #setup users
     sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $_LIBDIR/pass-root 1> /dev/null 2>&1
@@ -217,9 +219,6 @@ create_rootfs_img() {
     #system setup
     sudo systemd-nspawn -D rootfs_$_ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust 1> /dev/null 2>&1
-    
-    msg "Applying overlay for $edition..."
-    sudo cp -ap $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
 
     msg "Setting up keyrings..."
     #setup keys
@@ -250,7 +249,7 @@ create_img() {
     if [[ "$edition" = "minimal" ]]; then
         _SIZE=1500
     else
-        _SIZE=4000
+        _SIZE=3800
     fi
 
     msg "Please ensure that the rootfs is configured and all necessary boot packages are installed"
@@ -332,33 +331,34 @@ create_img() {
 
     # For Pine64 device
     elif [[ "$device" = "pine64" ]]; then
-        #Clear first 8mb
-        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
-	
-    #partition with a single root partition
+        #partition with boot and root
         sudo parted -s $LDEV mklabel msdos
-        sudo parted -s $LDEV mkpart primary ext4 0% 100%
+        sudo parted -s $LDEV mkpart primary fat32 0% 100M
+        START=`cat /sys/block/$DEV/${DEV}p1/start`
+        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+        END_SECTOR=$(expr $START + $SIZE)
+        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
         sudo partprobe $LDEV
-    #if [[ "$_DEVICE" = "xu4" ]]; then
-    #	sudo mkfs.ext4 "${LDEV}p1"
-    #else
-        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
-    #fi
+        sudo mkfs.vfat "${LDEV}p1"
+        sudo mkfs.ext4 "${LDEV}p2"
 
     #copy rootfs contents over to the FS
         mkdir -p $_TMPDIR/root
-        sudo chmod 777 -R $_TMPDIR/root
-        sudo mount ${LDEV}p1 $_TMPDIR/root
+        mkdir -p $_TMPDIR/boot
+        sudo mount ${LDEV}p1 $_TMPDIR/boot
+        sudo mount ${LDEV}p2 $_TMPDIR/root
         sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
+        sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
         
     #flash bootloader
-        sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $_TMPDIR/root/boot/boot.scr
-        sudo dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
+       # sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $_TMPDIR/root/boot/boot.scr
+       # sudo dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
 
     #clean up
         sudo umount $_TMPDIR/root
+        sudo umount $_TMPDIR/boot
         sudo losetup -d $LDEV
-        sudo rm -r $_TMPDIR/root
+        sudo rm -r $_TMPDIR/root $_TMPDIR/boot
         sudo partprobe $LDEV
 
     else
