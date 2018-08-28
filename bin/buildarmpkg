@@ -40,10 +40,6 @@ if [ "x" == "x$package" ]; then
   echo "-p [option] is required"
   exit
 fi
-if [ "x" == "x$arch" ]; then
-  echo "-a [option] is required"
-  exit
-fi
 
 #Build the 'any' packages on armv7
 if [ $arch == "any" ]; then

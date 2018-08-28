@@ -10,6 +10,7 @@ This software an all it's dependencies are available in the Manjaro Strit repo's
 These scripts rely on certain packages to be able to function. These packages are:
 * qemu (arch repo)
 * parted (arch repo)
+* arch-install-scripts (arch repo)
 
 This package also provides `binfmt-qemu-static`.
 
@@ -18,10 +19,12 @@ This package also provides `binfmt-qemu-static`.
 This script is used to create packages for ARM architectures.
 It assumes you have filled out the PACKAGER section of your `/etc/makepkg.conf`.
 
+Options inside [] are optional. Use `-h` to see what the defaults are.
+
 **Syntax**
 
 ```
-buildarmpkg -p package -a architecture
+buildarmpkg -p package [-a architecture]
 ```
 
 To build an armv7h package, place yourself in the folder, that contains a folder with the PKGBUILD, named as the package you want to build. Then run:
@@ -57,7 +60,7 @@ It will gpg sign and uploud the package you mention to the Manjaro-ARM main serv
 **Syntax**
 
 ```
-deployarmpkg -p package -a architecture -r repo -k keyid
+deployarmpkg -p package [-a architecture] -r repo -k keyid
 ```
 
 To upload a package to the armv7h core repo use:
@@ -107,7 +110,7 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-buildarmimg -d device -e edition -v version
+buildarmimg [-d device] -e edition [-v version]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 2/3:
@@ -129,7 +132,7 @@ If you don't, you can't use this.
 **Syntax**
 
 ```
-deployarmimg -i image -d device -e edition -v version -t
+deployarmimg -i image [-d device] -e edition [-v version] -t
 ```
 
 To upload an image to the raspberry pi minimal 18.07 folder use with torrent:

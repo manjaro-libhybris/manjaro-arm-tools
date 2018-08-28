@@ -15,6 +15,7 @@ _IMGNAME=Manjaro-ARM-$edition-$device-$version
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 version=$(date +'%y'.'%m')
+arch='armv7h'
 
 #import conf file
 if [[ -f ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
@@ -25,7 +26,7 @@ fi
 
 usage_deploy_pkg() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -a <arch>          Architecture. [Options = any, armv7h or aarch64]"
+    echo "    -a <arch>          Architecture. [Default = armv7h. Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to upload"
     echo '    -r <repo>          Repository package belongs to. [Options = core, extra or community]'
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -38,9 +39,9 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for."
+    echo "    -d <device>        Device the image is for. [Default = rpi2. Options = rpi2, oc1, oc2 and xu4]"
     echo '    -e <edition>       Edition of the image. [Options = minimal]'
-    echo "    -v <version>       Version of the image."
+    echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
     echo '    -h                 This help'
     echo ''
@@ -50,7 +51,7 @@ usage_deploy_img() {
 
 usage_build_pkg() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -a <arch>          Architecture. [Options = any, armv7h or aarch64]"
+    echo "    -a <arch>          Architecture. [Default = armv7h. Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo '    -h                 This help'
     echo ''
@@ -60,9 +61,9 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Options = rpi2, oc1, oc2 and xu4]"
-    echo "    -e <edition>       Edition to build [Options = minimal]"
-    echo "    -v <version>       Define the version the resulting image should be named. Default is YY.MM"
+    echo "    -d <device>        Device [Default = rpi2. Options = rpi2, oc1, oc2 and xu4]"
+    echo "    -e <edition>       Edition to build [Options = minimal, lxqt, mate and server]"
+    echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo '    -h                 This help'
     echo ''
     echo ''

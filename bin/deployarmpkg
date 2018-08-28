@@ -40,10 +40,6 @@ if [ "x" == "x$package" ]; then
   echo "-p [option] is required"
   exit
 fi
-if [ "x" == "x$arch" ]; then
-  echo "-a [option] is required"
-  exit
-fi
 if [ "x" == "x$repo" ]; then
   echo "-r [option] is required"
   exit

@@ -39,10 +39,6 @@ done
 _IMGNAME=Manjaro-ARM-$edition-$device-$version
 
 #Need both package and architecture
-if [ "x" == "x$device" ]; then
-  echo "-d [option] is required"
-  exit
-fi
 if [ "x" == "x$edition" ]; then
   echo "-e [option] is required"
   exit

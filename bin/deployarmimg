@@ -46,6 +46,17 @@ while getopts "${opt}" arg; do
   esac
 done
 
+#required options
+if [ "x" == "x$image" ]; then
+  echo "-i [option] is required"
+  exit
+fi
+if [ "x" == "x$edition" ]; then
+  echo "-e [option] is required"
+  exit
+fi
+
+
 
 # Create checksums for the image
 checksum_img
