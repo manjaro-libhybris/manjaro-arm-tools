@@ -182,7 +182,8 @@ create_rootfs_img() {
     sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
     
     # Enable cross architecture Chrooting
-    if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
+    #if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
+    if [[ "$device" = "oc2" ]]; then
         sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
         sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
     else
@@ -196,7 +197,8 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
-    if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]]; then
+    #if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]]; then
+    if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]]; then
         echo ""
     else
         sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
@@ -232,15 +234,17 @@ create_img() {
     msg "Creating image!"
 
     # Test for device input
-    if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" && "$device" != "pine64" ]]; then
+    #if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" && "$device" != "pine64" ]]; then
+    if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" ]]; then
         echo 'Invalid device '$device', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4 | pine64  '
+        echo 'rpi2  |  oc1  | oc2  |  xu4'
         exit 1
     else
         _DEVICE="$device"
     fi
 
-    if [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "pine64" ]]; then
+    #if [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "pine64" ]]; then
+    if [[ "$_DEVICE" = "oc2" ]]; then
         _ARCH='aarch64'
     else
         _ARCH='armv7h'
@@ -330,36 +334,36 @@ create_img() {
         sudo partprobe $LDEV
 
     # For Pine64 device
-    elif [[ "$device" = "pine64" ]]; then
+    #elif [[ "$device" = "pine64" ]]; then
         #partition with boot and root
-        sudo parted -s $LDEV mklabel msdos
-        sudo parted -s $LDEV mkpart primary fat32 0% 100M
-        START=`cat /sys/block/$DEV/${DEV}p1/start`
-        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
-        sudo partprobe $LDEV
-        sudo mkfs.vfat "${LDEV}p1"
-        sudo mkfs.ext4 "${LDEV}p2"
+        #sudo parted -s $LDEV mklabel msdos
+        #sudo parted -s $LDEV mkpart primary fat32 0% 100M
+        #START=`cat /sys/block/$DEV/${DEV}p1/start`
+        #SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+        #END_SECTOR=$(expr $START + $SIZE)
+        #sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
+        #sudo partprobe $LDEV
+        #sudo mkfs.vfat "${LDEV}p1"
+        #sudo mkfs.ext4 "${LDEV}p2"
 
     #copy rootfs contents over to the FS
-        mkdir -p $_TMPDIR/root
-        mkdir -p $_TMPDIR/boot
-        sudo mount ${LDEV}p1 $_TMPDIR/boot
-        sudo mount ${LDEV}p2 $_TMPDIR/root
-        sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
-        sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
+        #mkdir -p $_TMPDIR/root
+        #mkdir -p $_TMPDIR/boot
+        #sudo mount ${LDEV}p1 $_TMPDIR/boot
+        #sudo mount ${LDEV}p2 $_TMPDIR/root
+        #sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
+        #sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
         
     #flash bootloader
        # sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $_TMPDIR/root/boot/boot.scr
        # sudo dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
 
     #clean up
-        sudo umount $_TMPDIR/root
-        sudo umount $_TMPDIR/boot
-        sudo losetup -d $LDEV
-        sudo rm -r $_TMPDIR/root $_TMPDIR/boot
-        sudo partprobe $LDEV
+        #sudo umount $_TMPDIR/root
+        #sudo umount $_TMPDIR/boot
+        #sudo losetup -d $LDEV
+        #sudo rm -r $_TMPDIR/root $_TMPDIR/boot
+        #sudo partprobe $LDEV
 
     else
         #Not sure if this IF statement is nesssary anymore
