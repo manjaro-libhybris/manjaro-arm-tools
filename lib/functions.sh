@@ -417,8 +417,7 @@ export_and_clean() {
 get_profiles() {
     if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
         cd $PROFILES/arm-profiles
-        git fetch --all
-        git reset --hard
+        git pull
     else
         cd $PROFILES
         git clone https://gitlab.com/Strit/arm-profiles.git

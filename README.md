@@ -1,6 +1,7 @@
 # manjaro-arm-tools
 Contains scripts and files needed to build and manage manjaro-arm packages and images.
-This software an all it's dependencies are available in the Manjaro Strit repo's, if you run Manjaro.
+
+This software is available in the Manjaro Strit repo's, if you run Manjaro.
 
 
 ## Known issues
