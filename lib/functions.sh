@@ -119,7 +119,7 @@ remove_local_pkg() {
 }
 
 create_rootfs_pkg() {
-    msg "===== Creating rootfs ====="
+    msg "Creating rootfs..."
     # backup host mirrorlist
     sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
 
@@ -149,7 +149,7 @@ create_rootfs_pkg() {
     #msg "===== Creating rootfs user ====="
     #sudo systemd-nspawn -D $_BUILDDIR/$arch useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
 
-    msg "===== Configuring rootfs for building ====="
+    msg "Configuring rootfs for building..."
     sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
     sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
@@ -383,12 +383,12 @@ create_zip() {
 
 build_pkg() {
     #cp package to rootfs
-    msg "===== Copying build directory {$package} to rootfs ====="
+    msg "Copying build directory {$package} to rootfs..."
     sudo systemd-nspawn -D $_BUILDDIR/$arch mkdir build 1> /dev/null 2>&1
     sudo cp -rp "$package"/* $_BUILDDIR/$arch/build/
 
     #build package
-    msg "===== Building {$package} ====="
+    msg "Building {$package}..."
     sudo systemd-nspawn -D $_BUILDDIR/$arch/ chmod -R 777 build/ 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch/ --chdir=/build/ makepkg -sc --noconfirm
 }
@@ -396,18 +396,18 @@ build_pkg() {
 export_and_clean() {
     if ls $_BUILDDIR/$arch/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
         #pull package out of rootfs
-        msg "!!!!! +++++ ===== Package Succeeded ===== +++++ !!!!!"
-        msg "===== Extracting finished package out of rootfs ====="
+        msg "Package Succeeded..."
+        msg "Extracting finished package out of rootfs..."
         mkdir -p $_PKGDIR/$arch
         cp $_BUILDDIR/$arch/build/*.pkg.tar.xz* $_PKGDIR/$arch/
-        msg "+++++ Package saved at $_PKGDIR/$arch/$package*.pkg.tar.xz +++++"
+        msg "Package saved at $_PKGDIR/$arch/$package..."
 
         #clean up rootfs
-        msg "===== Cleaning rootfs ====="
+        msg "Cleaning rootfs..."
         sudo rm -rf $_BUILDDIR/$arch > /dev/null
 
     else
-        msg "!!!!! ++++++ ===== Package failed to build ===== +++++ !!!!!"
+        msg "!!!!! Package failed to build !!!!!"
         msg "Cleaning rootfs"
         sudo rm -rf $_BUILDDIR/$arch > /dev/null
         exit 1
