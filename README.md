@@ -93,12 +93,11 @@ and remove the local files.
 * oc1
 * oc2
 * xu4 (not tested)
-* pine64 (Work in Progress)
 
 **Supported editions:**
 
 * minimal
-* lxqt (not complete yet, lacks customization)
+* lxqt
 * mate (not complete yet, lacks customization)
 * server (not complete yet)
 
