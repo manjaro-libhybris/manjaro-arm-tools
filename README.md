@@ -12,6 +12,7 @@ These scripts rely on certain packages to be able to function. These packages ar
 * qemu (arch repo)
 * parted (arch repo)
 * arch-install-scripts (arch repo)
+* zip (arch repo)
 
 This package also provides `binfmt-qemu-static`.
 
