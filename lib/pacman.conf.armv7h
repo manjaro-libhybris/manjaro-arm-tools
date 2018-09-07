@@ -68,15 +68,15 @@ LocalFileSigLevel = Optional
 
 [core]
 #Include = /etc/pacman.d/mirrorlist
-Server = http://mirror.strits.dk/manjaro-arm/stable/$arch/$repo
+Server = http://mirrors.dotsrc.org/manjaro-arm/stable/$arch/$repo
 
 [extra]
 #Include = /etc/pacman.d/mirrorlist
-Server = http://mirror.strits.dk/manjaro-arm/stable/$arch/$repo
+Server = http://mirrors.dotsrc.org/manjaro-arm/stable/$arch/$repo
 
 [community]
 #Include = /etc/pacman.d/mirrorlist
-Server = http://mirror.strits.dk/manjaro-arm/stable/$arch/$repo
+Server = http://mirrors.dotsrc.org/manjaro-arm/stable/$arch/$repo
 
 # An example of a custom package repository.  See the pacman manpage for
 # tips on creating your own repositories.

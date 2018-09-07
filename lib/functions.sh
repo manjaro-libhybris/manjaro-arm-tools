@@ -125,7 +125,7 @@ create_rootfs_pkg() {
     sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
 
     # Create arm mirrorlist
-    echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
+    echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
@@ -169,7 +169,7 @@ create_rootfs_img() {
     sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
 
     # Create arm mirrlorlist
-    echo "Server = http://mirror.strits.dk/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
+    echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
