@@ -132,7 +132,7 @@ create_rootfs_pkg() {
     mkdir -p $_BUILDDIR/$arch
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release haveged
+    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
 
     # Enable cross architecture Chrooting
     sudo cp /usr/bin/qemu-arm-static $_BUILDDIR/$arch/usr/bin/
@@ -154,7 +154,7 @@ create_rootfs_pkg() {
     sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
     sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $_BUILDDIR/$arch systemctl enable haveged 1> /dev/null 2>&1
+    #sudo systemd-nspawn -D $_BUILDDIR/$arch systemctl enable haveged 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_BUILDDIR/$arch/etc/makepkg.conf
@@ -186,10 +186,10 @@ create_rootfs_img() {
     #if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
     if [[ "$device" = "oc2" ]]; then
         sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
-        sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
+        #sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
     else
         sudo cp /usr/bin/qemu-arm-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
-        sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
+        #sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
     fi
 
     msg "Enabling services..."
@@ -227,6 +227,14 @@ create_rootfs_img() {
     #setup keys
     sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
+    
+    msg "Cleaning rootfs for unwanted files..."
+       if [[ "$device" = "oc2" ]]; then
+        sudo rm $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-aarch64-static
+    else
+        sudo rm $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-arm-static
+    fi
+
 
     msg "$device $edition rootfs complete"
 }
