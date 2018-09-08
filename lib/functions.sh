@@ -135,26 +135,20 @@ create_rootfs_pkg() {
     sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
 
     # Enable cross architecture Chrooting
-    sudo cp /usr/bin/qemu-arm-static $_BUILDDIR/$arch/usr/bin/
-    sudo cp /usr/bin/qemu-aarch64-static $_BUILDDIR/$arch/usr/bin/
+    if [[ "$arch" = "aarch64" ]]; then
+        sudo cp /usr/bin/qemu-aarch64-static $_BUILDIR/$arch/usr/bin/
+    else
+        sudo cp /usr/bin/qemu-arm-static $_BUILDDIR/$arch/usr/bin/
+    fi
     
-    #enable qemu binaries
-    #msg "===== Enabling qemu binaries ====="
-    #sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
-    #sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
-
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
     sudo pacman -Syy
-
-    #msg "===== Creating rootfs user ====="
-    #sudo systemd-nspawn -D $_BUILDDIR/$arch useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
 
     msg "Configuring rootfs for building..."
     sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
     sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
-    #sudo systemd-nspawn -D $_BUILDDIR/$arch systemctl enable haveged 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_BUILDDIR/$arch/etc/makepkg.conf
@@ -186,10 +180,8 @@ create_rootfs_img() {
     #if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
     if [[ "$device" = "oc2" ]]; then
         sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
-        #sudo update-binfmts --enable qemu-aarch64 1> /dev/null 2>&1
     else
         sudo cp /usr/bin/qemu-arm-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
-        #sudo update-binfmts --enable qemu-arm 1> /dev/null 2>&1
     fi
 
     msg "Enabling services..."
