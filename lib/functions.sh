@@ -145,15 +145,18 @@ create_rootfs_pkg() {
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
     sudo pacman -Syy
 
-    msg "Configuring rootfs for building..."
+   msg "Configuring rootfs for building..."
     sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
     sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
+    sudo rm -f $_BUILDDIR/$arch/etc/ssl/certs/ca-certificates.crt
+    sudo rm -f $_BUILDDIR/$arch/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    sudo cp -a /etc/ssl/certs/ca-certificates.crt $_BUILDDIR/$arch/etc/ssl/certs/
+    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $_BUILDDIR/$arch/etc/ca-certificates/extracted/
+#    sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_BUILDDIR/$arch/etc/makepkg.conf
     sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_BUILDDIR/$arch/etc/makepkg.conf
-
 }
 
 create_rootfs_img() {
