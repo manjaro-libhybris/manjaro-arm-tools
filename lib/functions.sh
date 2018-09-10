@@ -2,16 +2,16 @@
 
 #variables
 SERVER='sync.manjaro-arm.org'
-_LIBDIR=/usr/share/manjaro-arm-tools/lib
-_BUILDDIR=/var/lib/manjaro-arm-tools/pkg
-_PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
+LIBDIR=/usr/share/manjaro-arm-tools/lib
+BUILDDIR=/var/lib/manjaro-arm-tools/pkg
+PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
 
 #Leave these alone
-_PKGDIR=/var/cache/manjaro-arm-tools/pkg
-_ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
-_TMPDIR=/var/lib/manjaro-arm-tools/tmp
+PKGDIR=/var/cache/manjaro-arm-tools/pkg
+ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
+TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
-_IMGNAME=Manjaro-ARM-$edition-$device-$version
+IMGNAME=Manjaro-ARM-$edition-$device-$version
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 version=$(date +'%y'.'%m')
@@ -104,7 +104,7 @@ pkg_upload() {
     scp $package* $SERVER:/opt/repo/mirror/stable/$arch/$repo/
     #msg "Adding [$package] to repo..."
     #echo "Please use your server login details..."
-    #ssh $SERVER 'bash -s' < $_LIBDIR/repo-add.sh "$@"
+    #ssh $SERVER 'bash -s' < $LIBDIR/repo-add.sh "$@"
 }
 
 img_upload() {
@@ -129,16 +129,16 @@ create_rootfs_pkg() {
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
-    mkdir -p $_BUILDDIR/$arch
+    mkdir -p $BUILDDIR/$arch
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$arch $_BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$arch $BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
 
     # Enable cross architecture Chrooting
     if [[ "$arch" = "aarch64" ]]; then
         sudo cp /usr/bin/qemu-aarch64-static $_BUILDIR/$arch/usr/bin/
     else
-        sudo cp /usr/bin/qemu-arm-static $_BUILDDIR/$arch/usr/bin/
+        sudo cp /usr/bin/qemu-arm-static $BUILDDIR/$arch/usr/bin/
     fi
     
     # restore original mirrorlist to host system
@@ -146,17 +146,17 @@ create_rootfs_pkg() {
     sudo pacman -Syy
 
    msg "Configuring rootfs for building..."
-    sudo cp $_LIBDIR/makepkg $_BUILDDIR/$arch/usr/bin/
-    sudo systemd-nspawn -D $_BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
-    sudo rm -f $_BUILDDIR/$arch/etc/ssl/certs/ca-certificates.crt
-    sudo rm -f $_BUILDDIR/$arch/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    sudo cp -a /etc/ssl/certs/ca-certificates.crt $_BUILDDIR/$arch/etc/ssl/certs/
-    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $_BUILDDIR/$arch/etc/ca-certificates/extracted/
-#    sudo systemd-nspawn -D $_BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --init 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $_BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$_PACKAGER"/ $_BUILDDIR/$arch/etc/makepkg.conf
-    sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $_BUILDDIR/$arch/etc/makepkg.conf
+    sudo cp $LIBDIR/makepkg $BUILDDIR/$arch/usr/bin/
+    sudo systemd-nspawn -D $BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
+    sudo rm -f $BUILDDIR/$arch/etc/ssl/certs/ca-certificates.crt
+    sudo rm -f $BUILDDIR/$arch/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    sudo cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$arch/etc/ssl/certs/
+    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$arch/etc/ca-certificates/extracted/
+#    sudo systemd-nspawn -D $BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$arch pacman-key --init 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$arch/etc/makepkg.conf
+    sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $BUILDDIR/$arch/etc/makepkg.conf
 }
 
 create_rootfs_img() {
@@ -170,21 +170,21 @@ create_rootfs_img() {
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
-    mkdir -p $_ROOTFS_IMG
-    cd $_ROOTFS_IMG
+    mkdir -p $ROOTFS_IMG
+    cd $ROOTFS_IMG
 
     # create folder for the rootfs
     mkdir -p rootfs_$_ARCH
 
     # install the rootfs filesystem
-    sudo pacstrap -G -c -C $_LIBDIR/pacman.conf.$_ARCH $_ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$_ARCH $ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
     
     # Enable cross architecture Chrooting
     #if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
     if [[ "$device" = "oc2" ]]; then
-        sudo cp /usr/bin/qemu-aarch64-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
+        sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
     else
-        sudo cp /usr/bin/qemu-arm-static $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
+        sudo cp /usr/bin/qemu-arm-static $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
     fi
 
     msg "Enabling services..."
@@ -205,13 +205,13 @@ create_rootfs_img() {
     sudo pacman -Syy
 
     msg "Applying overlay for $edition..."
-    sudo cp -ap $PROFILES/arm-profiles/overlays/$edition/* $_ROOTFS_IMG/rootfs_$_ARCH/
+    sudo cp -ap $PROFILES/arm-profiles/overlays/$edition/* $ROOTFS_IMG/rootfs_$_ARCH/
     
     msg "Setting up users..."
     #setup users
-    sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $_LIBDIR/pass-root 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$_ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$_ARCH passwd manjaro < $_LIBDIR/pass-manjaro 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$_ARCH passwd manjaro < $LIBDIR/pass-manjaro 1> /dev/null 2>&1
 
     msg "Setting up system settings..."
     #system setup
@@ -225,9 +225,9 @@ create_rootfs_img() {
     
     msg "Cleaning rootfs for unwanted files..."
        if [[ "$device" = "oc2" ]]; then
-        sudo rm $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-aarch64-static
+        sudo rm $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-aarch64-static
     else
-        sudo rm $_ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-arm-static
+        sudo rm $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-arm-static
     fi
 
 
@@ -264,7 +264,7 @@ create_img() {
 
     ##Image set up
     #making blank .img to be used
-    sudo dd if=/dev/zero of=$IMGDIR/$_IMGNAME.img bs=1M count=$_SIZE
+    sudo dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$_SIZE
 
     #probing loop into the kernel
     sudo modprobe loop
@@ -274,7 +274,7 @@ create_img() {
     DEV=`echo $LDEV | cut -d "/" -f 3`
 
     #mount image to loop device
-    sudo losetup $LDEV $IMGDIR/$_IMGNAME.img
+    sudo losetup $LDEV $IMGDIR/$IMGNAME.img
 
 
     # For Raspberry Pi devices
@@ -291,18 +291,18 @@ create_img() {
         sudo mkfs.ext4 "${LDEV}p2"
 
     #copy rootfs contents over to the FS
-        mkdir -p $_TMPDIR/root
-        mkdir -p $_TMPDIR/boot
-        sudo mount ${LDEV}p1 $_TMPDIR/boot
-        sudo mount ${LDEV}p2 $_TMPDIR/root
-        sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
-        sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
+        mkdir -p $TMPDIR/root
+        mkdir -p $TMPDIR/boot
+        sudo mount ${LDEV}p1 $TMPDIR/boot
+        sudo mount ${LDEV}p2 $TMPDIR/root
+        sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
+        sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
 
     #clean up
-        sudo umount $_TMPDIR/root
-        sudo umount $_TMPDIR/boot
+        sudo umount $TMPDIR/root
+        sudo umount $TMPDIR/boot
         sudo losetup -d $LDEV
-        sudo rm -r $_TMPDIR/root $_TMPDIR/boot
+        sudo rm -r $TMPDIR/root $TMPDIR/boot
         sudo partprobe $LDEV
 
     # For Odroid devices
@@ -321,20 +321,20 @@ create_img() {
     #fi
 
     #copy rootfs contents over to the FS
-        mkdir -p $_TMPDIR/root
-        sudo chmod 777 -R $_TMPDIR/root
-        sudo mount ${LDEV}p1 $_TMPDIR/root
-        sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
+        mkdir -p $TMPDIR/root
+        sudo chmod 777 -R $TMPDIR/root
+        sudo mount ${LDEV}p1 $TMPDIR/root
+        sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
 
     #flash bootloader
-        cd $_TMPDIR/root/boot/
+        cd $TMPDIR/root/boot/
         sudo ./sd_fusing.sh $LDEV
         cd ~
 
     #clean up
-        sudo umount $_TMPDIR/root
+        sudo umount $TMPDIR/root
         sudo losetup -d $LDEV
-        sudo rm -r $_TMPDIR/root
+        sudo rm -r $TMPDIR/root
         sudo partprobe $LDEV
 
     # For Pine64 device
@@ -351,22 +351,22 @@ create_img() {
         #sudo mkfs.ext4 "${LDEV}p2"
 
     #copy rootfs contents over to the FS
-        #mkdir -p $_TMPDIR/root
-        #mkdir -p $_TMPDIR/boot
-        #sudo mount ${LDEV}p1 $_TMPDIR/boot
-        #sudo mount ${LDEV}p2 $_TMPDIR/root
-        #sudo cp -ra $_ROOTFS_IMG/rootfs_$_ARCH/* $_TMPDIR/root/
-        #sudo mv $_TMPDIR/root/boot/* $_TMPDIR/boot
+        #mkdir -p $TMPDIR/root
+        #mkdir -p $TMPDIR/boot
+        #sudo mount ${LDEV}p1 $TMPDIR/boot
+        #sudo mount ${LDEV}p2 $TMPDIR/root
+        #sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
+        #sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
-       # sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $_TMPDIR/root/boot/boot.scr
-       # sudo dd if=$_TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
+       # sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $TMPDIR/root/boot/boot.scr
+       # sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
 
     #clean up
-        #sudo umount $_TMPDIR/root
-        #sudo umount $_TMPDIR/boot
+        #sudo umount $TMPDIR/root
+        #sudo umount $TMPDIR/boot
         #sudo losetup -d $LDEV
-        #sudo rm -r $_TMPDIR/root $_TMPDIR/boot
+        #sudo rm -r $TMPDIR/root $TMPDIR/boot
         #sudo partprobe $LDEV
 
     else
@@ -378,42 +378,42 @@ create_img() {
 create_zip() {
     #zip img
     cd $IMGDIR
-    zip -9 $_IMGNAME.zip $_IMGNAME.img 
-    sudo rm $IMGDIR/$_IMGNAME.img
+    zip -9 $IMGNAME.zip $IMGNAME.img 
+    sudo rm $IMGDIR/$IMGNAME.img
 
     msg "Removing rootfs_$_ARCH"
-    sudo rm -rf $_ROOTFS_IMG/rootfs_$_ARCH
+    sudo rm -rf $ROOTFS_IMG/rootfs_$_ARCH
 }
 
 build_pkg() {
     #cp package to rootfs
     msg "Copying build directory {$package} to rootfs..."
-    sudo systemd-nspawn -D $_BUILDDIR/$arch mkdir build 1> /dev/null 2>&1
-    sudo cp -rp "$package"/* $_BUILDDIR/$arch/build/
+    sudo systemd-nspawn -D $BUILDDIR/$arch mkdir build 1> /dev/null 2>&1
+    sudo cp -rp "$package"/* $BUILDDIR/$arch/build/
 
     #build package
     msg "Building {$package}..."
-    sudo systemd-nspawn -D $_BUILDDIR/$arch/ chmod -R 777 build/ 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $_BUILDDIR/$arch/ --chdir=/build/ makepkg -sc --noconfirm
+    sudo systemd-nspawn -D $BUILDDIR/$arch/ chmod -R 777 build/ 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$arch/ --chdir=/build/ makepkg -sc --noconfirm
 }
 
 export_and_clean() {
-    if ls $_BUILDDIR/$arch/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
+    if ls $BUILDDIR/$arch/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
         #pull package out of rootfs
         msg "Package Succeeded..."
         msg "Extracting finished package out of rootfs..."
-        mkdir -p $_PKGDIR/$arch
-        cp $_BUILDDIR/$arch/build/*.pkg.tar.xz* $_PKGDIR/$arch/
-        msg "Package saved at $_PKGDIR/$arch/$package..."
+        mkdir -p $PKGDIR/$arch
+        cp $BUILDDIR/$arch/build/*.pkg.tar.xz* $PKGDIR/$arch/
+        msg "Package saved at $PKGDIR/$arch/$package..."
 
         #clean up rootfs
         msg "Cleaning rootfs..."
-        sudo rm -rf $_BUILDDIR/$arch > /dev/null
+        sudo rm -rf $BUILDDIR/$arch > /dev/null
 
     else
         msg "!!!!! Package failed to build !!!!!"
         msg "Cleaning rootfs"
-        sudo rm -rf $_BUILDDIR/$arch > /dev/null
+        sudo rm -rf $BUILDDIR/$arch > /dev/null
         exit 1
     fi
 }
