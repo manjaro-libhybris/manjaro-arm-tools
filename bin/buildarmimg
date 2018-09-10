@@ -36,7 +36,7 @@ while getopts "${opt}" arg; do
 done
 
 
-_IMGNAME=Manjaro-ARM-$edition-$device-$version
+IMGNAME=Manjaro-ARM-$edition-$device-$version
 
 #Need both package and architecture
 if [ "x" == "x$edition" ]; then
