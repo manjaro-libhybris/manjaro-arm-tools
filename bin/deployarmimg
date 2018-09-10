@@ -4,11 +4,11 @@
 # Example: deployarmimg Manjaro-ARM-minimal-rpi2-18.07.zip rpi2 minimal 18.07
 
 # Set globals
-_LIBDIR=/usr/share/manjaro-arm-tools/lib
+LIBDIR=/usr/share/manjaro-arm-tools/lib
 torrent=false
 
 #imports
-source $_LIBDIR/functions.sh
+source $LIBDIR/functions.sh
 
 
 #Arguments 

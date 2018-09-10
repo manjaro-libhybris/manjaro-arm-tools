@@ -1,6 +1,6 @@
 #! /bin/bash
 
-_LIBDIR=/usr/share/manjaro-arm-tools/lib
-source $_LIBDIR/functions.sh
+LIBDIR=/usr/share/manjaro-arm-tools/lib
+source $LIBDIR/functions.sh
 
 get_profiles

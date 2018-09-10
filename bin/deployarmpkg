@@ -1,9 +1,9 @@
 #! /bin/bash
 
 # Set globals
-_LIBDIR=/usr/share/manjaro-arm-tools/lib
+LIBDIR=/usr/share/manjaro-arm-tools/lib
 
-source $_LIBDIR/functions.sh
+source $LIBDIR/functions.sh
 
 opt=":p:a:r:k:h"
 
