@@ -6,6 +6,7 @@ This software is available in the Manjaro Strit repo's, if you run Manjaro.
 
 ## Known issues
 `deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
+`buildarmpkg` has problems building *some* `armv7h` packages, but I think it's an upstream issue, because there's no problem on `aarch64`.
 
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
