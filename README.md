@@ -94,6 +94,8 @@ and remove the local files.
 * oc1
 * oc2
 * xu4 (not tested)
+* pine64 (not tested)
+* rpi3 (not tested)
 
 **Supported editions:**
 
