@@ -40,7 +40,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi2. Options = rpi2, oc1, oc2 and xu4]"
+    echo "    -d <device>        Device the image is for. [Default = rpi2. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
     echo '    -e <edition>       Edition of the image. [Options = minimal]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -62,7 +62,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi2. Options = rpi2, oc1, oc2 and xu4]"
+    echo "    -d <device>        Device [Default = rpi2. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
     echo "    -e <edition>       Edition to build [Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo '    -h                 This help'
@@ -180,8 +180,7 @@ create_rootfs_img() {
     sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$_ARCH $ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
     
     # Enable cross architecture Chrooting
-    #if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
-    if [[ "$device" = "oc2" ]]; then
+    if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
         sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
     else
         sudo cp /usr/bin/qemu-arm-static $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
@@ -193,8 +192,7 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
-    #if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]]; then
-    if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]]; then
+    if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
         echo ""
     else
         sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
@@ -224,7 +222,7 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
     
     msg "Cleaning rootfs for unwanted files..."
-       if [[ "$device" = "oc2" ]]; then
+       if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
         sudo rm $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-aarch64-static
     else
         sudo rm $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-arm-static
@@ -238,17 +236,15 @@ create_img() {
     msg "Creating image!"
 
     # Test for device input
-    #if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" && "$device" != "pine64" ]]; then
-    if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" ]]; then
+    if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" && "$device" != "pine64" && "$device" != "rpi3" ]]; then
         echo 'Invalid device '$device', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4'
+        echo 'rpi2  |  oc1  | oc2  |  xu4 | pine64 | rpi3'
         exit 1
     else
         _DEVICE="$device"
     fi
 
-    #if [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "pine64" ]]; then
-    if [[ "$_DEVICE" = "oc2" ]]; then
+    if [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "pine64" ]] || [[ "$_DEVICE" = "rpi3" ]]; then
         _ARCH='aarch64'
     else
         _ARCH='armv7h'
@@ -278,7 +274,7 @@ create_img() {
 
 
     # For Raspberry Pi devices
-    if [[ "$device" = "rpi2" ]]; then
+    if [[ "$device" = "rpi2" ]] || [[ "$device" = "rpi3" ]]; then
         #partition with boot and root
         sudo parted -s $LDEV mklabel msdos
         sudo parted -s $LDEV mkpart primary fat32 0% 100M
@@ -338,36 +334,36 @@ create_img() {
         sudo partprobe $LDEV
 
     # For Pine64 device
-    #elif [[ "$device" = "pine64" ]]; then
-        #partition with boot and root
-        #sudo parted -s $LDEV mklabel msdos
-        #sudo parted -s $LDEV mkpart primary fat32 0% 100M
-        #START=`cat /sys/block/$DEV/${DEV}p1/start`
-        #SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        #END_SECTOR=$(expr $START + $SIZE)
-        #sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
-        #sudo partprobe $LDEV
-        #sudo mkfs.vfat "${LDEV}p1"
-        #sudo mkfs.ext4 "${LDEV}p2"
+    elif [[ "$device" = "pine64" ]]; then
+        partition with boot and root
+        sudo parted -s $LDEV mklabel msdos
+        sudo parted -s $LDEV mkpart primary fat32 0% 100M
+        START=`cat /sys/block/$DEV/${DEV}p1/start`
+        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+        END_SECTOR=$(expr $START + $SIZE)
+        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
+        sudo partprobe $LDEV
+        sudo mkfs.vfat "${LDEV}p1"
+        sudo mkfs.ext4 "${LDEV}p2"
 
     #copy rootfs contents over to the FS
-        #mkdir -p $TMPDIR/root
-        #mkdir -p $TMPDIR/boot
-        #sudo mount ${LDEV}p1 $TMPDIR/boot
-        #sudo mount ${LDEV}p2 $TMPDIR/root
-        #sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
-        #sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
+        mkdir -p $TMPDIR/root
+        mkdir -p $TMPDIR/boot
+        sudo mount ${LDEV}p1 $TMPDIR/boot
+        sudo mount ${LDEV}p2 $TMPDIR/root
+        sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
+        sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
-       # sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $TMPDIR/root/boot/boot.scr
-       # sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
+        #sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $TMPDIR/root/boot/boot.scr
+        #sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
 
     #clean up
-        #sudo umount $TMPDIR/root
-        #sudo umount $TMPDIR/boot
-        #sudo losetup -d $LDEV
-        #sudo rm -r $TMPDIR/root $TMPDIR/boot
-        #sudo partprobe $LDEV
+        sudo umount $TMPDIR/root
+        sudo umount $TMPDIR/boot
+        sudo losetup -d $LDEV
+        sudo rm -r $TMPDIR/root $TMPDIR/boot
+        sudo partprobe $LDEV
 
     else
         #Not sure if this IF statement is nesssary anymore

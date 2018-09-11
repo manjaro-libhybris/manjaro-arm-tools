@@ -45,7 +45,7 @@ if [ "x" == "x$edition" ]; then
 fi
 
    
-if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]]; then
+if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
     _ARCH='aarch64'
 else
     _ARCH='armv7h'
