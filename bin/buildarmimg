@@ -49,6 +49,9 @@ if [ ! -d "$PROFILES/arm-profiles" ]; then
     getarmprofiles
 fi
 
+# start the timer
+timer_start=$(get_timer)
+
 #Package lists
 PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$DEVICE)
 PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$EDITION)
@@ -67,4 +70,4 @@ create_img
 create_zip
 
 # show timer
-#show_elapsed_time
+show_elapsed_time "${FUNCNAME}" "${timer_start}"
