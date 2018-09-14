@@ -53,9 +53,12 @@ fi
 timer_start=$(get_timer)
 
 #Package lists
-PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$DEVICE)
-PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$EDITION)
-SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$EDITION)
+#PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$DEVICE)
+#PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$EDITION)
+#SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$EDITION)
+PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
+PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{print $1}')
+SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{print $1}')
 
 #start timer
 #timer=$(get_timer)
