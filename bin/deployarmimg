@@ -5,7 +5,7 @@
 
 # Set globals
 LIBDIR=/usr/share/manjaro-arm-tools/lib
-torrent=false
+TORRENT=false
 
 #imports
 source $LIBDIR/functions.sh
@@ -17,19 +17,19 @@ opt=":i:d:e:v:th"
 while getopts "${opt}" arg; do
   case $arg in
     i)
-      image="${OPTARG}"
+      IMAGE="${OPTARG}"
       ;;
     d)
-      device="${OPTARG}"
+      DEVICE="${OPTARG}"
       ;;
     e)
-      edition="${OPTARG}"
+      EDITION="${OPTARG}"
       ;;
     v)
-      version="${OPTARG}"
+      VERSION="${OPTARG}"
       ;;
     t)
-      torrent="true"
+      TORRENT="true"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -47,11 +47,11 @@ while getopts "${opt}" arg; do
 done
 
 #required options
-if [ "x" == "x$image" ]; then
+if [ "x" == "x$IMAGE" ]; then
   echo "-i [option] is required"
   exit
 fi
-if [ "x" == "x$edition" ]; then
+if [ "x" == "x$EDITION" ]; then
   echo "-e [option] is required"
   exit
 fi
@@ -62,7 +62,7 @@ fi
 checksum_img
 
 #create torrent for image
-if [[ $torrent = "true" ]]
+if [[ $TORRENT = "true" ]]
 then
 create_torrent
 fi

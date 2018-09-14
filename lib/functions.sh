@@ -5,18 +5,16 @@ SERVER='sync.manjaro-arm.org'
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
-
-#Leave these alone
 PKGDIR=/var/cache/manjaro-arm-tools/pkg
 ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
 TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
-IMGNAME=Manjaro-ARM-$edition-$device-$version
+IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
-version=$(date +'%y'.'%m')
-arch='armv7h'
-device='rpi2'
+VERSION=$(date +'%y'.'%m')
+ARCH='armv7h'
+DEVICE='rpi2'
 
 #import conf file
 if [[ -f ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
@@ -80,29 +78,29 @@ usage_build_img() {
  }
  
  sign_pkg() {
-    msg "Signing [$package] with GPG key belonging to $gpgmail..."
-    gpg --detach-sign -u $gpgmail "$package"
+    msg "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
+    gpg --detach-sign -u $GPGMAIL "$PACKAGE"
 }
 
 create_torrent() {
-    msg "Creating torrent of $image..."
+    msg "Creating torrent of $IMAGE..."
     cd $IMGDIR/
-    mktorrent -a udp://mirror.strits.dk:6969 -v -w https://osdn.net/projects/manjaro-arm/storage/$device/$edition/$version/$image -o $image.torrent $image
+    mktorrent -a udp://mirror.strits.dk:6969 -v -w https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/$IMAGE -o $IMAGE.torrent $IMAGE
 }
 
 checksum_img() {
     # Create checksums for the image
-    msg "Creating checksums for [$image]..."
+    msg "Creating checksums for [$IMAGE]..."
     cd $IMGDIR/
-    sha1sum $image > $image.sha1
-    sha256sum $image > $image.sha256
+    sha1sum $IMAGE > $IMAGE.sha1
+    sha256sum $IMAGE > $IMAGE.sha256
 }
 
 pkg_upload() {
     msg "Uploading package to server..."
     echo "Please use your server login details..."
-    scp $package* $SERVER:/opt/repo/mirror/stable/$arch/$repo/
-    #msg "Adding [$package] to repo..."
+    scp $PACKAGE* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
+    #msg "Adding [$PACKAGE] to repo..."
     #echo "Please use your server login details..."
     #ssh $SERVER 'bash -s' < $LIBDIR/repo-add.sh "$@"
 }
@@ -111,12 +109,17 @@ img_upload() {
     # Upload image + checksums to image server
     msg "Uploading image and checksums to server..."
     echo "Please use your server login details..."
-    rsync -raP $image* $OSDN/$device/$edition/$version/
+    rsync -raP $IMAGE* $OSDN/$DEVICE/$EDITION/$VERSION/
 }
 
 remove_local_pkg() {
+    # remove local packages if remote packages exists, eg, if upload worked
+    if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$PACKAGE ]"; then
     msg "Removing local files..."
-    rm $package*
+    rm $PACKAGE*
+    else
+    msg "Package did not get uploaded correctly! Files not removed..."
+    fi
 }
 
 create_rootfs_pkg() {
@@ -129,16 +132,16 @@ create_rootfs_pkg() {
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
-    mkdir -p $BUILDDIR/$arch
+    mkdir -p $BUILDDIR/$ARCH
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$arch $BUILDDIR/$arch base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
 
     # Enable cross architecture Chrooting
-    if [[ "$arch" = "aarch64" ]]; then
-        sudo cp /usr/bin/qemu-aarch64-static $_BUILDIR/$arch/usr/bin/
+    if [[ "$ARCH" = "aarch64" ]]; then
+        sudo cp /usr/bin/qemu-aarch64-static $_BUILDIR/$ARCH/usr/bin/
     else
-        sudo cp /usr/bin/qemu-arm-static $BUILDDIR/$arch/usr/bin/
+        sudo cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
     fi
     
     # restore original mirrorlist to host system
@@ -146,21 +149,21 @@ create_rootfs_pkg() {
     sudo pacman -Syy
 
    msg "Configuring rootfs for building..."
-    sudo cp $LIBDIR/makepkg $BUILDDIR/$arch/usr/bin/
-    sudo systemd-nspawn -D $BUILDDIR/$arch chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
-    sudo rm -f $BUILDDIR/$arch/etc/ssl/certs/ca-certificates.crt
-    sudo rm -f $BUILDDIR/$arch/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    sudo cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$arch/etc/ssl/certs/
-    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$arch/etc/ca-certificates/extracted/
-#    sudo systemd-nspawn -D $BUILDDIR/$arch update-ca-trust 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$arch pacman-key --init 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$arch pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$arch/etc/makepkg.conf
-    sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $BUILDDIR/$arch/etc/makepkg.conf
+    sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
+    sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
+    sudo rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    sudo cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
+    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
+#    sudo systemd-nspawn -D $BUILDDIR/$ARCH update-ca-trust 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
+    sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
 }
 
 create_rootfs_img() {
-    msg "Creating rootfs for $device..."
+    msg "Creating rootfs for $DEVICE..."
 
     # backup host mirrorlist
     sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
@@ -174,83 +177,79 @@ create_rootfs_img() {
     cd $ROOTFS_IMG
 
     # create folder for the rootfs
-    mkdir -p rootfs_$_ARCH
+    mkdir -p rootfs_$ARCH
 
     # install the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$_ARCH $ROOTFS_IMG/rootfs_$_ARCH $PKG_DEVICE $PKG_EDITION
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH $PKG_DEVICE $PKG_EDITION
     
     # Enable cross architecture Chrooting
-    if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
-        sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
+    if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+        sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
     else
-        sudo cp /usr/bin/qemu-arm-static $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/
+        sudo cp /usr/bin/qemu-arm-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
     fi
 
     msg "Enabling services..."
-
     # Enable services
-    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
-    if [[ "$device" = "rpi2" ]] || [[ "$device" = "xu4" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
         echo ""
     else
-        sudo systemd-nspawn -D rootfs_$_ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     fi
 
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
     sudo pacman -Syy
 
-    msg "Applying overlay for $edition..."
-    sudo cp -ap $PROFILES/arm-profiles/overlays/$edition/* $ROOTFS_IMG/rootfs_$_ARCH/
+    msg "Applying overlay for $EDITION..."
+    sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
     
     msg "Setting up users..."
     #setup users
-    sudo systemd-nspawn -D rootfs_$_ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$_ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$_ARCH passwd manjaro < $LIBDIR/pass-manjaro 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH passwd manjaro < $LIBDIR/pass-manjaro 1> /dev/null 2>&1
 
     msg "Setting up system settings..."
     #system setup
-    sudo systemd-nspawn -D rootfs_$_ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$_ARCH update-ca-trust 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
 
     msg "Setting up keyrings..."
     #setup keys
-    sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --init 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$_ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
     
     msg "Cleaning rootfs for unwanted files..."
-       if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
-        sudo rm $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-aarch64-static
+       if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+        sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     else
-        sudo rm $ROOTFS_IMG/rootfs_$_ARCH/usr/bin/qemu-arm-static
+        sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
     fi
 
-
-    msg "$device $edition rootfs complete"
+    msg "$DEVICE $EDITION rootfs complete"
 }
 
 create_img() {
-    msg "Creating image!"
-
     # Test for device input
-    if [[ "$device" != "rpi2" && "$device" != "oc1" && "$device" != "oc2" && "$device" != "xu4" && "$device" != "pine64" && "$device" != "rpi3" ]]; then
-        echo 'Invalid device '$device', please choose one of the following'
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pine64" && "$DEVICE" != "rpi3" ]]; then
+        echo 'Invalid device '$DEVICE', please choose one of the following'
         echo 'rpi2  |  oc1  | oc2  |  xu4 | pine64 | rpi3'
         exit 1
     else
-        _DEVICE="$device"
+    msg "Building image for $DEVICE $EDITION..."
     fi
 
-    if [[ "$_DEVICE" = "oc2" ]] || [[ "$_DEVICE" = "pine64" ]] || [[ "$_DEVICE" = "rpi3" ]]; then
-        _ARCH='aarch64'
+    if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+        ARCH='aarch64'
     else
-        _ARCH='armv7h'
+        ARCH='armv7h'
     fi
 
-    if [[ "$edition" = "minimal" ]]; then
+    if [[ "$EDITION" = "minimal" ]]; then
         _SIZE=1500
     else
         _SIZE=3800
@@ -274,7 +273,7 @@ create_img() {
 
 
     # For Raspberry Pi devices
-    if [[ "$device" = "rpi2" ]] || [[ "$device" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
         #partition with boot and root
         sudo parted -s $LDEV mklabel msdos
         sudo parted -s $LDEV mkpart primary fat32 0% 100M
@@ -291,7 +290,7 @@ create_img() {
         mkdir -p $TMPDIR/boot
         sudo mount ${LDEV}p1 $TMPDIR/boot
         sudo mount ${LDEV}p2 $TMPDIR/root
-        sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
+        sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
 
     #clean up
@@ -302,7 +301,7 @@ create_img() {
         sudo partprobe $LDEV
 
     # For Odroid devices
-    elif [[ "$device" = "oc1" ]] || [[ "$device" = "oc2" ]] || [[ "$device" = "xu4" ]]; then
+    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
 	
@@ -310,7 +309,7 @@ create_img() {
         sudo parted -s $LDEV mklabel msdos
         sudo parted -s $LDEV mkpart primary ext4 0% 100%
         sudo partprobe $LDEV
-    #if [[ "$_DEVICE" = "xu4" ]]; then
+    #if [[ "$DEVICE" = "xu4" ]]; then
     #	sudo mkfs.ext4 "${LDEV}p1"
     #else
         sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
@@ -320,7 +319,7 @@ create_img() {
         mkdir -p $TMPDIR/root
         sudo chmod 777 -R $TMPDIR/root
         sudo mount ${LDEV}p1 $TMPDIR/root
-        sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
+        sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
 
     #flash bootloader
         cd $TMPDIR/root/boot/
@@ -334,7 +333,7 @@ create_img() {
         sudo partprobe $LDEV
 
     # For Pine64 device
-    elif [[ "$device" = "pine64" ]]; then
+    elif [[ "$DEVICE" = "pine64" ]]; then
         partition with boot and root
         sudo parted -s $LDEV mklabel msdos
         sudo parted -s $LDEV mkpart primary fat32 0% 100M
@@ -351,7 +350,7 @@ create_img() {
         mkdir -p $TMPDIR/boot
         sudo mount ${LDEV}p1 $TMPDIR/boot
         sudo mount ${LDEV}p2 $TMPDIR/root
-        sudo cp -ra $ROOTFS_IMG/rootfs_$_ARCH/* $TMPDIR/root/
+        sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
@@ -367,7 +366,7 @@ create_img() {
 
     else
         #Not sure if this IF statement is nesssary anymore
-        echo "The $device" has not been set up yet
+        echo "The $DEVICE" has not been set up yet
     fi
 }
 
@@ -377,39 +376,39 @@ create_zip() {
     zip -9 $IMGNAME.zip $IMGNAME.img 
     sudo rm $IMGDIR/$IMGNAME.img
 
-    msg "Removing rootfs_$_ARCH"
-    sudo rm -rf $ROOTFS_IMG/rootfs_$_ARCH
+    msg "Removing rootfs_$ARCH"
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
 }
 
 build_pkg() {
     #cp package to rootfs
-    msg "Copying build directory {$package} to rootfs..."
-    sudo systemd-nspawn -D $BUILDDIR/$arch mkdir build 1> /dev/null 2>&1
-    sudo cp -rp "$package"/* $BUILDDIR/$arch/build/
+    msg "Copying build directory {$PACKAGE} to rootfs..."
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
+    sudo cp -rp "$PACKAGE"/* $BUILDDIR/$ARCH/build/
 
     #build package
-    msg "Building {$package}..."
-    sudo systemd-nspawn -D $BUILDDIR/$arch/ chmod -R 777 build/ 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$arch/ --chdir=/build/ makepkg -sc --noconfirm
+    msg "Building {$PACKAGE}..."
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
 }
 
 export_and_clean() {
-    if ls $BUILDDIR/$arch/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
+    if ls $BUILDDIR/$ARCH/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
         #pull package out of rootfs
         msg "Package Succeeded..."
         msg "Extracting finished package out of rootfs..."
-        mkdir -p $PKGDIR/$arch
-        cp $BUILDDIR/$arch/build/*.pkg.tar.xz* $PKGDIR/$arch/
-        msg "Package saved at $PKGDIR/$arch/$package..."
+        mkdir -p $PKGDIR/$ARCH
+        cp $BUILDDIR/$ARCH/build/*.pkg.tar.xz* $PKGDIR/$ARCH/
+        msg "Package saved at $PKGDIR/$ARCH/$PACKAGE..."
 
         #clean up rootfs
         msg "Cleaning rootfs..."
-        sudo rm -rf $BUILDDIR/$arch > /dev/null
+        sudo rm -rf $BUILDDIR/$ARCH > /dev/null
 
     else
         msg "!!!!! Package failed to build !!!!!"
         msg "Cleaning rootfs"
-        sudo rm -rf $BUILDDIR/$arch > /dev/null
+        sudo rm -rf $BUILDDIR/$ARCH > /dev/null
         exit 1
     fi
 }

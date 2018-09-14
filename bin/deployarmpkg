@@ -10,16 +10,16 @@ opt=":p:a:r:k:h"
 while getopts "${opt}" arg; do
   case $arg in
     p)
-      package="${OPTARG%/}"
+      PACKAGE="${OPTARG%/}"
       ;;
     a)
-      arch="${OPTARG}"
+      ARCH="${OPTARG}"
       ;;
     r)
-      repo="${OPTARG}"
+      REPO="${OPTARG}"
       ;;
     k)
-      gpgmail="${OPTARG}"
+      GPGMAIL="${OPTARG}"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -36,15 +36,15 @@ while getopts "${opt}" arg; do
   esac
 done
 
-if [ "x" == "x$package" ]; then
+if [ "x" == "x$PACKAGE" ]; then
   echo "-p [option] is required"
   exit
 fi
-if [ "x" == "x$repo" ]; then
+if [ "x" == "x$REPO" ]; then
   echo "-r [option] is required"
   exit
 fi
-if [ "x" == "x$gpgmail" ]; then
+if [ "x" == "x$GPGMAIL" ]; then
   echo "-k [option] is required"
   exit
 fi

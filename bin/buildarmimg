@@ -12,13 +12,13 @@ opt=":e:d:v:th"
 while getopts "${opt}" arg; do
   case $arg in
     e)
-      edition="${OPTARG}"
+      EDITION="${OPTARG}"
       ;;
     d)
-      device="${OPTARG}"
+      DEVICE="${OPTARG}"
       ;;
     v)
-      version="${OPTARG}"
+      VERSION="${OPTARG}"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -36,19 +36,19 @@ while getopts "${opt}" arg; do
 done
 
 
-IMGNAME=Manjaro-ARM-$edition-$device-$version
+IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 
 #Need both package and architecture
-if [ "x" == "x$edition" ]; then
+if [ "x" == "x$EDITION" ]; then
   echo "-e [option] is required"
   exit
 fi
 
    
-if [[ "$device" = "oc2" ]] || [[ "$device" = "pine64" ]] || [[ "$device" = "rpi3" ]]; then
-    _ARCH='aarch64'
+if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+    ARCH='aarch64'
 else
-    _ARCH='armv7h'
+    ARCH='armv7h'
 fi
 
 if [ ! -d "$PROFILES/arm-profiles" ]; then
@@ -56,9 +56,9 @@ if [ ! -d "$PROFILES/arm-profiles" ]; then
 fi
 
 #Package lists
-PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$device)
-PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$edition)
-SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$edition)
+PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$DEVICE)
+PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$EDITION)
+SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$EDITION)
 
 #start timer
 #timer=$(get_timer)

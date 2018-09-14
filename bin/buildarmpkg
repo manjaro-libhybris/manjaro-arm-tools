@@ -15,10 +15,10 @@ opt=":p:a:h"
 while getopts "${opt}" arg; do
   case $arg in
     p)
-      package="${OPTARG%/}"
+      PACKAGE="${OPTARG%/}"
       ;;
     a)
-      arch="${OPTARG}"
+      ARCH="${OPTARG}"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -36,14 +36,14 @@ while getopts "${opt}" arg; do
 done
 
 #Need both package and architecture
-if [ "x" == "x$package" ]; then
+if [ "x" == "x$PACKAGE" ]; then
   echo "-p [option] is required"
   exit
 fi
 
 #Build the 'any' packages on armv7
-if [ $arch == "any" ]; then
-	arch="armv7h"
+if [ $ARCH == "any" ]; then
+	ARCH="armv7h"
 fi
 
 #create the rootfs to build in
