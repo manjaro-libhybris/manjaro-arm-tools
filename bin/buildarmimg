@@ -38,12 +38,6 @@ done
 
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 
-#Need both package and architecture
-if [ "x" == "x$EDITION" ]; then
-  echo "-e [option] is required"
-  exit
-fi
-
    
 if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
     ARCH='aarch64'

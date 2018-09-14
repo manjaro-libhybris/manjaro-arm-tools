@@ -51,11 +51,6 @@ if [ "x" == "x$IMAGE" ]; then
   echo "-i [option] is required"
   exit
 fi
-if [ "x" == "x$EDITION" ]; then
-  echo "-e [option] is required"
-  exit
-fi
-
 
 
 # Create checksums for the image

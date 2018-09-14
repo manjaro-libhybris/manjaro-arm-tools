@@ -114,7 +114,7 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-buildarmimg [-d device] -e edition [-v version]
+buildarmimg [-d device] [-e edition] [-v version]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 2/3:
@@ -136,7 +136,7 @@ If you don't, you can't use this.
 **Syntax**
 
 ```
-deployarmimg -i image [-d device] -e edition [-v version] -t
+deployarmimg -i image [-d device] [-e edition] [-v version] -t
 ```
 
 To upload an image to the raspberry pi minimal 18.07 folder use with torrent:

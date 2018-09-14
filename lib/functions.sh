@@ -15,6 +15,7 @@ OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 VERSION=$(date +'%y'.'%m')
 ARCH='armv7h'
 DEVICE='rpi2'
+EDITION='minimal'
 
 #import conf file
 if [[ -f ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
@@ -39,7 +40,7 @@ usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
     echo "    -d <device>        Device the image is for. [Default = rpi2. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
-    echo '    -e <edition>       Edition of the image. [Options = minimal]'
+    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
     echo '    -h                 This help'
@@ -61,7 +62,7 @@ usage_build_pkg() {
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device [Default = rpi2. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
-    echo "    -e <edition>       Edition to build [Options = minimal, lxqt, mate and server]"
+    echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo '    -h                 This help'
     echo ''
