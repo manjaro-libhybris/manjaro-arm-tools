@@ -413,7 +413,7 @@ export_and_clean() {
         msg "Extracting finished package out of rootfs..."
         mkdir -p $PKGDIR/$ARCH
         cp $BUILDDIR/$ARCH/build/*.pkg.tar.xz* $PKGDIR/$ARCH/
-        msg "Package saved at $PKGDIR/$ARCH/$PACKAGE..."
+        msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
 
         #clean up rootfs
         msg "Cleaning rootfs..."
