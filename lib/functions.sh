@@ -153,7 +153,7 @@ create_rootfs_pkg() {
 
     # Enable cross architecture Chrooting
     if [[ "$ARCH" = "aarch64" ]]; then
-        sudo cp /usr/bin/qemu-aarch64-static $_BUILDIR/$ARCH/usr/bin/
+        sudo cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
     else
         sudo cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
     fi
