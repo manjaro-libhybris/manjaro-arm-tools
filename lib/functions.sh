@@ -237,6 +237,15 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
     
+    msg "Doing device specific setups..."
+    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+        echo "dtparam=audio=on" >> $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
+        echo "hdmi_drive=2" >> $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
+        echo "audio_pwm_mode=2" >> $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
+    else
+        echo ""
+    fi
+    
     msg "Cleaning rootfs for unwanted files..."
        if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
