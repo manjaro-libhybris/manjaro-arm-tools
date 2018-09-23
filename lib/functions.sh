@@ -149,7 +149,7 @@ create_rootfs_pkg() {
     mkdir -p $BUILDDIR/$ARCH
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base base-devel manjaro-system archlinuxarm-keyring manjaro-keyring lsb-release
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base base-devel
 
     # Enable cross architecture Chrooting
     if [[ "$ARCH" = "aarch64" ]]; then
