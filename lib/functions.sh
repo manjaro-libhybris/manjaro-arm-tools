@@ -230,7 +230,11 @@ create_rootfs_img() {
     msg "Setting up system settings..."
     #system setup
     sudo systemd-nspawn -D rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    #sudo systemd-nspawn -D rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
+    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    sudo cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
+    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
 
     msg "Setting up keyrings..."
     #setup keys
