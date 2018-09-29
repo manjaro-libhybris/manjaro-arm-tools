@@ -64,6 +64,7 @@ usage_build_img() {
     echo "    -d <device>        Device [Default = rpi2. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
+    echo "    -n                 Make only rootfs, compressed as a .zip, instead of a .img."
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -403,6 +404,16 @@ create_zip() {
     zip -9 $IMGNAME.zip $IMGNAME.img 
     sudo rm $IMGDIR/$IMGNAME.img
 
+    msg "Removing rootfs_$ARCH"
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
+}
+
+create_rootfs_zip() {
+    #zip rootfs
+    cd $ROOTFS_IMG/rootfs_$ARCH
+    sudo zip -9 -qr ../$IMGNAME.zip .
+    sudo mv ../$IMGNAME.zip $IMGDIR/
+    
     msg "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
 }

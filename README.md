@@ -115,7 +115,7 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-buildarmimg [-d device] [-e edition] [-v version]
+buildarmimg [-d device] [-e edition] [-v version] -n
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 2/3:
@@ -124,10 +124,10 @@ To build a minimal image version 18.07 for the raspberry pi 2/3:
 buildarmimg -d rpi2 -e minimal -v 18.07
 ```
 
-To build a minimal image version 18.08 RC1 for the odroid-c2:
+To build a minimal rootfs archive version 18.08 RC1 for the odroid-c2:
 
 ```
-buildarmimg -d oc2 -e minimal -v 18.08-rc1
+buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
 ```
 
 ## deployarmimg

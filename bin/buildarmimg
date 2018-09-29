@@ -2,12 +2,13 @@
 
 # Set globals
 LIBDIR=/usr/share/manjaro-arm-tools/lib
+NOIMAGE="false"
 
 #imports
 source $LIBDIR/functions.sh
 
 #Arguments 
-opt=":e:d:v:th"
+opt=":e:d:v:nh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -19,6 +20,9 @@ while getopts "${opt}" arg; do
       ;;
     v)
       VERSION="${OPTARG}"
+      ;;
+    n)
+      NOIMAGE="true"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -66,11 +70,15 @@ SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{pri
 # Creating the rootfs used for the image.
 create_rootfs_img
 
-# Creating the image, from the rootfs created before.
-create_img
-
-# Create the .zip file, from the .img file which will get deleted.
-create_zip
+if [[ "$NOIMAGE" = "true" ]]; then
+    echo "Received -n flag, so only packing rootfs, not image"
+    create_rootfs_zip
+    else
+    # Creating the image, from the rootfs created before.
+    create_img
+    # Create the .zip file, from the .img file which will get deleted.
+    create_zip
+fi
 
 # show timer
 show_elapsed_time "${FUNCNAME}" "${timer_start}"
