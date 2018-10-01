@@ -102,8 +102,8 @@ and remove the local files.
 
 * minimal
 * lxqt
-* mate (not complete yet, lacks customization)
-* server (not complete yet)
+* mate (not complete yet, unmaintained)
+* server (not complete yet, unmaintained)
 
 *more to come*
 
