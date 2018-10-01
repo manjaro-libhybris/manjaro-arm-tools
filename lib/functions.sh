@@ -150,7 +150,7 @@ create_rootfs_pkg() {
     mkdir -p $BUILDDIR/$ARCH
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base base-devel
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base base-devel manjaro-arm-keyring
 
     # Enable cross architecture Chrooting
     if [[ "$ARCH" = "aarch64" ]]; then
@@ -195,7 +195,7 @@ create_rootfs_img() {
     mkdir -p rootfs_$ARCH
 
     # install the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH $PKG_DEVICE $PKG_EDITION
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH $PKG_DEVICE $PKG_EDITION manjaro-arm-keyring lsb-release
     
     # Enable cross architecture Chrooting
     if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
