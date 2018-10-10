@@ -401,7 +401,7 @@ create_img() {
 create_zip() {
     #zip img
     cd $IMGDIR
-    zip -9 $IMGNAME.zip $IMGNAME.img 
+    zip $IMGNAME.zip $IMGNAME.img 
     sudo rm $IMGDIR/$IMGNAME.img
 
     msg "Removing rootfs_$ARCH"
@@ -411,7 +411,7 @@ create_zip() {
 create_rootfs_zip() {
     #zip rootfs
     cd $ROOTFS_IMG/rootfs_$ARCH
-    sudo zip -9 -qr ../$IMGNAME.zip .
+    sudo zip -qr ../$IMGNAME.zip .
     sudo mv ../$IMGNAME.zip $IMGDIR/
     
     msg "Removing rootfs_$ARCH"
