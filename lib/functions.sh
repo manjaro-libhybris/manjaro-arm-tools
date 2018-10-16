@@ -214,6 +214,12 @@ create_rootfs_img() {
     else
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     fi
+    
+    if [[ "$EDITION" = "minimal" ]]; then
+        echo "no user services for minimal edition"
+    else
+        sudo systemd-nspawn -D rootfs_$ARCH systemctl --user enable pulseaudio.service pulseaudio.socket 1> /dev/null 2>&1
+    fi
 
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
