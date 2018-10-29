@@ -209,14 +209,12 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
-    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-        echo ""
-    else
+    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     fi
     
-    if [[ "$EDITION" = "minimal" ]]; then
-        echo "no user services for minimal edition"
+    if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
+        echo "No user services for $EDITION edition"
     else
         sudo systemd-nspawn -D rootfs_$ARCH systemctl --user enable pulseaudio.service pulseaudio.socket 1> /dev/null 2>&1
     fi
@@ -248,12 +246,14 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
     
-    msg "Doing device specific setups..."
+    msg "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
         echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
+        echo "No device setups for $DEVICE..."
     else
         echo ""
     fi
