@@ -43,10 +43,10 @@ done
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 
    
-if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-    ARCH='aarch64'
-else
+if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
     ARCH='armv7h'
+else
+    ARCH='aarch64'
 fi
 
 if [ ! -d "$PROFILES/arm-profiles" ]; then
@@ -57,9 +57,6 @@ fi
 timer_start=$(get_timer)
 
 #Package lists
-#PKG_DEVICE=$(cat $PROFILES/arm-profiles/devices/$DEVICE)
-#PKG_EDITION=$(cat $PROFILES/arm-profiles/editions/$EDITION)
-#SRV_EDITION=$(cat $PROFILES/arm-profiles/services/$EDITION)
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
 PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{print $1}')
 SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{print $1}')

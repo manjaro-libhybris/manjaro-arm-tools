@@ -13,8 +13,8 @@ IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 VERSION=$(date +'%y'.'%m')
-ARCH='armv7h'
-DEVICE='rpi2'
+ARCH='aarch64'
+DEVICE='rpi3'
 EDITION='minimal'
 
 #import conf file
@@ -26,7 +26,7 @@ fi
 
 usage_deploy_pkg() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -a <arch>          Architecture. [Default = armv7h. Options = any, armv7h or aarch64]"
+    echo "    -a <arch>          Architecture. [Default = aarch64. Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to upload"
     echo '    -r <repo>          Repository package belongs to. [Options = core, extra or community]'
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -39,7 +39,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi2. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -51,7 +51,7 @@ usage_deploy_img() {
 
 usage_build_pkg() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -a <arch>          Architecture. [Default = armv7h. Options = any, armv7h or aarch64]"
+    echo "    -a <arch>          Architecture. [Default = aarch64. Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo '    -h                 This help'
     echo ''
@@ -61,7 +61,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi2. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -n                 Make only rootfs, compressed as a .zip, instead of a .img."
@@ -198,10 +198,10 @@ create_rootfs_img() {
     sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH $PKG_DEVICE $PKG_EDITION manjaro-arm-keyring lsb-release
     
     # Enable cross architecture Chrooting
-    if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-        sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
-    else
+    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         sudo cp /usr/bin/qemu-arm-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
+    else
+        sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
     fi
 
     msg "Enabling services..."
@@ -259,10 +259,10 @@ create_rootfs_img() {
     fi
     
     msg "Cleaning rootfs for unwanted files..."
-       if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-        sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    else
+       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
+    else
+        sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     fi
 
     msg "$DEVICE $EDITION rootfs complete"
@@ -278,10 +278,10 @@ create_img() {
     msg "Building image for $DEVICE $EDITION..."
     fi
 
-    if [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-        ARCH='aarch64'
-    else
+    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         ARCH='armv7h'
+    else
+        ARCH='aarch64'
     fi
 
     if [[ "$EDITION" = "minimal" ]]; then

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-#Usage: buildarmpkg package architecture.
-#Example: buildarmpkg filesystem armv7h
-
 # Set globals
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 
@@ -41,9 +38,9 @@ if [ "x" == "x$PACKAGE" ]; then
   exit
 fi
 
-#Build the 'any' packages on armv7h
+#Build the 'any' packages on aarch64
 if [ $ARCH == "any" ]; then
-	ARCH="armv7h"
+	ARCH="aarch64"
 fi
 
 # start the timer

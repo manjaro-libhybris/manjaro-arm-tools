@@ -45,7 +45,7 @@ To build an aarch64 package it's the same, just with
 buildarmpkg -p package -a aarch64
 ```
 
-You can also build `any` packages, which will use the armv7h architecture to build from.
+You can also build `any` packages, which will use the aarch64 architecture to build from.
 
 ```
 buildarmpkg -p package -a any
@@ -91,21 +91,21 @@ and remove the local files.
 ## buildarmimg
 
 **Supported devices:**
-* rpi2
-* oc1
 * oc2
+* rpi3
+* rpi2 (not maintained)
+* oc1 (not maintained)
 * xu4 (not maintained or tested)
 * pine64 (not maintained or tested)
-* rpi3 (not maintained)
 
 **Supported editions:**
 
 * minimal
 * lxqt
+* kde
 * mate (not complete yet, unmaintained)
 * server (not complete yet, unmaintained)
 
-*more to come*
 
 The script breafly replaces your `/etc/pacman.d/mirrorlist` with that of manjaro-arm to fetch the right packages.
 This script will zip up the image file and place it in `/var/cache/manjaro-arm-tools/img/`
@@ -118,10 +118,10 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 buildarmimg [-d device] [-e edition] [-v version] -n
 ```
 
-To build a minimal image version 18.07 for the raspberry pi 2/3:
+To build a minimal image version 18.07 for the raspberry pi 3:
 
 ```
-buildarmimg -d rpi2 -e minimal -v 18.07
+buildarmimg -d rpi3 -e minimal -v 18.07
 ```
 
 To build a minimal rootfs archive version 18.08 RC1 for the odroid-c2:
@@ -143,7 +143,7 @@ deployarmimg -i image [-d device] [-e edition] [-v version] -t
 To upload an image to the raspberry pi minimal 18.07 folder use with torrent:
 
 ```
-deployarmimg -i Manjaro-ARM-minimal-rpi2-18.07.zip -d rpi2 -e minimal -v 18.07 -t
+deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.zip -d rpi3 -e minimal -v 18.07 -t
 ```
 
 ## getarmprofiles
