@@ -1,4 +1,4 @@
-# manjaro-arm-tools
+# Manjaro ARM Tools
 Contains scripts and files needed to build and manage manjaro-arm packages and images.
 
 This software is available in the Manjaro Strit repo's, if you run Manjaro.
@@ -6,6 +6,7 @@ This software is available in the Manjaro Strit repo's, if you run Manjaro.
 
 ## Known issues
 `deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
+
 `buildarmpkg` has problems building *some* `armv7h` packages, but I think it's an upstream issue, because there's no problem on `aarch64`.
 
 ## Dependencies
@@ -17,6 +18,22 @@ These scripts rely on certain packages to be able to function. These packages ar
 * git (arch repo)
 
 This package also provides `binfmt-qemu-static`.
+
+# Installation (Arch based distributions only)
+## From Manjaro Strit repo
+Add my repo to your `/etc/pacman.conf`:
+```
+[manjaro-strit]
+SigLevel = Optional
+Server = https://www.strits.dk/manjaro-strit/manjaro-strit-repo/$arch
+```
+Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools`.
+
+## From gitlab
+* Download the `.zip` or `.tar.gz` file from https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-arm-tools.
+* Extract it.
+* Copy the contents of `lib/` to `/usr/share/manjaro-arm-tools/lib/`.
+* Copy the contents of `bin/` to `/usr/bin/`. Remember to make them executable.
 
 # Usage
 ## buildarmpkg
