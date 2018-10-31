@@ -196,6 +196,12 @@ create_rootfs_img() {
     # cd to root_fs
     mkdir -p $ROOTFS_IMG
     cd $ROOTFS_IMG
+    
+        # Remove old rootfs if it exists
+    if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
+    echo "Removing old rootfs..."
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    fi
 
     # create folder for the rootfs
     mkdir -p rootfs_$ARCH
