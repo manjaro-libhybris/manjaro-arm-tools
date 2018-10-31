@@ -145,6 +145,12 @@ create_rootfs_pkg() {
     # Create arm mirrorlist
     echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
+    
+    # Remove old rootfs if it exists
+    if [ -d $BUILDDIR/$ARCH ]; then
+    echo "Removing old rootfs..."
+    sudo rm -rf $BUILDDIR/$ARCH
+    fi
 
     # cd to root_fs
     mkdir -p $BUILDDIR/$ARCH
