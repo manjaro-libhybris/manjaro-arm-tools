@@ -39,7 +39,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -61,7 +61,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine64]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -n                 Make only rootfs, compressed as a .zip, instead of a .img."
@@ -282,9 +282,9 @@ create_rootfs_img() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pine64" && "$DEVICE" != "rpi3" ]]; then
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pine" && "$DEVICE" != "rpi3" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4 | pine64 | rpi3'
+        echo 'rpi2  |  oc1  | oc2  |  xu4 | pine | rpi3'
         exit 1
     else
     msg "Building image for $DEVICE $EDITION..."
@@ -379,9 +379,9 @@ create_img() {
         sudo rm -r $TMPDIR/root
         sudo partprobe $LDEV
 
-    # For Pine64 device
-    elif [[ "$DEVICE" = "pine64" ]]; then
-        partition with boot and root
+    # For pine device
+    elif [[ "$DEVICE" = "pine" ]]; then
+    #partition with boot and root
         sudo parted -s $LDEV mklabel msdos
         sudo parted -s $LDEV mkpart primary fat32 0% 100M
         START=`cat /sys/block/$DEV/${DEV}p1/start`
