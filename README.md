@@ -110,10 +110,10 @@ and remove the local files.
 **Supported devices:**
 * oc2
 * rpi3
+* pinebook
 * rpi2 (not maintained)
 * oc1 (not maintained)
 * xu4 (not maintained or tested)
-* pine64 (not maintained or tested)
 
 **Supported editions:**
 

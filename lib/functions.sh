@@ -39,7 +39,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -61,7 +61,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pine]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pinebook]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -n                 Make only rootfs, compressed as a .zip, instead of a .img."
@@ -282,9 +282,9 @@ create_rootfs_img() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pine" && "$DEVICE" != "rpi3" ]]; then
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "rpi3" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4 | pine | rpi3'
+        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | rpi3'
         exit 1
     else
     msg "Building image for $DEVICE $EDITION..."
@@ -380,37 +380,31 @@ create_img() {
         sudo partprobe $LDEV
 
     # For pine device
-    elif [[ "$DEVICE" = "pine" ]]; then
-    #partition with boot and root
+    elif [[ "$DEVICE" = "pinebook" ]]; then
+
+    #Clear first 8mb
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
+	
+    #partition with a single root partition
         sudo parted -s $LDEV mklabel msdos
-        sudo parted -s $LDEV mkpart primary fat32 0% 100M
-        START=`cat /sys/block/$DEV/${DEV}p1/start`
-        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
+        sudo parted -s $LDEV mkpart primary ext4 0% 100%
         sudo partprobe $LDEV
-        sudo mkfs.vfat "${LDEV}p1"
-        sudo mkfs.ext4 "${LDEV}p2"
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
-        mkdir -p $TMPDIR/boot
-        sudo mount ${LDEV}p1 $TMPDIR/boot
-        sudo mount ${LDEV}p2 $TMPDIR/root
+        sudo chmod 777 -R $TMPDIR/root
+        sudo mount ${LDEV}p1 $TMPDIR/root
         sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
-        #sudo wget http://os.archlinuxarm.org/os/allwinner/boot/pine64/boot.scr -O $TMPDIR/root/boot/boot.scr
-        #sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl.bin of=${LDEV} bs=8k seek=1
-
+        sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1
+        
     #clean up
         sudo umount $TMPDIR/root
-        sudo umount $TMPDIR/boot
         sudo losetup -d $LDEV
-        sudo rm -r $TMPDIR/root $TMPDIR/boot
+        sudo rm -r $TMPDIR/root
         sudo partprobe $LDEV
-
     else
         #Not sure if this IF statement is nesssary anymore
         echo "The $DEVICE" has not been set up yet
