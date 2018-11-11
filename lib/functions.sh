@@ -217,6 +217,10 @@ create_rootfs_img() {
         sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
     fi
 
+    # restore original mirrorlist to host system
+    sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
+    sudo pacman -Syy
+    
     msg "Enabling services..."
     # Enable services
     sudo systemd-nspawn -D rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
@@ -225,10 +229,6 @@ create_rootfs_img() {
     if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     fi
-
-    # restore original mirrorlist to host system
-    sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-    sudo pacman -Syy
 
     msg "Applying overlay for $EDITION..."
     sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
@@ -243,7 +243,7 @@ create_rootfs_img() {
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
         echo "No user services for $EDITION edition"
     else
-        sudo systemd-nspawn -D rootfs_$ARCH --chuser manjaro systemctl --user enable pulseaudio.service pulseaudio.socket 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
     fi
 
     msg "Setting up system settings..."
