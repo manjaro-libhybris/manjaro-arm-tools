@@ -171,6 +171,7 @@ create_rootfs_pkg() {
 
    msg "Configuring rootfs for building..."
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
+    sudo cp $LIBDIR/loaders.cache $BUILDDIR/$ARCH/usr/lib/gdk-pixbuf-2.0/2.10.0/
     sudo systemd-nspawn -D $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
     sudo rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
@@ -224,12 +225,6 @@ create_rootfs_img() {
     if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     fi
-    
-    if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
-        echo "No user services for $EDITION edition"
-    else
-        sudo systemd-nspawn -D rootfs_$ARCH systemctl --user enable pulseaudio.service pulseaudio.socket 1> /dev/null 2>&1
-    fi
 
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
@@ -243,6 +238,13 @@ create_rootfs_img() {
     sudo systemd-nspawn -D rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH passwd manjaro < $LIBDIR/pass-manjaro 1> /dev/null 2>&1
+    
+    msg "Enabling user services..."
+    if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
+        echo "No user services for $EDITION edition"
+    else
+        sudo systemd-nspawn -D rootfs_$ARCH --chuser manjaro systemctl --user enable pulseaudio.service pulseaudio.socket 1> /dev/null 2>&1
+    fi
 
     msg "Setting up system settings..."
     #system setup
@@ -266,6 +268,9 @@ create_rootfs_img() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         echo "No device setups for $DEVICE..."
+    elif [[ "$DEVICE" = "pinebook" ]]; then
+        echo "Making wifi module. May take some time..."
+        sudo systemd-nspawn -D rootfs_$ARCH dkms install "rtl8723cs/2018.09.11" 1> /dev/null 2>&1
     else
         echo ""
     fi
@@ -297,9 +302,9 @@ create_img() {
     fi
 
     if [[ "$EDITION" = "minimal" ]]; then
-        _SIZE=1500
+        _SIZE=1800
     else
-        _SIZE=3800
+        _SIZE=4500
     fi
 
     msg "Please ensure that the rootfs is configured and all necessary boot packages are installed"
@@ -356,11 +361,7 @@ create_img() {
         sudo parted -s $LDEV mklabel msdos
         sudo parted -s $LDEV mkpart primary ext4 0% 100%
         sudo partprobe $LDEV
-    #if [[ "$DEVICE" = "xu4" ]]; then
-    #	sudo mkfs.ext4 "${LDEV}p1"
-    #else
         sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
-    #fi
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -379,10 +380,10 @@ create_img() {
         sudo rm -r $TMPDIR/root
         sudo partprobe $LDEV
 
-    # For pine device
+    # For pinebook device
     elif [[ "$DEVICE" = "pinebook" ]]; then
 
-    #Clear first 8mb
+            #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
 	
     #partition with a single root partition
