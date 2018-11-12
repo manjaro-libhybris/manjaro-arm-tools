@@ -171,7 +171,6 @@ create_rootfs_pkg() {
 
    msg "Configuring rootfs for building..."
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
-    sudo cp $LIBDIR/loaders.cache $BUILDDIR/$ARCH/usr/lib/gdk-pixbuf-2.0/2.10.0/
     sudo systemd-nspawn -D $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
     sudo rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
@@ -269,8 +268,7 @@ create_rootfs_img() {
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         echo "No device setups for $DEVICE..."
     elif [[ "$DEVICE" = "pinebook" ]]; then
-        echo "Making wifi module. May take some time..."
-        sudo systemd-nspawn -D rootfs_$ARCH dkms install "rtl8723cs/2018.09.11" 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
         echo ""
     fi
@@ -304,12 +302,9 @@ create_img() {
     if [[ "$EDITION" = "minimal" ]]; then
         _SIZE=1800
     else
-        _SIZE=4500
+        _SIZE=5000
     fi
 
-    msg "Please ensure that the rootfs is configured and all necessary boot packages are installed"
-
-    ##Image set up
     #making blank .img to be used
     sudo dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$_SIZE
 
@@ -383,7 +378,7 @@ create_img() {
     # For pinebook device
     elif [[ "$DEVICE" = "pinebook" ]]; then
 
-            #Clear first 8mb
+    #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
 	
     #partition with a single root partition
