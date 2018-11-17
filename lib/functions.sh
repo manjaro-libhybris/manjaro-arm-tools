@@ -1,7 +1,7 @@
 #! /bin/bash
 
 #variables
-SERVER='sync.manjaro-arm.org'
+SERVER='159.65.88.73'
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
@@ -39,7 +39,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rockpro64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -61,7 +61,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4 and pinebook]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rockpro64 and pinebook]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -n                 Make only rootfs, compressed as a .zip, instead of a .img."
@@ -156,7 +156,7 @@ create_rootfs_pkg() {
     mkdir -p $BUILDDIR/$ARCH
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base base-devel manjaro-arm-keyring
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel manjaro-arm-keyring
 
     # Enable cross architecture Chrooting
     if [[ "$ARCH" = "aarch64" ]]; then
@@ -267,6 +267,8 @@ create_rootfs_img() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         echo "No device setups for $DEVICE..."
+    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
+        echo "No device setups for $DEVICE..."
     elif [[ "$DEVICE" = "pinebook" ]]; then
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
@@ -285,9 +287,9 @@ create_rootfs_img() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "rpi3" ]]; then
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | rpi3'
+        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | rpi3 | rock64 | rockpro64'
         exit 1
     else
     msg "Building image for $DEVICE $EDITION..."
@@ -377,6 +379,33 @@ create_img() {
 
     # For pinebook device
     elif [[ "$DEVICE" = "pinebook" ]]; then
+
+    #Clear first 8mb
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
+	
+    #partition with a single root partition
+        sudo parted -s $LDEV mklabel msdos
+        sudo parted -s $LDEV mkpart primary ext4 0% 100%
+        sudo partprobe $LDEV
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
+
+    #copy rootfs contents over to the FS
+        mkdir -p $TMPDIR/root
+        sudo chmod 777 -R $TMPDIR/root
+        sudo mount ${LDEV}p1 $TMPDIR/root
+        sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+        
+    #flash bootloader
+        sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1
+        
+    #clean up
+        sudo umount $TMPDIR/root
+        sudo losetup -d $LDEV
+        sudo rm -r $TMPDIR/root
+        sudo partprobe $LDEV
+        
+    # For rockpro64 device
+    elif [[ "$DEVICE" = "rockpro64" ]]; then
 
     #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
