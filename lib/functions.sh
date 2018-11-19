@@ -302,7 +302,7 @@ create_img() {
     fi
 
     if [[ "$EDITION" = "minimal" ]]; then
-        _SIZE=1800
+        _SIZE=2000
     else
         _SIZE=5000
     fi
@@ -423,7 +423,10 @@ create_img() {
         sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         
     #flash bootloader
-        sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1
+        #sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1
+        sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc
+        sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc
+        sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc
         
     #clean up
         sudo umount $TMPDIR/root
