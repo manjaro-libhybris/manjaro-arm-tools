@@ -207,7 +207,7 @@ create_rootfs_img() {
     mkdir -p rootfs_$ARCH
 
     # install the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH $PKG_DEVICE $PKG_EDITION manjaro-arm-keyring lsb-release
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH base manjaro-arm-keyring #$PKG_DEVICE $PKG_EDITION manjaro-arm-keyring lsb-release
     
     # Enable cross architecture Chrooting
     if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
@@ -215,6 +215,11 @@ create_rootfs_img() {
     else
         sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
     fi
+    
+    # Install device and editions specific packages
+    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman -S $PKG_DEVICE $PKG_EDITION lsb-release --needed --noconfirm
 
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
@@ -249,15 +254,15 @@ create_rootfs_img() {
     #system setup
     sudo systemd-nspawn -D rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
     #sudo systemd-nspawn -D rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
-    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
-    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    sudo cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
-    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
+    #sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
+    #sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    #sudo cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
+    #sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
 
-    msg "Setting up keyrings..."
+    #msg "Setting up keyrings..."
     #setup keys
-    sudo systemd-nspawn -D rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
+    #sudo systemd-nspawn -D rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
+    #sudo systemd-nspawn -D rootfs_$ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
     
     msg "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
@@ -281,6 +286,7 @@ create_rootfs_img() {
     else
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     fi
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
 
     msg "$DEVICE $EDITION rootfs complete"
 }
