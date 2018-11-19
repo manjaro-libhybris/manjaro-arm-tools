@@ -3,6 +3,8 @@ Contains scripts and files needed to build and manage manjaro-arm packages and i
 
 This software is available in the Manjaro Strit repo's, if you run Manjaro.
 
+*These tools only work on Arch based distributions!*
+
 
 ## Known issues
 `deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
@@ -34,6 +36,12 @@ Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools
 * Extract it.
 * Copy the contents of `lib/` to `/usr/share/manjaro-arm-tools/lib/`.
 * Copy the contents of `bin/` to `/usr/bin/`. Remember to make them executable.
+* Create `/var/lib/manjaro-arm-tools/pkg` folder.
+* Create `/var/lib/manjaro-arm-tools/img` folder.
+* Create `/var/lib/manjaro-arm-tools/tmp` folder.
+* Create /var/cache/manjaro-arm-tools/img` folder.
+* Create /var/cache/manjaro-arm-tools/pkg` folder.
+* Install `binfmt-qemu-static` package.
 
 # Usage
 ## buildarmpkg
@@ -74,6 +82,7 @@ This places the packages created inside `/var/cache/manjaro-arm-tools/pkg/` in e
 This script is only for package maintainers of Manjaro-ARM.
 
 This script assumes that you have enabled GPG signing on your machine, that you have a working key-pair and that you have a user on the Manjaro-ARM main server.
+The `-p` option needs to be only the package. Not the full path to the package.
 
 It will gpg sign and uploud the package you mention to the Manjaro-ARM main server.
 
