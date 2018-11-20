@@ -170,15 +170,15 @@ create_rootfs_pkg() {
     sudo pacman -Syy
 
    msg "Configuring rootfs for building..."
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman -S base --noconfirm
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
     sudo systemd-nspawn -D $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
     sudo rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
     sudo cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
     sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
-#    sudo systemd-nspawn -D $BUILDDIR/$ARCH update-ca-trust 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
 }
@@ -206,6 +206,7 @@ create_rootfs_img() {
     # create folder for the rootfs
     mkdir -p rootfs_$ARCH
 
+    msg "Create new rootfs..."
     # install the rootfs filesystem
     sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH base manjaro-arm-keyring #$PKG_DEVICE $PKG_EDITION manjaro-arm-keyring lsb-release
     
@@ -216,9 +217,12 @@ create_rootfs_img() {
         sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
     fi
     
-    # Install device and editions specific packages
+    msg "Setting up keyrings..."
     sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    
+    msg "Installing packages for $EDITION on $DEVICE..."
+    # Install device and editions specific packages
     sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman -S $PKG_DEVICE $PKG_EDITION lsb-release --needed --noconfirm
 
     # restore original mirrorlist to host system
@@ -253,17 +257,7 @@ create_rootfs_img() {
     msg "Setting up system settings..."
     #system setup
     sudo systemd-nspawn -D rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH pacman -S ca-certificates --noconfirm 1> /dev/null 2>&1
-    #sudo systemd-nspawn -D rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
-    #sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
-    #sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    #sudo cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
-    #sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
-
-    #msg "Setting up keyrings..."
-    #setup keys
-    #sudo systemd-nspawn -D rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
-    #sudo systemd-nspawn -D rootfs_$ARCH pacman-key --populate manjaro archlinuxarm manjaro-arm 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
     
     msg "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
@@ -288,6 +282,7 @@ create_rootfs_img() {
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     fi
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
 
     msg "$DEVICE $EDITION rootfs complete"
 }
