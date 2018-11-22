@@ -271,6 +271,7 @@ create_rootfs_img() {
         echo "No device setups for $DEVICE..."
     elif [[ "$DEVICE" = "pinebook" ]]; then
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         echo ""
     fi
