@@ -141,7 +141,7 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-buildarmimg [-d device] [-e edition] [-v version] -n
+buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] -n
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 3:
@@ -178,3 +178,8 @@ So nothing that fancy.
 
 This would enable users to clone the profiles repository, make any changes they would like to their images and then build them localy.
 So if you made changes to the profiles yourself, don't run `getarmprofiles` and you will still have your edits.
+
+But if you messed up your profiles somehow, you can start with the repo ones with:
+```
+getarmprofiles -f
+```
