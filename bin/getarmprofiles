@@ -3,4 +3,28 @@
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 source $LIBDIR/functions.sh
 
+#Arguments 
+opt="fh"
+
+while getopts "${opt}" arg; do
+  case $arg in
+    f)
+      echo "Forcing git update..."
+      rm -rf $PROFILES/arm-profiles/
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}"
+      exit 1
+      ;;
+    h|?)
+      usage_deploy_img
+      exit 1
+      ;;
+    :)
+      echo "Option -${OPTARG} requires an argument."
+      exit 1
+      ;;
+  esac
+done
+
 get_profiles
