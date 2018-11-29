@@ -8,7 +8,7 @@ NOIMAGE="false"
 source $LIBDIR/functions.sh
 
 #Arguments 
-opt=":e:d:v:nh"
+opt=":e:d:v:u:p:nh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -20,6 +20,12 @@ while getopts "${opt}" arg; do
       ;;
     v)
       VERSION="${OPTARG}"
+      ;;
+    u)
+      USER="${OPTARG}"
+      ;;
+    p)
+      PASSWORD="${OPTARG}"
       ;;
     n)
       NOIMAGE="true"

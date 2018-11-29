@@ -16,6 +16,8 @@ VERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
 DEVICE='rpi3'
 EDITION='minimal'
+USER='manjaro'
+PASSWORD='manjaro'
 
 #import conf file
 if [[ -f ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
@@ -64,6 +66,8 @@ usage_build_img() {
     echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rockpro64 and pinebook]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
+    echo "    -u <user>          Username for default user. [Default = manjaro]"
+    echo "    -p <password>      Password of default user. [Default = manjaro]"
     echo "    -n                 Make only rootfs, compressed as a .zip, instead of a .img."
     echo '    -h                 This help'
     echo ''
@@ -221,7 +225,7 @@ create_rootfs_img() {
     sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     
-    msg "Installing packages for $EDITION on $DEVICE..."
+    msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman -S $PKG_DEVICE $PKG_EDITION lsb-release --needed --noconfirm
 
@@ -238,14 +242,18 @@ create_rootfs_img() {
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     fi
 
-    msg "Applying overlay for $EDITION..."
+    msg "Applying overlay for $EDITION edition..."
     sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
     
     msg "Setting up users..."
     #setup users
+    echo "$USER" > $TMPDIR/user
+    echo "$PASSWORD" >> $TMPDIR/password
+    echo "$PASSWORD" >> $TMPDIR/password
     sudo systemd-nspawn -D rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash manjaro 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH passwd manjaro < $LIBDIR/pass-manjaro 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
+    sudo rm -f $TMPDIR/user $TMPDIR/password
     
     msg "Enabling user services..."
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
@@ -295,7 +303,7 @@ create_img() {
         echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | rpi3 | rock64 | rockpro64'
         exit 1
     else
-    msg "Building image for $DEVICE $EDITION..."
+    msg "Building image for $DEVICE $EDITION edition..."
     fi
 
     if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
