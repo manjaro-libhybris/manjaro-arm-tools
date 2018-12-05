@@ -27,7 +27,7 @@ Add my repo to your `/etc/pacman.conf`:
 ```
 [manjaro-strit]
 SigLevel = Optional
-Server = https://www.strits.dk/manjaro-strit/manjaro-strit-repo/$arch
+Server = https://www.strits.dk/files/manjaro-strit/manjaro-strit-repo/$arch
 ```
 Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools`.
 
