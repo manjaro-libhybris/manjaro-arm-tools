@@ -212,7 +212,7 @@ create_rootfs_img() {
 
     msg "Create new rootfs..."
     # install the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH base manjaro-arm-keyring #$PKG_DEVICE $PKG_EDITION manjaro-arm-keyring lsb-release
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH base manjaro-arm-keyring
     
     # Enable cross architecture Chrooting
     if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
@@ -434,7 +434,6 @@ create_img() {
         sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         
     #flash bootloader
-        #sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1
         sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc
         sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc
         sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc
@@ -451,10 +450,10 @@ create_img() {
 }
 
 create_zip() {
+    msg "Compressing $IMGNAME.img..."
     #zip img
     cd $IMGDIR
-    zip $IMGNAME.zip $IMGNAME.img 
-    sudo rm $IMGDIR/$IMGNAME.img
+    xz -z --threads=0 $IMGNAME.img
 
     msg "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
