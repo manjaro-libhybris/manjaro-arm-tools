@@ -453,7 +453,7 @@ create_zip() {
     msg "Compressing $IMGNAME.img..."
     #zip img
     cd $IMGDIR
-    xz -z --threads=0 $IMGNAME.img
+    xz -zv --threads=0 $IMGNAME.img
 
     msg "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
