@@ -251,15 +251,15 @@ create_rootfs_img() {
     echo "$PASSWORD" >> $TMPDIR/password
     echo "$PASSWORD" >> $TMPDIR/password
     sudo systemd-nspawn -D rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
-    sudo rm -f $TMPDIR/user $TMPDIR/password
+ 
     
     msg "Enabling user services..."
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
         echo "No user services for $EDITION edition"
     else
-        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
     fi
 
     msg "Setting up system settings..."
@@ -269,6 +269,8 @@ create_rootfs_img() {
     
     msg "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+#        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable rpi3-post-install.service 1> /dev/null 2>&1
+#        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable rpi3-user.service 1> /dev/null 2>&1
         echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
@@ -279,7 +281,7 @@ create_rootfs_img() {
         echo "No device setups for $DEVICE..."
     elif [[ "$DEVICE" = "pinebook" ]]; then
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         echo ""
     fi
@@ -292,6 +294,9 @@ create_rootfs_img() {
     fi
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
+    
+    # Remove tmp files from host
+    sudo rm -f $TMPDIR/user $TMPDIR/password
 
     msg "$DEVICE $EDITION rootfs complete"
 }
