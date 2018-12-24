@@ -156,6 +156,24 @@ To build a minimal rootfs archive version 18.08 RC1 for the odroid-c2:
 buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
 ```
 
+## buildrootfs
+This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer (and perhaps `buildarmpkg` and `buildarmimg` in the future.
+
+**Syntax**
+```
+buildrootfs -a arch
+```
+
+To build an armv7h rootfs:
+```
+buildrootfs -a armv7h
+```
+
+To build an aarch64 rootfs:
+```
+buildrootfs -a aarch64
+```
+
 ## deployarmimg
 This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.
 If you don't, you can't use this.

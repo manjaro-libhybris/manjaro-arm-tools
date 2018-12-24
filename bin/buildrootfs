@@ -1,0 +1,79 @@
+#! /bin/bash
+
+# Set globals
+LIBDIR=/usr/share/manjaro-arm-tools/lib
+ARCH="aarch64"
+
+#imports
+source $LIBDIR/functions.sh 
+
+# Functions
+
+create_rootfs () {
+    msg "Creating rootfs..."
+    # backup host mirrorlist
+    sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
+
+    # Create arm mirrorlist
+    echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
+    sudo mv mirrorlist /etc/pacman.d/mirrorlist
+    
+    # Remove old rootfs if it exists
+    if [ -d $BUILDDIR/$ARCH ]; then
+    echo "Removing old rootfs..."
+    sudo rm -rf $BUILDDIR/$ARCH
+    fi
+
+    # cd to root_fs
+    sudo mkdir -p $BUILDDIR/$ARCH
+
+    # basescrap the rootfs filesystem
+    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH pacman
+
+    # Enable cross architecture Chrooting
+    if [[ "$ARCH" = "aarch64" ]]; then
+        sudo cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
+    else
+        sudo cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
+    fi
+    
+    # restore original mirrorlist to host system
+    sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
+    sudo pacman -Syy
+}
+
+compress_rootfs () {
+    msg "Compressing rootfs..."
+    cd $BUILDDIR/$ARCH
+    sudo tar -czf $IMGDIR/Manjaro-ARM-$ARCH-latest.tar.gz .
+    sudo rm -rf $BUILDDIR/$ARCH
+    
+}
+
+#Arguments 
+opt=":a:h"
+
+while getopts "${opt}" arg; do
+  case $arg in
+    a)
+      ARCH="${OPTARG}"
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}"
+      exit 1
+      ;;
+    h|?)
+      echo "-a <arch>       Architecture"
+      echo "-h <help>       This help"
+      exit 1
+      ;;
+    :)
+      echo "Option -${OPTARG} requires an argument."
+      exit 1
+      ;;
+  esac
+done
+
+# Commands
+create_rootfs
+compress_rootfs
