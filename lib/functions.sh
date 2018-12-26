@@ -142,6 +142,11 @@ remove_local_pkg() {
 }
 
 create_rootfs_pkg() {
+    # Remove old rootfs if it exists
+    if [ -d $BUILDDIR/$ARCH ]; then
+    echo "Removing old rootfs..."
+    sudo rm -rf $BUILDDIR/$ARCH
+    fi
     msg "Creating rootfs..."
     # backup host mirrorlist
     sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
@@ -149,15 +154,9 @@ create_rootfs_pkg() {
     # Create arm mirrorlist
     echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
-    
-    # Remove old rootfs if it exists
-    if [ -d $BUILDDIR/$ARCH ]; then
-    echo "Removing old rootfs..."
-    sudo rm -rf $BUILDDIR/$ARCH
-    fi
 
     # cd to root_fs
-    mkdir -p $BUILDDIR/$ARCH
+    sudo mkdir -p $BUILDDIR/$ARCH
 
     # basescrap the rootfs filesystem
     sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel manjaro-arm-keyring
@@ -176,7 +175,7 @@ create_rootfs_pkg() {
    msg "Configuring rootfs for building..."
     sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
     sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman -S base --noconfirm
+    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman -Syy base-devel manjaro-arm-keyring --noconfirm
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
     sudo systemd-nspawn -D $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
@@ -188,38 +187,20 @@ create_rootfs_pkg() {
 }
 
 create_rootfs_img() {
-    msg "Creating rootfs for $DEVICE..."
-
-    # backup host mirrorlist
-    sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-    # Create arm mirrlorlist
-    echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
-    sudo mv mirrorlist /etc/pacman.d/mirrorlist
-
-    # cd to root_fs
-    mkdir -p $ROOTFS_IMG
-    cd $ROOTFS_IMG
-    
-        # Remove old rootfs if it exists
+    # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
     echo "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
     fi
-
-    # create folder for the rootfs
-    mkdir -p rootfs_$ARCH
-
-    msg "Create new rootfs..."
-    # install the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $ROOTFS_IMG/rootfs_$ARCH base manjaro-arm-keyring
     
-    # Enable cross architecture Chrooting
-    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
-        sudo cp /usr/bin/qemu-arm-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
-    else
-        sudo cp /usr/bin/qemu-aarch64-static $ROOTFS_IMG/rootfs_$ARCH/usr/bin/
-    fi
+    # fetch and extract rootfs
+    msg "Downloading latest $ARCH rootfs..."
+    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
+    cd $ROOTFS_IMG
+    wget https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz 1> /dev/null 2>&1
+    
+    msg "Extracting $ARCH rootfs..."
+    sudo bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
     
     msg "Setting up keyrings..."
     sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
@@ -227,20 +208,12 @@ create_rootfs_img() {
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman -S $PKG_DEVICE $PKG_EDITION lsb-release --needed --noconfirm
-
-    # restore original mirrorlist to host system
-    sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-    sudo pacman -Syy
+    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION lsb-release --needed --noconfirm
     
     msg "Enabling services..."
     # Enable services
     sudo systemd-nspawn -D rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
-
-    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
-        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
-    fi
 
     msg "Applying overlay for $EDITION edition..."
     sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
@@ -251,15 +224,15 @@ create_rootfs_img() {
     echo "$PASSWORD" >> $TMPDIR/password
     echo "$PASSWORD" >> $TMPDIR/password
     sudo systemd-nspawn -D rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
+    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
     sudo systemd-nspawn -D rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
- 
+    sudo rm -f $TMPDIR/user $TMPDIR/password
     
     msg "Enabling user services..."
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
         echo "No user services for $EDITION edition"
     else
-        sudo systemd-nspawn -D rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
     fi
 
     msg "Setting up system settings..."
@@ -269,19 +242,17 @@ create_rootfs_img() {
     
     msg "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-#        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable rpi3-post-install.service 1> /dev/null 2>&1
-#        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable rpi3-user.service 1> /dev/null 2>&1
         echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
-        echo "No device setups for $DEVICE..."
+        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
         echo "No device setups for $DEVICE..."
     elif [[ "$DEVICE" = "pinebook" ]]; then
         sudo systemd-nspawn -D rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        sudo systemd-nspawn -D rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         echo ""
     fi
@@ -294,9 +265,6 @@ create_rootfs_img() {
     fi
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
-    
-    # Remove tmp files from host
-    sudo rm -f $TMPDIR/user $TMPDIR/password
 
     msg "$DEVICE $EDITION rootfs complete"
 }
@@ -324,31 +292,31 @@ create_img() {
     fi
 
     #making blank .img to be used
-    sudo dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$_SIZE
+    sudo dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$_SIZE 1> /dev/null 2>&1
 
     #probing loop into the kernel
-    sudo modprobe loop
+    sudo modprobe loop 1> /dev/null 2>&1
 
     #set up loop device
     LDEV=`sudo losetup -f`
     DEV=`echo $LDEV | cut -d "/" -f 3`
 
     #mount image to loop device
-    sudo losetup $LDEV $IMGDIR/$IMGNAME.img
+    sudo losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
 
 
     # For Raspberry Pi devices
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
         #partition with boot and root
-        sudo parted -s $LDEV mklabel msdos
-        sudo parted -s $LDEV mkpart primary fat32 0% 100M
+        sudo parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary fat32 0% 100M 1> /dev/null 2>&1
         START=`cat /sys/block/$DEV/${DEV}p1/start`
         SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
         END_SECTOR=$(expr $START + $SIZE)
-        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100%
-        sudo partprobe $LDEV
-        sudo mkfs.vfat "${LDEV}p1"
-        sudo mkfs.ext4 "${LDEV}p2"
+        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+        sudo mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
+        sudo mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -361,20 +329,20 @@ create_img() {
     #clean up
         sudo umount $TMPDIR/root
         sudo umount $TMPDIR/boot
-        sudo losetup -d $LDEV
+        sudo losetup -d $LDEV 1> /dev/null 2>&1
         sudo rm -r $TMPDIR/root $TMPDIR/boot
-        sudo partprobe $LDEV
+        sudo partprobe $LDEV 1> /dev/null 2>&1
 
     # For Odroid devices
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         #Clear first 8mb
-        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
 	
     #partition with a single root partition
-        sudo parted -s $LDEV mklabel msdos
-        sudo parted -s $LDEV mkpart primary ext4 0% 100%
-        sudo partprobe $LDEV
-        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
+        sudo parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -384,26 +352,26 @@ create_img() {
 
     #flash bootloader
         cd $TMPDIR/root/boot/
-        sudo ./sd_fusing.sh $LDEV
+        sudo ./sd_fusing.sh $LDEV 1> /dev/null 2>&1
         cd ~
 
     #clean up
         sudo umount $TMPDIR/root
-        sudo losetup -d $LDEV
+        sudo losetup -d $LDEV 1> /dev/null 2>&1
         sudo rm -r $TMPDIR/root
-        sudo partprobe $LDEV
+        sudo partprobe $LDEV 1> /dev/null 2>&1
 
     # For pinebook device
     elif [[ "$DEVICE" = "pinebook" ]]; then
 
     #Clear first 8mb
-        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
 	
     #partition with a single root partition
-        sudo parted -s $LDEV mklabel msdos
-        sudo parted -s $LDEV mkpart primary ext4 0% 100%
-        sudo partprobe $LDEV
-        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
+        sudo parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -412,25 +380,25 @@ create_img() {
         sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         
     #flash bootloader
-        sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1
+        sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
         
     #clean up
         sudo umount $TMPDIR/root
-        sudo losetup -d $LDEV
+        sudo losetup -d $LDEV 1> /dev/null 2>&1
         sudo rm -r $TMPDIR/root
-        sudo partprobe $LDEV
+        sudo partprobe $LDEV 1> /dev/null 2>&1
         
     # For rockpro64 device
     elif [[ "$DEVICE" = "rockpro64" ]]; then
 
     #Clear first 8mb
-        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
 	
     #partition with a single root partition
-        sudo parted -s $LDEV mklabel msdos
-        sudo parted -s $LDEV mkpart primary ext4 0% 100%
-        sudo partprobe $LDEV
-        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1
+        sudo parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -439,15 +407,15 @@ create_img() {
         sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         
     #flash bootloader
-        sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc
-        sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc
-        sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc
+        sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
         
     #clean up
         sudo umount $TMPDIR/root
-        sudo losetup -d $LDEV
+        sudo losetup -d $LDEV 1> /dev/null 2>&1
         sudo rm -r $TMPDIR/root
-        sudo partprobe $LDEV
+        sudo partprobe $LDEV 1> /dev/null 2>&1
     else
         #Not sure if this IF statement is nesssary anymore
         echo "The $DEVICE" has not been set up yet
