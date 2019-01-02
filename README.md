@@ -13,7 +13,6 @@ This software is available in the Manjaro Strit repo's, if you run Manjaro.
 
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
-* qemu (arch repo)
 * parted (arch repo)
 * arch-install-scripts (arch repo)
 * xz (arch repo)
