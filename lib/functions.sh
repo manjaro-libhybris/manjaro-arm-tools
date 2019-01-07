@@ -11,6 +11,7 @@ TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
+NSPAWN='sudo systemd-nspawn --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 VERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
@@ -173,11 +174,11 @@ create_rootfs_pkg() {
     sudo pacman -Syy
 
    msg "Configuring rootfs for building..."
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH pacman -Syy base-devel manjaro-arm-keyring --noconfirm
+    $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH pacman -Syy base-devel manjaro-arm-keyring --noconfirm
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
     sudo rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
     sudo cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
@@ -197,23 +198,23 @@ create_rootfs_img() {
     msg "Downloading latest $ARCH rootfs..."
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     cd $ROOTFS_IMG
-    wget https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz 1> /dev/null 2>&1
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
     
     msg "Extracting $ARCH rootfs..."
     sudo bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
     
     msg "Setting up keyrings..."
-    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    sudo systemd-nspawn -D $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION lsb-release --needed --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION --needed --noconfirm
     
     msg "Enabling services..."
     # Enable services
-    sudo systemd-nspawn -D rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
     msg "Applying overlay for $EDITION edition..."
     sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
@@ -223,22 +224,22 @@ create_rootfs_img() {
     echo "$USER" > $TMPDIR/user
     echo "$PASSWORD" >> $TMPDIR/password
     echo "$PASSWORD" >> $TMPDIR/password
-    sudo systemd-nspawn -D rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
     sudo rm -f $TMPDIR/user $TMPDIR/password
     
     msg "Enabling user services..."
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
         echo "No user services for $EDITION edition"
     else
-        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH --user manjaro systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
     fi
 
     msg "Setting up system settings..."
     #system setup
-    sudo systemd-nspawn -D rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    sudo systemd-nspawn -D rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
     
     msg "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
@@ -247,12 +248,12 @@ create_rootfs_img() {
         echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
-        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
         echo "No device setups for $DEVICE..."
     elif [[ "$DEVICE" = "pinebook" ]]; then
-        sudo systemd-nspawn -D rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        sudo systemd-nspawn -D rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         echo ""
     fi
@@ -440,18 +441,19 @@ create_rootfs_zip() {
     
     msg "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
 }
 
 build_pkg() {
     #cp package to rootfs
     msg "Copying build directory {$PACKAGE} to rootfs..."
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
     sudo cp -rp "$PACKAGE"/* $BUILDDIR/$ARCH/build/
 
     #build package
     msg "Building {$PACKAGE}..."
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
-    sudo systemd-nspawn -D $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
+    $NSPAWN $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
 }
 
 export_and_clean() {

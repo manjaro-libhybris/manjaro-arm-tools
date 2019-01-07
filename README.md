@@ -129,6 +129,7 @@ and remove the local files.
 * lxqt
 * kde
 * mate (not complete yet, unmaintained)
+* i3 (not complete yet)
 * server (not complete yet, unmaintained)
 
 
