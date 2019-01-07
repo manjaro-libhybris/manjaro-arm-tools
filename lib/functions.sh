@@ -76,6 +76,17 @@ usage_build_img() {
     exit $1
 }
 
+usage_build_oem() {
+    echo "Usage: ${0##*/} [options]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rockpro64 and pinebook]"
+    echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
+    echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
+    echo '    -h                 This help'
+    echo ''
+    echo ''
+    exit $1
+}
+
 msg() {
     ALL_OFF="\e[1;0m"
     BOLD="\e[1;1m"
@@ -240,6 +251,84 @@ create_rootfs_img() {
     #system setup
     $NSPAWN rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
     $NSPAWN rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    
+    msg "Doing device specific setups for $DEVICE..."
+    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+        echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
+        echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
+        echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
+        echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
+        $NSPAWN rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
+    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
+        echo "No device setups for $DEVICE..."
+    elif [[ "$DEVICE" = "pinebook" ]]; then
+        $NSPAWN rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+    else
+        echo ""
+    fi
+    
+    msg "Cleaning rootfs for unwanted files..."
+       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
+        sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
+    else
+        sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
+    fi
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
+
+    msg "$DEVICE $EDITION rootfs complete"
+}
+
+create_rootfs_oem() {
+    msg "Creating OEM image of $EDITION for $DEVICE..."
+    # Remove old rootfs if it exists
+    if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
+    echo "Removing old rootfs..."
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
+    fi
+    
+    # fetch and extract rootfs
+    msg "Downloading latest $ARCH rootfs..."
+    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
+    cd $ROOTFS_IMG
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    
+    msg "Extracting $ARCH rootfs..."
+    sudo bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
+    
+    msg "Setting up keyrings..."
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    
+    msg "Installing packages for $EDITION edition on $DEVICE..."
+    # Install device and editions specific packages
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION dialog --needed --noconfirm
+    
+    msg "Enabling services..."
+    # Enable services
+    $NSPAWN rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
+
+    msg "Applying overlay for $EDITION edition..."
+    sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
+    
+    msg "Enabling user services..."
+    if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
+        echo "No user services for $EDITION edition"
+    else
+        $NSPAWN rootfs_$ARCH --user $USER systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+    fi
+
+    msg "Setting up system settings..."
+    #system setup
+    $NSPAWN rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
+    $NSPAWN rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    sudo mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
+    sudo cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+    
     
     msg "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
