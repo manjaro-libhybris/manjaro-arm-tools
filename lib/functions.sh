@@ -305,7 +305,7 @@ create_rootfs_oem() {
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION dialog --needed --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --needed --noconfirm
     
     msg "Enabling services..."
     # Enable services
@@ -356,7 +356,7 @@ create_rootfs_oem() {
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
 
-    msg "$DEVICE $EDITION rootfs complete"
+    msg "$DEVICE $EDITION OEM rootfs complete"
 }
 
 create_img() {
