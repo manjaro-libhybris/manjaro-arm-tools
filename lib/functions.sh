@@ -203,6 +203,7 @@ create_rootfs_img() {
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
     echo "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     fi
     
     # fetch and extract rootfs
@@ -520,6 +521,7 @@ create_zip() {
 
     msg "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
 }
 
 create_rootfs_zip() {
