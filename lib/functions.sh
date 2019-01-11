@@ -11,7 +11,7 @@ TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
-NSPAWN='sudo systemd-nspawn -q --timezone=off --resolv-conf=copy-host -D'
+NSPAWN='sudo systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 VERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
@@ -339,13 +339,13 @@ create_rootfs_oem() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
-        echo "No device setups for $DEVICE..."
+    elif [[ "$DEVICE" = "rock64" ]]; then
+        echo "/dev/mmcblk0p1 /boot/efi vfat defaults,sync 0 0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         $NSPAWN rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
-        echo ""
+        echo "No device specific setups for $DEVICE..."
     fi
     
     msg "Cleaning rootfs for unwanted files..."
@@ -357,17 +357,17 @@ create_rootfs_oem() {
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
 
-    msg "$DEVICE $EDITION OEM rootfs complete"
+    msg "$DEVICE $EDITION rootfs complete"
 }
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" ]]; then
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | rpi3 | rock64 | rockpro64'
+        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | sopine | rpi3 | rock64 | rockpro64'
         exit 1
     else
-    msg "Building image for $DEVICE $EDITION edition..."
+    msg "Finishing image for $DEVICE $EDITION edition..."
     fi
 
     if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
@@ -396,7 +396,7 @@ create_img() {
     sudo losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
 
 
-    # For Raspberry Pi devices
+    ## For Raspberry Pi devices
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
         #partition with boot and root
         sudo parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
@@ -424,7 +424,7 @@ create_img() {
         sudo rm -r $TMPDIR/root $TMPDIR/boot
         sudo partprobe $LDEV 1> /dev/null 2>&1
 
-    # For Odroid devices
+    ## For Odroid devices
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
@@ -452,8 +452,8 @@ create_img() {
         sudo rm -r $TMPDIR/root
         sudo partprobe $LDEV 1> /dev/null 2>&1
 
-    # For pinebook device
-    elif [[ "$DEVICE" = "pinebook" ]]; then
+    ## For pine devices
+    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]]; then
 
     #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
@@ -472,30 +472,38 @@ create_img() {
         
     #flash bootloader
         sudo dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
-        
+
     #clean up
         sudo umount $TMPDIR/root
         sudo losetup -d $LDEV 1> /dev/null 2>&1
         sudo rm -r $TMPDIR/root
         sudo partprobe $LDEV 1> /dev/null 2>&1
         
-    # For rockpro64 device
-    elif [[ "$DEVICE" = "rockpro64" ]]; then
+    ## For rockchip devices
+    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
 
-    #Clear first 8mb
-        sudo dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
+    #Clear first 32mb
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
 	
     #partition with a single root partition
         sudo parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        sudo parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary fat32 32M 132M 1> /dev/null 2>&1
+        START=`cat /sys/block/$DEV/${DEV}p1/start`
+        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+        END_SECTOR=$(expr $START + $SIZE)
+        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
         sudo partprobe $LDEV 1> /dev/null 2>&1
-        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+        sudo mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
+        sudo mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
-        sudo chmod 777 -R $TMPDIR/root
-        sudo mount ${LDEV}p1 $TMPDIR/root
+        mkdir -p $TMPDIR/boot
+        sudo mount ${LDEV}p1 $TMPDIR/boot
+        sudo mount ${LDEV}p2 $TMPDIR/root
         sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+        sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
         sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
@@ -504,8 +512,9 @@ create_img() {
         
     #clean up
         sudo umount $TMPDIR/root
+        sudo umount $TMPDIR/boot
         sudo losetup -d $LDEV 1> /dev/null 2>&1
-        sudo rm -r $TMPDIR/root
+        sudo rm -r $TMPDIR/root $TMPDIR/boot
         sudo partprobe $LDEV 1> /dev/null 2>&1
     else
         #Not sure if this IF statement is nesssary anymore

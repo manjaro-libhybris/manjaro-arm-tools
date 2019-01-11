@@ -119,6 +119,7 @@ and remove the local files.
 * oc2
 * rpi3
 * pinebook
+* sopine
 * rpi2 (not maintained)
 * oc1 (not maintained)
 * xu4 (not maintained or tested)
