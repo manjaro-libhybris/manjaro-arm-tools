@@ -164,7 +164,7 @@ create_rootfs_pkg() {
     sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
 
     # Create arm mirrorlist
-    echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
+    echo "Server = http://manjaro-arm.moson.eu/stable/\$arch/\$repo/" > mirrorlist
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
@@ -377,7 +377,7 @@ create_img() {
     fi
 
     if [[ "$EDITION" = "minimal" ]]; then
-        _SIZE=2000
+        _SIZE=3000
     else
         _SIZE=5000
     fi
@@ -487,23 +487,15 @@ create_img() {
 	
     #partition with a single root partition
         sudo parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        sudo parted -s $LDEV mkpart primary fat32 32M 132M 1> /dev/null 2>&1
-        START=`cat /sys/block/$DEV/${DEV}p1/start`
-        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary ext4 32M 100% 1> /dev/null 2>&1
         sudo partprobe $LDEV 1> /dev/null 2>&1
-        sudo partprobe $LDEV 1> /dev/null 2>&1
-        sudo mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
-        sudo mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
-        mkdir -p $TMPDIR/boot
-        sudo mount ${LDEV}p1 $TMPDIR/boot
-        sudo mount ${LDEV}p2 $TMPDIR/root
+        sudo chmod 777 -R $TMPDIR/root
+        sudo mount ${LDEV}p1 $TMPDIR/root
         sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
         sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
@@ -512,9 +504,8 @@ create_img() {
         
     #clean up
         sudo umount $TMPDIR/root
-        sudo umount $TMPDIR/boot
         sudo losetup -d $LDEV 1> /dev/null 2>&1
-        sudo rm -r $TMPDIR/root $TMPDIR/boot
+        sudo rm -r $TMPDIR/root
         sudo partprobe $LDEV 1> /dev/null 2>&1
     else
         #Not sure if this IF statement is nesssary anymore
