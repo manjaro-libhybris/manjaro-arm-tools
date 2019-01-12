@@ -117,7 +117,7 @@ and remove the local files.
 
 **Supported devices:**
 * oc2
-* rpi3
+* rpi3 (not the A+ model)
 * pinebook
 * sopine
 * rpi2 (not maintained)
