@@ -15,7 +15,7 @@ create_rootfs () {
     sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
 
     # Create arm mirrorlist
-    echo "Server = http://mirrors.dotsrc.org/manjaro-arm/stable/\$arch/\$repo/" > mirrorlist
+    echo "Server = http://manjaro-arm.moson.eu/stable/\$arch/\$repo/" > mirrorlist
     sudo mv mirrorlist /etc/pacman.d/mirrorlist
     
     # Remove old rootfs if it exists
