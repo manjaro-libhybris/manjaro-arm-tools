@@ -187,7 +187,6 @@ create_rootfs_pkg() {
    msg "Configuring rootfs for building..."
     $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    $NSPAWN $BUILDDIR/$ARCH pacman -Syy base-devel manjaro-arm-keyring --noconfirm
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
     $NSPAWN $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
@@ -221,7 +220,7 @@ create_rootfs_img() {
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION --needed --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION --noconfirm
     
     msg "Enabling services..."
     # Enable services
@@ -245,7 +244,7 @@ create_rootfs_img() {
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
         echo "No user services for $EDITION edition"
     else
-        $NSPAWN rootfs_$ARCH --user manjaro systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
     fi
 
     msg "Setting up system settings..."
@@ -265,7 +264,7 @@ create_rootfs_img() {
         echo "No device setups for $DEVICE..."
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        $NSPAWN rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         echo ""
     fi
@@ -306,7 +305,7 @@ create_rootfs_oem() {
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --needed --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syy base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
     
     msg "Enabling services..."
     # Enable services
@@ -320,7 +319,7 @@ create_rootfs_oem() {
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
         echo "No user services for $EDITION edition"
     else
-        $NSPAWN rootfs_$ARCH --user $USER systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
     fi
 
     msg "Setting up system settings..."
@@ -339,11 +338,11 @@ create_rootfs_oem() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "rock64" ]]; then
+    elif [[ "$DEVICE" = "rockpro64" ]]; then
         echo "/dev/mmcblk0p1 /boot/efi vfat defaults,sync 0 0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        $NSPAWN rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        $NSPAWN rootfs_$ARCH systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         echo "No device specific setups for $DEVICE..."
     fi
@@ -378,6 +377,8 @@ create_img() {
 
     if [[ "$EDITION" = "minimal" ]]; then
         _SIZE=3000
+    elif [[ "$EDITION" = "kde" ]]; then
+        _SIZE=6000
     else
         _SIZE=5000
     fi
@@ -480,7 +481,7 @@ create_img() {
         sudo partprobe $LDEV 1> /dev/null 2>&1
         
     ## For rockchip devices
-    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
+    elif [[ "$DEVICE" = "rock64" ]]; then
 
     #Clear first 32mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
@@ -506,6 +507,44 @@ create_img() {
         sudo umount $TMPDIR/root
         sudo losetup -d $LDEV 1> /dev/null 2>&1
         sudo rm -r $TMPDIR/root
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+        
+    # RockPro64 uses EFI it seems
+    elif [[ "$DEVICE" = "rockpro64" ]]; then
+    
+    #Clear first 32mb
+        sudo dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
+	
+    #partition with a single root partition
+        sudo parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary fat16 32M 132M 1> /dev/null 2>&1
+        START=`cat /sys/block/$DEV/${DEV}p1/start`
+        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+        END_SECTOR=$(expr $START + $SIZE)
+        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+        sudo mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
+        sudo mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
+
+    #copy rootfs contents over to the FS
+        mkdir -p $TMPDIR/root
+        mkdir -p $TMPDIR/boot
+        sudo mount ${LDEV}p1 $TMPDIR/boot
+        sudo mount ${LDEV}p2 $TMPDIR/root
+        sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+        sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
+        
+    #flash bootloader
+    # This is just from the rock64. I probably need some SPI flash stuff for the bbootloader to work.
+        sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+        
+    #clean up
+        sudo umount $TMPDIR/root
+        sudo umount $TMPDIR/boot
+        sudo losetup -d $LDEV 1> /dev/null 2>&1
+        sudo rm -r $TMPDIR/root $TMPDIR/boot
         sudo partprobe $LDEV 1> /dev/null 2>&1
     else
         #Not sure if this IF statement is nesssary anymore
