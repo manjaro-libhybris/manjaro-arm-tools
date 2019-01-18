@@ -42,7 +42,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rockpro64 and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -64,7 +64,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rockpro64 and pinebook]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64 and pinebook]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -78,7 +78,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rockpro64 and pinebook]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64 and pinebook]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo '    -h                 This help'
@@ -95,6 +95,14 @@ msg() {
       printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
  
+info() {
+    ALL_OFF="\e[1;0m"
+    BOLD="\e[1;1m"
+    BLUE="${BOLD}\e[1;34m"
+      local mesg=$1; shift
+      printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+ }
+ 
 get_timer(){
     echo $(date +%s)
 }
@@ -109,19 +117,19 @@ show_elapsed_time(){
 }
  
 sign_pkg() {
-    msg "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
+    info "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
     gpg --detach-sign -u $GPGMAIL "$PACKAGE"
 }
 
 create_torrent() {
-    msg "Creating torrent of $IMAGE..."
+    info "Creating torrent of $IMAGE..."
     cd $IMGDIR/
     mktorrent -a udp://mirror.strits.dk:6969 -v -w https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/$IMAGE -o $IMAGE.torrent $IMAGE
 }
 
 checksum_img() {
     # Create checksums for the image
-    msg "Creating checksums for [$IMAGE]..."
+    info "Creating checksums for [$IMAGE]..."
     cd $IMGDIR/
     sha1sum $IMAGE > $IMAGE.sha1
     sha256sum $IMAGE > $IMAGE.sha256
@@ -129,17 +137,17 @@ checksum_img() {
 
 pkg_upload() {
     msg "Uploading package to server..."
-    echo "Please use your server login details..."
+    info "Please use your server login details..."
     scp $PACKAGE* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
     #msg "Adding [$PACKAGE] to repo..."
-    #echo "Please use your server login details..."
+    #info "Please use your server login details..."
     #ssh $SERVER 'bash -s' < $LIBDIR/repo-add.sh "$@"
 }
 
 img_upload() {
     # Upload image + checksums to image server
     msg "Uploading image and checksums to server..."
-    echo "Please use your server login details..."
+    info "Please use your server login details..."
     rsync -raP $IMAGE* $OSDN/$DEVICE/$EDITION/$VERSION/
 }
 
@@ -149,14 +157,15 @@ remove_local_pkg() {
     msg "Removing local files..."
     rm $PACKAGE*
     else
-    msg "Package did not get uploaded correctly! Files not removed..."
+    info "Package did not get uploaded correctly! Files not removed..."
     fi
 }
 
 create_rootfs_pkg() {
+    msg "Building $PACKAGE for $ARCH..."
     # Remove old rootfs if it exists
     if [ -d $BUILDDIR/$ARCH ]; then
-    echo "Removing old rootfs..."
+    info "Removing old rootfs..."
     sudo rm -rf $BUILDDIR/$ARCH
     fi
     msg "Creating rootfs..."
@@ -187,6 +196,7 @@ create_rootfs_pkg() {
    msg "Configuring rootfs for building..."
     $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+#    $NSPAWN $BUILDDIR/$ARCH pacman -Syy base-devel manjaro-arm-keyring --noconfirm
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
     $NSPAWN $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
@@ -198,23 +208,24 @@ create_rootfs_pkg() {
 }
 
 create_rootfs_img() {
+    msg "Creating install image of $EDITION for $DEVICE..."
     # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
-    echo "Removing old rootfs..."
+    info "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
     sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     fi
     
     # fetch and extract rootfs
-    msg "Downloading latest $ARCH rootfs..."
+    info "Downloading latest $ARCH rootfs..."
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     cd $ROOTFS_IMG
     wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
     
-    msg "Extracting $ARCH rootfs..."
+    info "Extracting $ARCH rootfs..."
     sudo bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
     
-    msg "Setting up keyrings..."
+    info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     
@@ -222,54 +233,54 @@ create_rootfs_img() {
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
     
-    msg "Enabling services..."
+    info "Enabling services..."
     # Enable services
-    $NSPAWN rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
-    $NSPAWN rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
-    msg "Applying overlay for $EDITION edition..."
+    info "Applying overlay for $EDITION edition..."
     sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
     
-    msg "Setting up users..."
+    info "Setting up users..."
     #setup users
     echo "$USER" > $TMPDIR/user
     echo "$PASSWORD" >> $TMPDIR/password
     echo "$PASSWORD" >> $TMPDIR/password
-    $NSPAWN rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
-    $NSPAWN rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
-    $NSPAWN rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
     sudo rm -f $TMPDIR/user $TMPDIR/password
     
-    msg "Enabling user services..."
+    info "Enabling user services..."
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
-        echo "No user services for $EDITION edition"
+        info "No user services for $EDITION edition"
     else
-        $NSPAWN rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
     fi
 
-    msg "Setting up system settings..."
+    info "Setting up system settings..."
     #system setup
-    $NSPAWN rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    $NSPAWN rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
     
-    msg "Doing device specific setups for $DEVICE..."
+    info "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-        echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
-        echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
-        echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
-        echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+        echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
-        $NSPAWN rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
-        echo "No device setups for $DEVICE..."
+        echo "/dev/mmcblk0p1  /boot/efi   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]]; then
-        $NSPAWN rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        $NSPAWN rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         echo ""
     fi
     
-    msg "Cleaning rootfs for unwanted files..."
+    info "Cleaning rootfs for unwanted files..."
        if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
     else
@@ -285,69 +296,78 @@ create_rootfs_oem() {
     msg "Creating OEM image of $EDITION for $DEVICE..."
     # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
-    echo "Removing old rootfs..."
+    info "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
     sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     fi
     
     # fetch and extract rootfs
-    msg "Downloading latest $ARCH rootfs..."
+    info "Downloading latest $ARCH rootfs..."
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     cd $ROOTFS_IMG
     wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
     
-    msg "Extracting $ARCH rootfs..."
+    info "Extracting $ARCH rootfs..."
     sudo bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
     
-    msg "Setting up keyrings..."
+    info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --needed --noconfirm
     
-    msg "Enabling services..."
+    info "Enabling services..."
     # Enable services
-    $NSPAWN rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
-    $NSPAWN rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
-
-    msg "Applying overlay for $EDITION edition..."
-    sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
     
-    msg "Enabling user services..."
-    if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
-        echo "No user services for $EDITION edition"
+    #disabling services depending on edition
+    if [[ "$EDITION" = "mate" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service
+    #elif [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
+    #echo ""
     else
-        $NSPAWN rootfs_$ARCH systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service
     fi
 
-    msg "Setting up system settings..."
+    info "Applying overlay for $EDITION edition..."
+    sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
+    
+    #msg "Enabling user services..."
+    #if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
+    #    info "No user services for $EDITION edition"
+    #else
+    #    $NSPAWN rootfs_$ARCH --user $USER systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
+    #fi
+
+    info "Setting up system settings..."
     #system setup
-    $NSPAWN rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    $NSPAWN rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
     sudo mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     sudo cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     
     
-    msg "Doing device specific setups for $DEVICE..."
+    info "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
-        echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
-        echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
-        echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt
-        echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+        echo "dtparam=audio=on" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "hdmi_drive=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "audio_pwm_mode=2" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
-        $NSPAWN rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "rockpro64" ]]; then
-        echo "/dev/mmcblk0p1 /boot/efi vfat defaults,sync 0 0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+        echo "/dev/mmcblk0p1 /boot/efi vfat defaults,sync 0 0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]]; then
-        $NSPAWN rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        $NSPAWN rootfs_$ARCH systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
-        echo "No device specific setups for $DEVICE..."
+        info "No device specific setups for $DEVICE..."
     fi
     
-    msg "Cleaning rootfs for unwanted files..."
+    info "Cleaning rootfs for unwanted files..."
        if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
     else
@@ -524,7 +544,7 @@ create_img() {
         sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
         sudo partprobe $LDEV 1> /dev/null 2>&1
         sudo mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
-        sudo mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p2 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -539,6 +559,7 @@ create_img() {
         sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+        #sudo dd if=$TMPDIR/root/usr/lib/u-boot-rockpro64/rksd_loader.img of=${LDEV} seek=64 conv=notrunc
         
     #clean up
         sudo umount $TMPDIR/root
@@ -548,17 +569,17 @@ create_img() {
         sudo partprobe $LDEV 1> /dev/null 2>&1
     else
         #Not sure if this IF statement is nesssary anymore
-        echo "The $DEVICE" has not been set up yet
+        info "The $DEVICE" has not been set up yet
     fi
 }
 
 create_zip() {
-    msg "Compressing $IMGNAME.img..."
+    info "Compressing $IMGNAME.img..."
     #zip img
     cd $IMGDIR
     xz -zv --threads=0 $IMGNAME.img
 
-    msg "Removing rootfs_$ARCH"
+    info "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
     sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
 }
@@ -569,7 +590,7 @@ create_rootfs_zip() {
     sudo zip -qr ../$IMGNAME.zip .
     sudo mv ../$IMGNAME.zip $IMGDIR/
     
-    msg "Removing rootfs_$ARCH"
+    info "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
     sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
 }
@@ -590,18 +611,18 @@ export_and_clean() {
     if ls $BUILDDIR/$ARCH/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
         #pull package out of rootfs
         msg "Package Succeeded..."
-        msg "Extracting finished package out of rootfs..."
+        info "Extracting finished package out of rootfs..."
         mkdir -p $PKGDIR/$ARCH
         cp $BUILDDIR/$ARCH/build/*.pkg.tar.xz* $PKGDIR/$ARCH/
         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
 
         #clean up rootfs
-        msg "Cleaning rootfs..."
+        info "Cleaning rootfs..."
         sudo rm -rf $BUILDDIR/$ARCH > /dev/null
 
     else
         msg "!!!!! Package failed to build !!!!!"
-        msg "Cleaning rootfs"
+        info "Cleaning rootfs"
         sudo rm -rf $BUILDDIR/$ARCH > /dev/null
         exit 1
     fi
