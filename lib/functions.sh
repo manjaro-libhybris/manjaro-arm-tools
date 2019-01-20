@@ -249,7 +249,6 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
-    sudo rm -f $TMPDIR/user $TMPDIR/password
     
     info "Enabling user services..."
     if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
@@ -288,6 +287,7 @@ create_rootfs_img() {
     fi
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
+    sudo rm -f $TMPDIR/user $TMPDIR/password
 
     msg "$DEVICE $EDITION rootfs complete"
 }
