@@ -325,11 +325,11 @@ create_rootfs_oem() {
     
     #disabling services depending on edition
     if [[ "$EDITION" = "mate" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
     #elif [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
     #echo ""
     else
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
     fi
 
     info "Applying overlay for $EDITION edition..."
