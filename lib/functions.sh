@@ -261,6 +261,7 @@ create_rootfs_img() {
     #system setup
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    echo "manjaro-arm" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     
     info "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
@@ -270,8 +271,6 @@ create_rootfs_img() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
-        echo "/dev/mmcblk0p1  /boot/efi   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
@@ -316,7 +315,7 @@ create_rootfs_oem() {
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --needed --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
     
     info "Enabling services..."
     # Enable services
@@ -334,18 +333,12 @@ create_rootfs_oem() {
 
     info "Applying overlay for $EDITION edition..."
     sudo cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
-    
-    #msg "Enabling user services..."
-    #if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
-    #    info "No user services for $EDITION edition"
-    #else
-    #    $NSPAWN rootfs_$ARCH --user $USER systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
-    #fi
 
     info "Setting up system settings..."
     #system setup
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    echo "manjaro-arm" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     sudo mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     sudo cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     
@@ -358,8 +351,6 @@ create_rootfs_oem() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "rockpro64" ]]; then
-        echo "/dev/mmcblk0p1 /boot/efi vfat defaults,sync 0 0" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
@@ -555,11 +546,9 @@ create_img() {
         sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
-    # This is just from the rock64. I probably need some SPI flash stuff for the bbootloader to work.
         sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
-        #sudo dd if=$TMPDIR/root/usr/lib/u-boot-rockpro64/rksd_loader.img of=${LDEV} seek=64 conv=notrunc
         
     #clean up
         sudo umount $TMPDIR/root
