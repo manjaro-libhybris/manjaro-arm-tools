@@ -259,8 +259,10 @@ create_rootfs_img() {
 
     info "Setting up system settings..."
     #system setup
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
+    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    sudo cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
+    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     
     info "Doing device specific setups for $DEVICE..."
@@ -336,8 +338,10 @@ create_rootfs_oem() {
 
     info "Setting up system settings..."
     #system setup
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod u+s /usr/bin/ping 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust 1> /dev/null 2>&1
+    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
+    sudo rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    sudo cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
+    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | sudo tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     sudo mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     sudo cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
@@ -387,11 +391,11 @@ create_img() {
     fi
 
     if [[ "$EDITION" = "minimal" ]]; then
-        _SIZE=3000
+        _SIZE=2000
     elif [[ "$EDITION" = "kde" ]]; then
-        _SIZE=6000
-    else
         _SIZE=5000
+    else
+        _SIZE=4000
     fi
 
     #making blank .img to be used
@@ -526,7 +530,7 @@ create_img() {
     #Clear first 32mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
 	
-    #partition with a single root partition
+    #partition with boot and root
         sudo parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
         sudo parted -s $LDEV mkpart primary fat16 32M 132M 1> /dev/null 2>&1
         START=`cat /sys/block/$DEV/${DEV}p1/start`
