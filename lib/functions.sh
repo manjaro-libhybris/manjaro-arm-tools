@@ -196,7 +196,6 @@ create_rootfs_pkg() {
    msg "Configuring rootfs for building..."
     $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-#    $NSPAWN $BUILDDIR/$ARCH pacman -Syy base-devel manjaro-arm-keyring --noconfirm
     sudo cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
     $NSPAWN $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
@@ -550,9 +549,9 @@ create_img() {
         sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
-        sudo dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        sudo dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        sudo dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+        sudo dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        sudo dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        sudo dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
         
     #clean up
         sudo umount $TMPDIR/root
