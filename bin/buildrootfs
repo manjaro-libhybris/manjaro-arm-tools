@@ -37,6 +37,12 @@ create_rootfs () {
         sudo cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
     fi
     
+    # fix SSL in the rootfs
+    sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
+    sudo rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    sudo cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
+    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
+    
     # restore original mirrorlist to host system
     sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
     sudo pacman -Syy

@@ -356,7 +356,7 @@ create_rootfs_oem() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user manjaro systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
         info "No device specific setups for $DEVICE..."
     fi
@@ -531,14 +531,14 @@ create_img() {
 	
     #partition with boot and root
         sudo parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-        sudo parted -s $LDEV mkpart primary fat16 32M 132M 1> /dev/null 2>&1
+        sudo parted -s $LDEV mkpart primary fat16 32M 128M 1> /dev/null 2>&1
         START=`cat /sys/block/$DEV/${DEV}p1/start`
         SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
         END_SECTOR=$(expr $START + $SIZE)
         sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
         sudo partprobe $LDEV 1> /dev/null 2>&1
-        sudo mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
-        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p2 1> /dev/null 2>&1
+        sudo mkfs.vfat "${LDEV}p1" -n boot 1> /dev/null 2>&1
+        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p2 -L linux-root 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
