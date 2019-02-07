@@ -52,7 +52,7 @@ Options inside [] are optional. Use `-h` to see what the defaults are.
 **Syntax**
 
 ```
-buildarmpkg -p package [-a architecture]
+buildarmpkg -p package [-a architecture] [-k]
 ```
 
 To build an armv7h package, place yourself in the folder, that contains a folder with the PKGBUILD, named as the package you want to build. Then run:
@@ -61,7 +61,7 @@ To build an armv7h package, place yourself in the folder, that contains a folder
 buildarmpkg -p package -a armv7h
 ```
 
-This will build the package called "package" for the armv7h architecture.
+This will build the package called "package" for the armv7h architecture in the previous rootfs generated.
 
 To build an aarch64 package it's the same, just with
 

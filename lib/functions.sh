@@ -612,13 +612,13 @@ export_and_clean() {
         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
 
         #clean up rootfs
-        info "Cleaning rootfs..."
-        sudo rm -rf $BUILDDIR/$ARCH > /dev/null
+        info "Cleaning build files from rootfs"
+        sudo rm -rf $BUILDDIR/$ARCH/build/
 
     else
         msg "!!!!! Package failed to build !!!!!"
-        info "Cleaning rootfs"
-        sudo rm -rf $BUILDDIR/$ARCH > /dev/null
+        info "Cleaning build files from rootfs"
+        sudo rm -rf $BUILDDIR/$ARCH/build/
         exit 1
     fi
 }

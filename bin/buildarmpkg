@@ -2,12 +2,13 @@
 
 # Set globals
 LIBDIR=/usr/share/manjaro-arm-tools/lib
+BUILDCLEAN=true
 
 #imports
 source $LIBDIR/functions.sh
 
 #Arguments 
-opt=":p:a:h"
+opt=":p:a:kh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -16,6 +17,9 @@ while getopts "${opt}" arg; do
       ;;
     a)
       ARCH="${OPTARG}"
+      ;;
+    k)
+      BUILDCLEAN=false
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -46,8 +50,14 @@ fi
 # start the timer
 timer_start=$(get_timer)
 
+if [[ "$BUILDCLEAN" = "true" ]]; then
+if [[ ! -d $BUILDDIR/$ARCH ]]; then
+    msg "Rootfs does not exist. Please run this command again without the -k option to generate a rootfs to use..."
+    exit 1
+fi
 #create the rootfs to build in
 create_rootfs_pkg
+fi
 
 #build the package
 build_pkg
