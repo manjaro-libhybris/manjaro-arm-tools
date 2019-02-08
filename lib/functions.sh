@@ -42,7 +42,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64 and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -64,7 +64,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64 and pinebook]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -78,7 +78,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64 and pinebook]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo '    -h                 This help'
@@ -280,7 +280,7 @@ create_rootfs_img() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
-       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
+       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
     else
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
@@ -364,7 +364,7 @@ create_rootfs_oem() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
-       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
+       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
     else
         sudo rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
@@ -378,9 +378,9 @@ create_rootfs_oem() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" ]]; then
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "nyan-big" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | sopine | rpi3 | rock64 | rockpro64'
+        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | sopine | rpi3 | rock64 | rockpro64 | nyan-big'
         exit 1
     else
     msg "Finishing image for $DEVICE $EDITION edition..."
@@ -562,6 +562,41 @@ create_img() {
         sudo losetup -d $LDEV 1> /dev/null 2>&1
         sudo rm -r $TMPDIR/root $TMPDIR/boot
         sudo partprobe $LDEV 1> /dev/null 2>&1
+        
+    elif [[ "$DEVICE" = "nyan-big" ]]; then
+	
+    #partition with boot and root
+        if [ ! -f /usr/bin/sgdisk ]; then
+        info "gptfdisk is not installed. Please install it and try again..."
+        exit 1
+        fi
+
+	    sudo sgdisk -a 64 -n 1:0:+16M -t 1:7F00 -c 1:"KERN-A" -A 1:=:0x0105000000000000 -n 2:0:0 -t 2:7F01 -c 2:"ROOT-A" $LDEV
+
+	    sync
+	    sudo partprobe $LDEV
+	    sudo partprobe
+	    sudo mkfs.ext4 -L ROOT ${LDEV}p2
+        
+
+    #copy rootfs contents over to the FS
+        mkdir -p $TMPDIR/root
+        sudo mount ${LDEV}p2 $TMPDIR/root
+        sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+        
+    #flash bootloader
+	sudo dd if=/dev/zero of=${LDEV}p1
+	#flash u-boot or linux-nyan-chromebook kpart..
+	    #sudo dd if=$TMPDIR/root/boot/u-boot.kpart of=${LDEV}p1
+        sudo dd if=$TMPDIR/root/boot/vmlinux.kpart of=${LDEV}p1 
+        
+    #clean up
+        sudo umount $TMPDIR/root
+        sudo losetup -d $LDEV 1> /dev/null 2>&1
+        sudo rm -r $TMPDIR/root
+        sudo partprobe $LDEV 1> /dev/null 2>&1
+
+
     else
         #Not sure if this IF statement is nesssary anymore
         info "The $DEVICE" has not been set up yet

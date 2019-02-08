@@ -49,7 +49,7 @@ done
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 
    
-if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
+if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
     ARCH='armv7h'
 else
     ARCH='aarch64'
