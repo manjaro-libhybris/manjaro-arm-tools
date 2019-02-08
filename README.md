@@ -17,6 +17,7 @@ These scripts rely on certain packages to be able to function. These packages ar
 * arch-install-scripts (arch repo)
 * xz (arch repo)
 * git (arch repo)
+* gptfdisk (arch repo) (required for nyan-big builds)
 
 This package also provides `binfmt-qemu-static`.
 
