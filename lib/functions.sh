@@ -56,6 +56,7 @@ usage_build_pkg() {
     echo "Usage: ${0##*/} [options]"
     echo "    -a <arch>          Architecture. [Default = aarch64. Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to build"
+    echo "    -k                 Keep the previous rootfs for this build"
     echo '    -h                 This help'
     echo ''
     echo ''
