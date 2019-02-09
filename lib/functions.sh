@@ -125,7 +125,7 @@ sign_pkg() {
 create_torrent() {
     info "Creating torrent of $IMAGE..."
     cd $IMGDIR/
-    mktorrent -a udp://mirror.strits.dk:6969 -v -w https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/$IMAGE -o $IMAGE.torrent $IMAGE
+    mktorrent -v -w https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/$IMAGE -o $IMAGE.torrent $IMAGE
 }
 
 checksum_img() {
