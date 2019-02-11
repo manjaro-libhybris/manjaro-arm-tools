@@ -70,7 +70,7 @@ usage_build_img() {
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
     echo "    -p <password>      Password of default user. [Default = manjaro]"
-    echo "    -n                 Make only rootfs, compressed as a .zip, instead of a .img."
+    echo "    -n                 Force download of new rootfs."
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -82,6 +82,7 @@ usage_build_oem() {
     echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
+    echo "    -n                 Force download of new rootfs."
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -213,14 +214,20 @@ create_rootfs_img() {
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
     info "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
-    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     fi
-    
+    if [[ "$KEEPROOTFS" = "false" ]]; then
+    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     # fetch and extract rootfs
     info "Downloading latest $ARCH rootfs..."
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     cd $ROOTFS_IMG
     wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
+    #also fetch it, if it does not exist
+    if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
+    cd $ROOTFS_IMG
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
     
     info "Extracting $ARCH rootfs..."
     sudo bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
@@ -299,14 +306,20 @@ create_rootfs_oem() {
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
     info "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
-    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     fi
-    
+    if [[ "$KEEPROOTFS" = "false" ]]; then
+    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     # fetch and extract rootfs
     info "Downloading latest $ARCH rootfs..."
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     cd $ROOTFS_IMG
     wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
+    #also fetch it, if it does not exist
+    if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
+    cd $ROOTFS_IMG
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
     
     info "Extracting $ARCH rootfs..."
     sudo bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
@@ -612,7 +625,6 @@ create_zip() {
 
     info "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
-    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
 }
 
 create_rootfs_zip() {
@@ -623,7 +635,6 @@ create_rootfs_zip() {
     
     info "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
-    sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
 }
 
 build_pkg() {

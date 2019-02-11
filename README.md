@@ -152,7 +152,7 @@ To build a minimal image version 18.07 for the raspberry pi 3:
 buildarmimg -d rpi3 -e minimal -v 18.07
 ```
 
-To build a minimal rootfs archive version 18.08 RC1 for the odroid-c2:
+To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:
 
 ```
 buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n

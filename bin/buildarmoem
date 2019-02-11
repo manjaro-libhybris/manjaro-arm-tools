@@ -2,12 +2,13 @@
 
 # Set globals
 LIBDIR=/usr/share/manjaro-arm-tools/lib
+KEEPROOTFS=true
 
 #imports
 source $LIBDIR/functions.sh
 
 #Arguments 
-opt=":e:d:v:h"
+opt=":e:d:v:nh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -19,6 +20,9 @@ while getopts "${opt}" arg; do
       ;;
     v)
       VERSION="${OPTARG}"
+      ;;
+    n)
+      KEEPROOTFS=false
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
