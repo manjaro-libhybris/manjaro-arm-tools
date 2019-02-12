@@ -53,7 +53,8 @@ timer_start=$(get_timer)
 if [[ "$BUILDCLEAN" = "false" && ! -d $BUILDDIR/$ARCH ]]; then
     msg "Rootfs does not exist. Please run this command again without the -k option to generate a rootfs to use..."
     exit 1
-else
+    
+elif [[ "$BUILDCLEAN" = "true" ]]; then
 #create the rootfs to build in
 create_rootfs_pkg
 fi
