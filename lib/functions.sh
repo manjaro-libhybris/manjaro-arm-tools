@@ -215,11 +215,11 @@ create_rootfs_img() {
     info "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
     fi
+    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     if [[ "$KEEPROOTFS" = "false" ]]; then
     sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     # fetch and extract rootfs
     info "Downloading latest $ARCH rootfs..."
-    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     cd $ROOTFS_IMG
     wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
@@ -307,11 +307,11 @@ create_rootfs_oem() {
     info "Removing old rootfs..."
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
     fi
+    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     if [[ "$KEEPROOTFS" = "false" ]]; then
     sudo rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
     # fetch and extract rootfs
     info "Downloading latest $ARCH rootfs..."
-    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     cd $ROOTFS_IMG
     wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
