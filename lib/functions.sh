@@ -512,7 +512,7 @@ create_img() {
         sudo partprobe $LDEV 1> /dev/null 2>&1
         
     ## For rockchip devices
-    elif [[ "$DEVICE" = "rock64" ]]; then
+    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
 
     #Clear first 32mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
@@ -541,41 +541,41 @@ create_img() {
         sudo partprobe $LDEV 1> /dev/null 2>&1
         
     # RockPro64 uses EFI it seems
-    elif [[ "$DEVICE" = "rockpro64" ]]; then
+    #elif [[ "$DEVICE" = "rockpro64" ]]; then
     
     #Clear first 32mb
-        sudo dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
+        #sudo dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
 	
     #partition with boot and root
-        sudo parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-        sudo parted -s $LDEV mkpart primary fat16 32M 128M 1> /dev/null 2>&1
-        START=`cat /sys/block/$DEV/${DEV}p1/start`
-        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-        sudo partprobe $LDEV 1> /dev/null 2>&1
-        sudo mkfs.vfat "${LDEV}p1" -n boot 1> /dev/null 2>&1
-        sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p2 -L linux-root 1> /dev/null 2>&1
+        #sudo parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+        #sudo parted -s $LDEV mkpart primary fat16 32M 128M 1> /dev/null 2>&1
+        #START=`cat /sys/block/$DEV/${DEV}p1/start`
+        #SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+        #END_SECTOR=$(expr $START + $SIZE)
+        #sudo parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+        #sudo partprobe $LDEV 1> /dev/null 2>&1
+        #sudo mkfs.vfat "${LDEV}p1" -n boot 1> /dev/null 2>&1
+        #sudo mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p2 -L linux-root 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
-        mkdir -p $TMPDIR/root
-        mkdir -p $TMPDIR/boot
-        sudo mount ${LDEV}p1 $TMPDIR/boot
-        sudo mount ${LDEV}p2 $TMPDIR/root
-        sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
+        #mkdir -p $TMPDIR/root
+        #mkdir -p $TMPDIR/boot
+        #sudo mount ${LDEV}p1 $TMPDIR/boot
+        #sudo mount ${LDEV}p2 $TMPDIR/root
+        #sudo cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+        #sudo mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
-        sudo dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        sudo dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        sudo dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+        #sudo dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        #sudo dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        #sudo dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
         
     #clean up
-        sudo umount $TMPDIR/root
-        sudo umount $TMPDIR/boot
-        sudo losetup -d $LDEV 1> /dev/null 2>&1
-        sudo rm -r $TMPDIR/root $TMPDIR/boot
-        sudo partprobe $LDEV 1> /dev/null 2>&1
+        #sudo umount $TMPDIR/root
+        #sudo umount $TMPDIR/boot
+        #sudo losetup -d $LDEV 1> /dev/null 2>&1
+        #sudo rm -r $TMPDIR/root $TMPDIR/boot
+        #sudo partprobe $LDEV 1> /dev/null 2>&1
         
     elif [[ "$DEVICE" = "nyan-big" ]]; then
 	
