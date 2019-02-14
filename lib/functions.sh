@@ -408,7 +408,7 @@ create_img() {
 
     if [[ "$EDITION" = "minimal" ]]; then
         _SIZE=2000
-    elif [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "gnome" ]]; then
+    elif [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "gnome" ]] || [[ "$EDITION" = "i3" ]]; then
         _SIZE=5000
     else
         _SIZE=4000
