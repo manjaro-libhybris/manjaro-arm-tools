@@ -70,6 +70,7 @@ usage_build_img() {
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
     echo "    -p <password>      Password of default user. [Default = manjaro]"
+    echo "    -i <package>       Install local package into image rootfs."
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
@@ -83,6 +84,7 @@ usage_build_oem() {
     echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
+    echo "    -i <package>       Install local package into image rootfs."
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
@@ -241,6 +243,11 @@ create_rootfs_img() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
+    if [[ ! -z "$ADD_PACKAGE" ]]; then
+    info "Installing local package {$ADD_PACKAGE} to rootfs..."
+    sudo cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+    fi
     
     info "Enabling services..."
     # Enable services
@@ -333,6 +340,11 @@ create_rootfs_oem() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
+    if [[ ! -z "$ADD_PACKAGE" ]]; then
+    info "Installing local package {$ADD_PACKAGE} to rootfs..."
+    sudo cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+    fi
     
     info "Enabling services..."
     # Enable services

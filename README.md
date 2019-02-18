@@ -158,6 +158,12 @@ To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloa
 buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
 ```
 
+To build an lxqt version with a local package installed for the rock64:
+
+```
+buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
+```
+
 ## buildarmoem
 This one functions mostly like `buildarmimg`, but only has device, edition and version arguments.
 

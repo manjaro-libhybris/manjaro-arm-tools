@@ -9,7 +9,7 @@ EXTRACTED=false
 source $LIBDIR/functions.sh
 
 #Arguments 
-opt=":e:d:v:u:p:nxh"
+opt=":e:d:v:u:p:i:nxh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -33,6 +33,9 @@ while getopts "${opt}" arg; do
       ;;
     x)
       EXTRACTED=true
+      ;;
+    i)
+      ADD_PACKAGE="${OPTARG}"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
