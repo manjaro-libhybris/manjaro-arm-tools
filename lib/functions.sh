@@ -71,6 +71,7 @@ usage_build_img() {
     echo "    -u <user>          Username for default user. [Default = manjaro]"
     echo "    -p <password>      Password of default user. [Default = manjaro]"
     echo "    -n                 Force download of new rootfs."
+    echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -83,6 +84,7 @@ usage_build_oem() {
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -n                 Force download of new rootfs."
+    echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
     echo ''
     echo ''

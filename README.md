@@ -143,7 +143,7 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] [-n]
+buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] [-n] [-x]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 3:
