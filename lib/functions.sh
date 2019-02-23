@@ -42,7 +42,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, sopine, pine64, pinebook and nyan-big]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -65,7 +65,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, sopine, pine64, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -81,7 +81,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, pinebook and nyan-big]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, sopine, pine64, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -293,7 +293,7 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pinebook-user.service 1> /dev/null 2>&1
     else
-        echo ""
+        info "No device specific setups for $DEVICE..."
     fi
     
     info "Cleaning rootfs for unwanted files..."
@@ -406,15 +406,25 @@ create_rootfs_oem() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "nyan-big" ]]; then
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "pine64" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "nyan-big" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'rpi2  |  oc1  | oc2  |  xu4 | pinebook | sopine | rpi3 | rock64 | rockpro64 | nyan-big'
+        echo 'rpi2
+        oc1
+        oc2
+        xu4
+        pinebook
+        sopine
+        pine64
+        rpi3
+        rock64
+        rockpro64
+        nyan-big'
         exit 1
     else
     msg "Finishing image for $DEVICE $EDITION edition..."
     fi
 
-    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]]; then
+    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
         ARCH='armv7h'
     else
         ARCH='aarch64'
@@ -422,10 +432,8 @@ create_img() {
 
     if [[ "$EDITION" = "minimal" ]]; then
         _SIZE=2000
-    elif [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "gnome" ]] || [[ "$EDITION" = "i3" ]]; then
-        _SIZE=5000
     else
-        _SIZE=4000
+        _SIZE=5000
     fi
 
     #making blank .img to be used
@@ -499,7 +507,7 @@ create_img() {
         sudo partprobe $LDEV 1> /dev/null 2>&1
 
     ## For pine devices
-    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]]; then
+    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pine64" ]]; then
 
     #Clear first 8mb
         sudo dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
@@ -637,16 +645,6 @@ create_zip() {
     cd $IMGDIR
     xz -zv --threads=0 $IMGNAME.img
 
-    info "Removing rootfs_$ARCH"
-    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
-}
-
-create_rootfs_zip() {
-    #zip rootfs
-    cd $ROOTFS_IMG/rootfs_$ARCH
-    sudo zip -qr ../$IMGNAME.zip .
-    sudo mv ../$IMGNAME.zip $IMGDIR/
-    
     info "Removing rootfs_$ARCH"
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH
 }
