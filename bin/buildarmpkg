@@ -8,7 +8,7 @@ BUILDCLEAN=true
 source $LIBDIR/functions.sh
 
 #Arguments 
-opt=":p:a:kh"
+opt=":p:a:i:kh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -20,6 +20,9 @@ while getopts "${opt}" arg; do
       ;;
     k)
       BUILDCLEAN=false
+      ;;
+    i)
+      ADD_PACKAGE="${OPTARG}"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"

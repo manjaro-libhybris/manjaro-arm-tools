@@ -53,7 +53,7 @@ Options inside [] are optional. Use `-h` to see what the defaults are.
 **Syntax**
 
 ```
-buildarmpkg -p package [-a architecture] [-k]
+buildarmpkg -p package [-a architecture] [-k] [-i package file]
 ```
 
 To build an armv7h package, place yourself in the folder, that contains a folder with the PKGBUILD, named as the package you want to build. Then run:
@@ -143,7 +143,7 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] [-n] [-x]
+buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] [-n] [-x] [-i package file]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 3:

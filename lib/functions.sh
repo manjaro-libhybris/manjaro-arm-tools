@@ -57,6 +57,7 @@ usage_build_pkg() {
     echo "    -a <arch>          Architecture. [Default = aarch64. Options = any, armv7h or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo "    -k                 Keep the previous rootfs for this build"
+    echo "    -i <package>       Install local package into image rootfs."
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -210,6 +211,11 @@ create_rootfs_pkg() {
     sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sudo sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sudo sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
+     if [[ ! -z "$ADD_PACKAGE" ]]; then
+    info "Installing local package {$ADD_PACKAGE} to rootfs..."
+    sudo cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
+    $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+    fi
 }
 
 create_rootfs_img() {
