@@ -435,14 +435,13 @@ create_img() {
         ARCH='aarch64'
     fi
 
-    if [[ "$EDITION" = "minimal" ]]; then
-        _SIZE=2000
-    else
-        _SIZE=5000
-    fi
-
+    #get size of blank image
+    SIZE=$(sudo du -s --block-size=MB $ROOTFS_IMG/rootfs_$ARCH | awk '{print $1}' | sed -e 's/MB//g')
+    EXTRA_SIZE=200
+    REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
+    
     #making blank .img to be used
-    sudo dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$_SIZE 1> /dev/null 2>&1
+    sudo dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE 1> /dev/null 2>&1
 
     #probing loop into the kernel
     sudo modprobe loop 1> /dev/null 2>&1
