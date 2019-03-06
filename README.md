@@ -17,6 +17,7 @@ These scripts rely on certain packages to be able to function. These packages ar
 * arch-install-scripts (arch repo)
 * xz (arch repo)
 * git (arch repo)
+* zip (arch repo) (for `buildrootfs`)
 * gptfdisk (arch repo) (required for nyan-big builds)
 
 This package also provides `binfmt-qemu-static`.
@@ -118,7 +119,7 @@ and remove the local files.
 
 **Supported devices:**
 * oc2
-* rpi3 (not the A+ model it seems)
+* rpi3 (not the A/B+ models it seems)
 * pinebook
 * sopine
 * rpi2 (not maintained)
