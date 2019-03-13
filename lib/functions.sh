@@ -311,6 +311,7 @@ create_rootfs_img() {
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     sudo rm -f $TMPDIR/user $TMPDIR/password
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
 
     msg "$DEVICE $EDITION rootfs complete"
 }
@@ -406,6 +407,7 @@ create_rootfs_oem() {
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
+    sudo rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
 
     msg "$DEVICE $EDITION rootfs complete"
 }
