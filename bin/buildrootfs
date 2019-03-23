@@ -7,52 +7,58 @@ ARCH="aarch64"
 #imports
 source $LIBDIR/functions.sh 
 
+# check if root
+if [ "$EUID" -ne 0 ]
+  then echo "This script requires root permissions to run. Please run as root or with sudo!"
+  exit
+fi
+
 # Functions
 
 create_rootfs () {
     msg "Creating rootfs..."
     # backup host mirrorlist
-    sudo mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
+    mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
 
     # Create arm mirrorlist
     echo "Server = http://manjaro-arm.moson.eu/stable/\$arch/\$repo/" > mirrorlist
-    sudo mv mirrorlist /etc/pacman.d/mirrorlist
+    mv mirrorlist /etc/pacman.d/mirrorlist
     
     # Remove old rootfs if it exists
     if [ -d $BUILDDIR/$ARCH ]; then
     echo "Removing old rootfs..."
-    sudo rm -rf $BUILDDIR/$ARCH
+    rm -rf $BUILDDIR/$ARCH
     fi
 
     # cd to root_fs
-    sudo mkdir -p $BUILDDIR/$ARCH
+    mkdir -p $BUILDDIR/$ARCH
 
     # basescrap the rootfs filesystem
-    sudo pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH pacman
+    pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH pacman
 
     # Enable cross architecture Chrooting
     if [[ "$ARCH" = "aarch64" ]]; then
-        sudo cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
+        cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
     else
-        sudo cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
+        cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
     fi
     
     # fix SSL in the rootfs
-    sudo rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
-    sudo rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    sudo cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
-    sudo cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
+    rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
+    rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
+    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     
     # restore original mirrorlist to host system
-    sudo mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-    sudo pacman -Syy
+    mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
+    pacman -Syy
 }
 
 compress_rootfs () {
     msg "Compressing rootfs..."
     cd $BUILDDIR/$ARCH
-    sudo tar -czf $IMGDIR/Manjaro-ARM-$ARCH-latest.tar.gz .
-    sudo rm -rf $BUILDDIR/$ARCH
+    tar -czf $IMGDIR/Manjaro-ARM-$ARCH-latest.tar.gz .
+    rm -rf $BUILDDIR/$ARCH
     
 }
 

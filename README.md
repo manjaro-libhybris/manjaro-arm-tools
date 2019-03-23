@@ -54,13 +54,13 @@ Options inside [] are optional. Use `-h` to see what the defaults are.
 **Syntax**
 
 ```
-buildarmpkg -p package [-a architecture] [-k] [-i package file]
+sudo buildarmpkg -p package [-a architecture] [-k] [-i package file]
 ```
 
 To build an armv7h package, place yourself in the folder, that contains a folder with the PKGBUILD, named as the package you want to build. Then run:
 
 ```
-buildarmpkg -p package -a armv7h
+sudo buildarmpkg -p package -a armv7h
 ```
 
 This will build the package called "package" for the armv7h architecture in the previous rootfs generated.
@@ -68,13 +68,13 @@ This will build the package called "package" for the armv7h architecture in the 
 To build an aarch64 package it's the same, just with
 
 ```
-buildarmpkg -p package -a aarch64
+sudo buildarmpkg -p package -a aarch64
 ```
 
 You can also build `any` packages, which will use the aarch64 architecture to build from.
 
 ```
-buildarmpkg -p package -a any
+sudo buildarmpkg -p package -a any
 ```
 
 This places the packages created inside `/var/cache/manjaro-arm-tools/pkg/` in either armv7h folder or aarch64 folder.
@@ -144,25 +144,25 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] [-n] [-x] [-i package file]
+sudo buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] [-n] [-x] [-i package file]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 3:
 
 ```
-buildarmimg -d rpi3 -e minimal -v 18.07
+sudo buildarmimg -d rpi3 -e minimal -v 18.07
 ```
 
 To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:
 
 ```
-buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
+sudo buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
 ```
 
 To build an lxqt version with a local package installed for the rock64:
 
 ```
-buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
+sudo buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
 ```
 
 ## buildarmoem
@@ -175,17 +175,17 @@ This script does exactly what it says it does. It builds a very small rootfs, to
 
 **Syntax**
 ```
-buildrootfs -a arch
+sudo buildrootfs -a arch
 ```
 
 To build an armv7h rootfs:
 ```
-buildrootfs -a armv7h
+sudo buildrootfs -a armv7h
 ```
 
 To build an aarch64 rootfs:
 ```
-buildrootfs -a aarch64
+sudo buildrootfs -a aarch64
 ```
 
 ## deployarmimg

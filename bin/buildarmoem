@@ -8,6 +8,12 @@ EXTRACTED=false
 #imports
 source $LIBDIR/functions.sh
 
+# check if root
+if [ "$EUID" -ne 0 ]
+  then echo "This script requires root permissions to run. Please run as root or with sudo!"
+  exit
+fi
+
 #Arguments 
 opt=":e:d:v:i:nxh"
 
