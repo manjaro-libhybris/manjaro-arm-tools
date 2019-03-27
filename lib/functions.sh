@@ -641,7 +641,7 @@ create_img() {
 
     else
         #Not sure if this IF statement is nesssary anymore
-        info "The $DEVICE" has not been set up yet
+        info "The $DEVICE has not been set up yet"
     fi
 }
 
