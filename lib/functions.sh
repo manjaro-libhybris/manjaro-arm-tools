@@ -287,6 +287,7 @@ create_rootfs_img() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
+    chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     
     info "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
@@ -382,6 +383,7 @@ create_rootfs_oem() {
     mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
+    chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     
     
     info "Doing device specific setups for $DEVICE..."
@@ -643,6 +645,7 @@ create_img() {
         #Not sure if this IF statement is nesssary anymore
         info "The $DEVICE has not been set up yet"
     fi
+    chmod 666 $IMGDIR/$IMGNAME.img
 }
 
 create_zip() {
@@ -650,6 +653,7 @@ create_zip() {
     #zip img
     cd $IMGDIR
     xz -zv --threads=0 $IMGNAME.img
+    chmod 666 $IMGDIR/$IMGNAME.img.xz
 
     info "Removing rootfs_$ARCH"
     rm -rf $ROOTFS_IMG/rootfs_$ARCH
