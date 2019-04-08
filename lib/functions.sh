@@ -313,6 +313,7 @@ create_rootfs_img() {
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -f $TMPDIR/user $TMPDIR/password
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
 
     msg "$DEVICE $EDITION rootfs complete"
 }
@@ -410,6 +411,7 @@ create_rootfs_oem() {
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
 
     msg "$DEVICE $EDITION rootfs complete"
 }
