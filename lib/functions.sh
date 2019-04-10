@@ -21,11 +21,8 @@ USER='manjaro'
 PASSWORD='manjaro'
 
 #import conf file
-if [[ -f ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf ]]; then
-source ~/.local/share/manjaro-arm-tools/manjaro-arm-tools.conf 
-else
 source /etc/manjaro-arm-tools/manjaro-arm-tools.conf 
-fi
+
 
 usage_deploy_pkg() {
     echo "Usage: ${0##*/} [options]"
