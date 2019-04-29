@@ -39,7 +39,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, sopine, pinebook and nyan-big]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, sopine, pinebook and nyan-big]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -t                 Create a torrent of the image"
@@ -63,7 +63,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, sopine, pinebook and nyan-big]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, sopine, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -79,7 +79,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, xu4, rock64, sopine, pinebook and nyan-big]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, sopine, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -392,7 +392,7 @@ create_rootfs_oem() {
         echo "hdmi_drive=2" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "audio_pwm_mode=2" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
+    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "on2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
@@ -417,11 +417,12 @@ create_rootfs_oem() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "nyan-big" ]]; then
+    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "nyan-big" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
         echo 'rpi2
         oc1
         oc2
+        on2
         xu4
         pinebook
         sopine
@@ -513,6 +514,38 @@ create_img() {
         umount $TMPDIR/root
         losetup -d $LDEV 1> /dev/null 2>&1
         rm -r $TMPDIR/root
+        partprobe $LDEV 1> /dev/null 2>&1
+    elif [[ "$DEVICE" = "on2" ]]; then
+        #Clear first 8 mb
+        dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
+        
+    #partition with 2 partitions
+        parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+        parted -s $LDEV mkpart primary fat32 0% 256M 1> /dev/null 2>&1
+        START=`cat /sys/block/$DEV/${DEV}p1/start`
+        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+        END_SECTOR=$(expr $START + $SIZE)
+        parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+        partprobe $LDEV 1> /dev/null 2>&1
+        mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
+        mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
+        
+    #copy rootfs contents over to the FS
+        mkdir -p $TMPDIR/root
+        mkdir -p $TMPDIR/boot
+        mount ${LDEV}p1 $TMPDIR/boot
+        mount ${LDEV}p2 $TMPDIR/root
+        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+        mv $TMPDIR/root/boot/* $TMPDIR/boot
+        
+    #flash bootloader
+        dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
+        
+    #clean up
+        umount $TMPDIR/root
+        umount $TMPDIR/boot
+        losetup -d $LDEV 1> /dev/null 2>&1
+        rm -r $TMPDIR/root $TMPDIR/boot
         partprobe $LDEV 1> /dev/null 2>&1
 
     ## For pine devices
