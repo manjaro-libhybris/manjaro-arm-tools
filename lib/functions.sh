@@ -137,6 +137,8 @@ checksum_img() {
     cd $IMGDIR/
     sha1sum $IMAGE > $IMAGE.sha1
     sha256sum $IMAGE > $IMAGE.sha256
+    info "Creating signature for [$IMAGE]..."
+    gpg --detach-sign -u $GPGMAIL "$IMAGE"
 }
 
 pkg_upload() {
