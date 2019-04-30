@@ -443,7 +443,7 @@ create_img() {
 
     #get size of blank image
     SIZE=$(du -s --block-size=MB $ROOTFS_IMG/rootfs_$ARCH | awk '{print $1}' | sed -e 's/MB//g')
-    EXTRA_SIZE=200
+    EXTRA_SIZE=300
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
     
     #making blank .img to be used
