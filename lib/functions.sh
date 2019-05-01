@@ -434,6 +434,7 @@ create_img() {
         exit 1
     else
     msg "Finishing image for $DEVICE $EDITION edition..."
+    info "Copying files to image..."
     fi
 
     if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
