@@ -42,6 +42,7 @@ usage_deploy_img() {
     echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, sopine, pinebook and nyan-big]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
+    echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
     echo "    -t                 Create a torrent of the image"
     echo '    -h                 This help'
     echo ''

@@ -195,13 +195,13 @@ If you don't, you can't use this.
 **Syntax**
 
 ```
-deployarmimg -i image [-d device] [-e edition] [-v version] [-t]
+deployarmimg -i image [-d device] [-e edition] [-v version] -k email@server.org [-t]
 ```
 
 To upload an image to the raspberry pi minimal 18.07 folder use with torrent:
 
 ```
-deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.zip -d rpi3 -e minimal -v 18.07 -t
+deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.zip -d rpi3 -e minimal -v 18.07 -k email@server.org -t
 ```
 
 ## getarmprofiles

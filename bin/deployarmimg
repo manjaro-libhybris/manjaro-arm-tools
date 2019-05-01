@@ -28,6 +28,9 @@ while getopts "${opt}" arg; do
     v)
       VERSION="${OPTARG}"
       ;;
+    k)
+      GPGMAIL="${OPTARG}"
+      ;;
     t)
       TORRENT="true"
       ;;
@@ -49,6 +52,10 @@ done
 #required options
 if [ "x" == "x$IMAGE" ]; then
   echo "-i [option] is required"
+  exit
+fi
+if [ "x" == "x$GPGMAIL" ]; then
+  echo "-k [option] is required"
   exit
 fi
 
