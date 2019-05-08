@@ -257,7 +257,7 @@ create_rootfs_img() {
     
     info "Enabling services..."
     # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service resize-fs.service 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
 
     info "Applying overlay for $EDITION edition..."
@@ -357,7 +357,7 @@ create_rootfs_oem() {
     
     info "Enabling services..."
     # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service dhcpcd.service resize-fs.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable systemd-networkd.service getty.target haveged.service resize-fs.service 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
     
     #disabling services depending on edition
