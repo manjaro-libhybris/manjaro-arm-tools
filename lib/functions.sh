@@ -297,6 +297,8 @@ create_rootfs_img() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
+    elif [[ "$DEVICE" = "on2" ]]; then
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
@@ -395,6 +397,8 @@ create_rootfs_oem() {
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "on2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
+    elif [[ "$DEVICE" = "on2" ]]; then
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
