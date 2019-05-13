@@ -249,6 +249,10 @@ create_rootfs_img() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
+    if [[ "$DEVICE" = "on2" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 --noconfirm
+    fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
@@ -351,6 +355,10 @@ create_rootfs_oem() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
+    if [[ "$DEVICE" = "on2" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 --noconfirm
+    fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
