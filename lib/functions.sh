@@ -250,9 +250,12 @@ create_rootfs_img() {
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
     if [[ "$DEVICE" = "on2" ]]; then
-    if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "lxqt" ]] || [[ "$EDITION" = "cubocore" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 --noconfirm
+    if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-kcm --noconfirm
+    elif [[ "$EDITION" = "lxqt" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-qt-manjaro-theme --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-qt-manjaro-theme --noconfirm
     fi
     fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
@@ -358,9 +361,12 @@ create_rootfs_oem() {
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
     if [[ "$DEVICE" = "on2" ]]; then
-    if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "lxqt" ]] || [[ "$EDITION" = "cubocore" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 --noconfirm
+    if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-kcm --noconfirm
+    elif [[ "$EDITION" = "lxqt" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-qt-manjaro-theme --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-qt-manjaro-theme --noconfirm
     fi
     fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
