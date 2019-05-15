@@ -39,7 +39,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, sopine, pinebook and nyan-big]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, rockpro64, sopine, pinebook and nyan-big]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -64,7 +64,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, sopine, pinebook and nyan-big]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, rockpro64, sopine, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -80,7 +80,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, sopine, pinebook and nyan-big]"
+    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, rockpro64, sopine, pinebook and nyan-big]"
     echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -628,43 +628,7 @@ create_img() {
         rm -r $TMPDIR/root
         partprobe $LDEV 1> /dev/null 2>&1
         
-    # RockPro64 uses EFI it seems
-    #elif [[ "$DEVICE" = "rockpro64" ]]; then
-    
-    #Clear first 32mb
-        #dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-	
-    #partition with boot and root
-        #parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-        #parted -s $LDEV mkpart primary fat16 32M 128M 1> /dev/null 2>&1
-        #START=`cat /sys/block/$DEV/${DEV}p1/start`
-        #SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        #END_SECTOR=$(expr $START + $SIZE)
-        #parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-        #partprobe $LDEV 1> /dev/null 2>&1
-        #mkfs.vfat "${LDEV}p1" -n boot 1> /dev/null 2>&1
-        #mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p2 -L linux-root 1> /dev/null 2>&1
-
-    #copy rootfs contents over to the FS
-        #mkdir -p $TMPDIR/root
-        #mkdir -p $TMPDIR/boot
-        #mount ${LDEV}p1 $TMPDIR/boot
-        #mount ${LDEV}p2 $TMPDIR/root
-        #cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        #mv $TMPDIR/root/boot/* $TMPDIR/boot
-        
-    #flash bootloader
-        #dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        #dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        #dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
-        
-    #clean up
-        #umount $TMPDIR/root
-        #umount $TMPDIR/boot
-        #losetup -d $LDEV 1> /dev/null 2>&1
-        #rm -r $TMPDIR/root $TMPDIR/boot
-        #partprobe $LDEV 1> /dev/null 2>&1
-        
+    ## For Asus Chromebook (nyan)
     elif [[ "$DEVICE" = "nyan-big" ]]; then
 	
     #partition with boot and root
