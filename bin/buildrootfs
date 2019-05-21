@@ -37,11 +37,7 @@ create_rootfs () {
     pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH pacman
 
     # Enable cross architecture Chrooting
-    if [[ "$ARCH" = "aarch64" ]]; then
-        cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
-    else
-        cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
-    fi
+    cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
     
     # fix SSL in the rootfs
     rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
@@ -75,7 +71,7 @@ while getopts "${opt}" arg; do
       exit 1
       ;;
     h|?)
-      echo "-a <arch>       Architecture"
+ #     echo "-a <arch>       Architecture"
       echo "-h <help>       This help"
       exit 1
       ;;
