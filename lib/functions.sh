@@ -295,12 +295,12 @@ create_rootfs_img() {
     chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     
     info "Doing device specific setups for $DEVICE..."
-    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
+    elif [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
@@ -400,12 +400,12 @@ create_rootfs_oem() {
     
     
     info "Doing device specific setups for $DEVICE..."
-    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]]; then
+    elif [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
@@ -428,30 +428,22 @@ create_rootfs_oem() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "rpi2" && "$DEVICE" != "oc1" && "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "xu4" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "nyan-big" ]]; then
+    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'rpi2
-        oc1
-        oc2
+        echo 'oc2
         on2
-        xu4
         pinebook
         sopine
         rpi3
         rock64
-        rockpro64
-        nyan-big'
+        rockpro64'
         exit 1
     else
     msg "Finishing image for $DEVICE $EDITION edition..."
     info "Copying files to image..."
     fi
 
-    if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
-        ARCH='armv7h'
-    else
-        ARCH='aarch64'
-    fi
+    ARCH='aarch64'
 
     #get size of blank image
     SIZE=$(du -s --block-size=MB $ROOTFS_IMG/rootfs_$ARCH | awk '{print $1}' | sed -e 's/MB//g')
@@ -473,7 +465,7 @@ create_img() {
 
 
     ## For Raspberry Pi devices
-    if [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]]; then
         #partition with boot and root
         parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
         parted -s $LDEV mkpart primary fat32 0% 100M 1> /dev/null 2>&1
@@ -501,7 +493,7 @@ create_img() {
         partprobe $LDEV 1> /dev/null 2>&1
 
     ## For Odroid devices
-    elif [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "oc2" ]] || [[ "$DEVICE" = "xu4" ]]; then
+    elif [[ "$DEVICE" = "oc2" ]]; then
         #Clear first 8mb
         dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
 	
@@ -527,6 +519,7 @@ create_img() {
         losetup -d $LDEV 1> /dev/null 2>&1
         rm -r $TMPDIR/root
         partprobe $LDEV 1> /dev/null 2>&1
+        
     elif [[ "$DEVICE" = "on2" ]]; then
         #Clear first 8 mb
         dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
@@ -615,41 +608,6 @@ create_img() {
         losetup -d $LDEV 1> /dev/null 2>&1
         rm -r $TMPDIR/root
         partprobe $LDEV 1> /dev/null 2>&1
-        
-    ## For Asus Chromebook (nyan)
-    elif [[ "$DEVICE" = "nyan-big" ]]; then
-	
-    #partition with boot and root
-        if [ ! -f /usr/bin/sgdisk ]; then
-        info "gptfdisk is not installed. Please install it and try again..."
-        exit 1
-        fi
-
-	    sgdisk -a 64 -n 1:0:+16M -t 1:7F00 -c 1:"KERN-A" -A 1:=:0x0105000000000000 -n 2:0:0 -t 2:7F01 -c 2:"ROOT-A" $LDEV
-
-	    sync
-	    partprobe $LDEV
-	    partprobe
-	    mkfs.ext4 -L ROOT ${LDEV}p2
-        
-
-    #copy rootfs contents over to the FS
-        mkdir -p $TMPDIR/root
-        mount ${LDEV}p2 $TMPDIR/root
-        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        
-    #flash bootloader
-	dd if=/dev/zero of=${LDEV}p1
-	#flash u-boot or linux-nyan-chromebook kpart..
-	    #dd if=$TMPDIR/root/boot/u-boot.kpart of=${LDEV}p1
-        dd if=$TMPDIR/root/boot/vmlinux.kpart of=${LDEV}p1 
-        
-    #clean up
-        umount $TMPDIR/root
-        losetup -d $LDEV 1> /dev/null 2>&1
-        rm -r $TMPDIR/root
-        partprobe $LDEV 1> /dev/null 2>&1
-
 
     else
         #Not sure if this IF statement is nesssary anymore
