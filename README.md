@@ -9,8 +9,6 @@ This software is available in the Manjaro Strit repo's, if you run Manjaro.
 ## Known issues
 `deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
 
-`buildarmpkg` has problems building *some* `armv7h` packages, but I think it's an upstream issue, because there's no problem on `aarch64`.
-
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
 * parted (arch repo)
@@ -57,15 +55,7 @@ Options inside [] are optional. Use `-h` to see what the defaults are.
 sudo buildarmpkg -p package [-a architecture] [-k] [-i package file]
 ```
 
-To build an armv7h package, place yourself in the folder, that contains a folder with the PKGBUILD, named as the package you want to build. Then run:
-
-```
-sudo buildarmpkg -p package -a armv7h
-```
-
-This will build the package called "package" for the armv7h architecture in the previous rootfs generated.
-
-To build an aarch64 package it's the same, just with
+To build an aarch64 package use the following command:
 
 ```
 sudo buildarmpkg -p package -a aarch64
@@ -94,12 +84,6 @@ It will gpg sign and uploud the package you mention to the Manjaro-ARM main serv
 deployarmpkg -p package [-a architecture] -r repo -k keyid
 ```
 
-To upload a package to the armv7h core repo use:
-
-```
-deployarmpkg -p package.pkg.tar.xz -a armv7h -r core -k email@server.org
-```
-
 To upload a package to the aarch64 extra repo use:
 
 ```
@@ -122,9 +106,6 @@ and remove the local files.
 * rpi3 (not the A/B+ models it seems)
 * pinebook
 * sopine
-* rpi2 (not maintained)
-* oc1 (not maintained)
-* xu4 (not maintained or tested)
 
 **Supported editions:**
 
@@ -176,11 +157,6 @@ This script does exactly what it says it does. It builds a very small rootfs, to
 **Syntax**
 ```
 sudo buildrootfs -a arch
-```
-
-To build an armv7h rootfs:
-```
-sudo buildrootfs -a armv7h
 ```
 
 To build an aarch64 rootfs:
