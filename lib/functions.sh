@@ -26,7 +26,7 @@ source /etc/manjaro-arm-tools/manjaro-arm-tools.conf
 
 usage_deploy_pkg() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -a <arch>          Architecture. [Default = aarch64. Options = any, armv7h or aarch64]"
+    echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
     echo "    -p <pkg>           Package to upload"
     echo '    -r <repo>          Repository package belongs to. [Options = core, extra or community]'
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -39,8 +39,8 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, rockpro64, sopine, pinebook and nyan-big]"
-    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, mate and server]'
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, sopine and pinebook]"
+    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
     echo "    -t                 Create a torrent of the image"
@@ -52,7 +52,7 @@ usage_deploy_img() {
 
 usage_build_pkg() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -a <arch>          Architecture. [Default = aarch64. Options = any, armv7h or aarch64]"
+    echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo "    -k                 Keep the previous rootfs for this build"
     echo "    -i <package>       Install local package into image rootfs."
@@ -64,8 +64,8 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, rockpro64, sopine, pinebook and nyan-big]"
-    echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, sopine and pinebook]"
+    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
     echo "    -p <password>      Password of default user. [Default = manjaro]"
@@ -80,8 +80,8 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device [Default = rpi3. Options = rpi2, rpi3, oc1, oc2, on2, xu4, rock64, rockpro64, sopine, pinebook and nyan-big]"
-    echo "    -e <edition>       Edition to build [Default = minimal. Options = minimal, lxqt, mate and server]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, sopine and pinebook]"
+    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -n                 Force download of new rootfs."
