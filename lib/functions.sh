@@ -190,11 +190,7 @@ create_rootfs_pkg() {
     pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel manjaro-arm-keyring
 
     # Enable cross architecture Chrooting
-    if [[ "$ARCH" = "aarch64" ]]; then
-        cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
-    else
-        cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
-    fi
+    cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
     
     # restore original mirrorlist to host system
     mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
@@ -315,11 +311,7 @@ create_rootfs_img() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
-       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
-        rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
-    else
-        rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    fi
+    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -f $TMPDIR/user $TMPDIR/password
@@ -424,11 +416,7 @@ create_rootfs_oem() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
-       if [[ "$DEVICE" = "oc1" ]] || [[ "$DEVICE" = "rpi2" ]] || [[ "$DEVICE" = "xu4" ]] || [[ "$DEVICE" = "nyan-big" ]]; then
-        rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-arm-static
-    else
-        rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    fi
+    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
