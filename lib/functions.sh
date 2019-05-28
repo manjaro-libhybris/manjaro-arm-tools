@@ -190,7 +190,7 @@ create_rootfs_pkg() {
     pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel manjaro-arm-keyring
 
     # Enable cross architecture Chrooting
-    cp /usr/bin/qemu-arm-static $BUILDDIR/$ARCH/usr/bin/
+    cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
     
     # restore original mirrorlist to host system
     mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
