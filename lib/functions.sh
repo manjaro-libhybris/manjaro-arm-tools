@@ -39,7 +39,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -64,7 +64,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -80,7 +80,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -428,7 +428,7 @@ create_rootfs_oem() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" ]]; then
+    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
         echo 'oc2
         on2
@@ -436,7 +436,8 @@ create_img() {
         sopine
         rpi3
         rock64
-        rockpro64'
+        rockpro64
+        rockpi4'
         exit 1
     else
     msg "Finishing image for $DEVICE $EDITION edition..."
@@ -581,7 +582,7 @@ create_img() {
         partprobe $LDEV 1> /dev/null 2>&1
         
     ## For rockchip devices
-    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]]; then
+    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
 
     #Clear first 32mb
         dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
