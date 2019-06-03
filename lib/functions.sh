@@ -292,7 +292,7 @@ create_rootfs_img() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
-    if [[ "$EDITION" != "minimal" ]] || [[ "$EDITION" != "server" ]]; then
+    if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
     chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     fi
     
