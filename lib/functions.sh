@@ -292,18 +292,21 @@ create_rootfs_img() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
+    if [[ "$EDITION" != "minimal" ]] || [[ "$EDITION" != "server" ]]; then
     chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
+    fi
     
     info "Doing device specific setups for $DEVICE..."
     if [[ "$DEVICE" = "rpi3" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
-        echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
+        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
+        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
@@ -396,7 +399,9 @@ create_rootfs_oem() {
     mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
+    if [[ "$EDITION" != "minimal" ]] || [[ "$EDITION" != "server" ]]; then
     chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
+    fi
     
     
     info "Doing device specific setups for $DEVICE..."
@@ -404,11 +409,12 @@ create_rootfs_oem() {
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
-        echo "/dev/mmcblk0p1  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
+        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
+        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
@@ -475,8 +481,8 @@ create_img() {
         END_SECTOR=$(expr $START + $SIZE)
         parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
         partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
-        mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
+        mkfs.vfat "${LDEV}p1" -n BOOT 1> /dev/null 2>&1
+        mkfs.ext4 "${LDEV}p2" -L ROOT 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -502,7 +508,7 @@ create_img() {
         parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
         parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
         partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
+        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 -L ROOT 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -533,8 +539,8 @@ create_img() {
         END_SECTOR=$(expr $START + $SIZE)
         parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
         partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.vfat "${LDEV}p1" 1> /dev/null 2>&1
-        mkfs.ext4 "${LDEV}p2" 1> /dev/null 2>&1
+        mkfs.vfat "${LDEV}p1" -n BOOT 1>/dev/null 2>&1
+        mkfs.ext4 "${LDEV}p2" -L ROOT 1> /dev/null 2>&1
         
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -564,7 +570,7 @@ create_img() {
         parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
         parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
         partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
+        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 -L ROOT 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
@@ -591,7 +597,7 @@ create_img() {
         parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
         parted -s $LDEV mkpart primary ext4 32M 100% 1> /dev/null 2>&1
         partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 1> /dev/null 2>&1
+        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 -L ROOT 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
         mkdir -p $TMPDIR/root
