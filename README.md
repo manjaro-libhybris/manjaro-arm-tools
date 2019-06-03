@@ -1,7 +1,7 @@
 # Manjaro ARM Tools
 Contains scripts and files needed to build and manage manjaro-arm packages and images.
 
-This software is available in the Manjaro Strit repo's, if you run Manjaro.
+This software is available in the Manjaro Strit repo's, if you run Manjaro or other Arch derivatives.
 
 *These tools only work on Arch based distributions!*
 
@@ -38,8 +38,8 @@ Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools
 * Create `/var/lib/manjaro-arm-tools/pkg` folder.
 * Create `/var/lib/manjaro-arm-tools/img` folder.
 * Create `/var/lib/manjaro-arm-tools/tmp` folder.
-* Create /var/cache/manjaro-arm-tools/img` folder.
-* Create /var/cache/manjaro-arm-tools/pkg` folder.
+* Create `/var/cache/manjaro-arm-tools/img` folder.
+* Create `/var/cache/manjaro-arm-tools/pkg` folder.
 * Install `binfmt-qemu-static` package.
 
 # Usage
@@ -99,13 +99,16 @@ deployarmpkg -p package.pkg.tar.xz -a any -r community -k email@server.org
 This should be used after creating a package with `buildarmpkg` and cd'ing to the cache folder. It will sign the package with your default secret GPG key and upload both files
 and remove the local files.
 
-## buildarmimg
 
+## buildarmoem
 **Supported devices:**
 * oc2
 * rpi3 (not the A/B+ models it seems)
 * pinebook
 * sopine
+* rock64
+* rockpro64
+* on2
 
 **Supported editions:**
 
@@ -117,7 +120,6 @@ and remove the local files.
 * server (not complete yet, unmaintained)
 
 
-The script breafly replaces your `/etc/pacman.d/mirrorlist` with that of manjaro-arm to fetch the right packages.
 This script will zip up the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
 Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-profiles) website, so they are easier to fork and create merge requests.
@@ -125,34 +127,29 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-sudo buildarmimg [-d device] [-e edition] [-v version] [-u username] [-p password] [-n] [-x] [-i package file]
+sudo buildarmoem [-d device] [-e edition] [-v version] [-n] [-x] [-i package file]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 3:
 
 ```
-sudo buildarmimg -d rpi3 -e minimal -v 18.07
+sudo buildarmoem -d rpi3 -e minimal -v 18.07
 ```
 
 To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:
 
 ```
-sudo buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
+sudo buildarmoem -d oc2 -e minimal -v 18.08-rc1 -n
 ```
 
 To build an lxqt version with a local package installed for the rock64:
 
 ```
-sudo buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
+sudo buildarmoem -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
 ```
 
-## buildarmoem
-This one functions mostly like `buildarmimg`, but only has device, edition and version arguments.
-
-It will create an image, much like `buildarmimg`, but will not add users or password to it. It will then install a special script that runs on first boot, that prompts the user for OEM stuff.
-
 ## buildrootfs
-This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer (and perhaps `buildarmpkg` and `buildarmimg` in the future.
+This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmoem`.
 
 **Syntax**
 ```
