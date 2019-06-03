@@ -399,7 +399,7 @@ create_rootfs_oem() {
     mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
-    if [[ "$EDITION" != "minimal" ]] || [[ "$EDITION" != "server" ]]; then
+    if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
     chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     fi
     
