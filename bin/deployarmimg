@@ -12,7 +12,7 @@ source $LIBDIR/functions.sh
 
 
 #Arguments 
-opt=":i:d:e:v:th"
+opt=":i:d:e:v:k:th"
 
 while getopts "${opt}" arg; do
   case $arg in
