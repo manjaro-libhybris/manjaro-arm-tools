@@ -468,9 +468,22 @@ create_emmc_install() {
     # Enable services
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service resize-fs.service 1> /dev/null 2>&1
     
+    info "Setting up system settings..."
+    # enable autologin
+    mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
+    cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+    
     info "Downloading $DEVICE $EDITION image..."
     cd $ROOTFS_IMG/rootfs_$ARCH/var/tmp/
     wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
+    
+    info "Cleaning rootfs for unwanted files..."
+    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
 }
 
 create_img() {
