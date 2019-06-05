@@ -148,6 +148,23 @@ To build an lxqt version with a local package installed for the rock64:
 sudo buildarmoem -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
 ```
 
+## buildemmcinstaller
+This script does almost the same as the `buildarmoem` script.
+
+Except that it always creates a minimal image, an already existing image inside it, only to be used for internal storage (eMMC) deployments.
+
+**Syntax**
+```
+sudo buildemmcinstaller [-d device] [-e edition] [-v version]
+```
+
+So to build an eMMC installer image for KDE 19.04 on Pinebook:
+```
+sudo buildemmcinstaller -d pinebook -e kde -v 19.04
+```
+Be aware that the device, edition and version, most already exist on the OSDN download page, else it won't work.
+
+
 ## buildrootfs
 This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmoem`.
 

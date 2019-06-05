@@ -432,6 +432,47 @@ create_rootfs_oem() {
     msg "$DEVICE $EDITION rootfs complete"
 }
 
+create_emmc_install() {
+    msg "Creating eMMC install image of $EDITION for $DEVICE..."
+    # Remove old rootfs if it exists
+    if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
+    info "Removing old rootfs..."
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    fi
+    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
+    if [[ "$KEEPROOTFS" = "false" ]]; then
+    rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
+    # fetch and extract rootfs
+    info "Downloading latest $ARCH rootfs..."
+    cd $ROOTFS_IMG
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
+    #also fetch it, if it does not exist
+    if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
+    cd $ROOTFS_IMG
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
+    
+    info "Extracting $ARCH rootfs..."
+    bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
+    
+    info "Setting up keyrings..."
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    
+    msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
+    # Install device and editions specific packages
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-arm-emmc-flasher --noconfirm
+
+    info "Enabling services..."
+    # Enable services
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service resize-fs.service 1> /dev/null 2>&1
+    
+    info "Downloading $DEVICE $EDITION image..."
+    cd $ROOTFS_IMG/rootfs_$ARCH/var/tmp/
+    wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
+}
+
 create_img() {
     # Test for device input
     if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" ]]; then
