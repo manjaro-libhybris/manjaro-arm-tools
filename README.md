@@ -12,11 +12,10 @@ This software is available in the Manjaro Strit repo's, if you run Manjaro or ot
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
 * parted (arch repo)
-* arch-install-scripts (arch repo)
+* manjaro-tools-base (manjaro repo)
 * xz (arch repo)
 * git (arch repo)
 * zip (arch repo) (for `buildrootfs`)
-* gptfdisk (arch repo) (required for nyan-big builds)
 
 This package also provides `binfmt-qemu-static`.
 

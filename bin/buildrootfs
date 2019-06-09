@@ -33,8 +33,8 @@ create_rootfs () {
     # cd to root_fs
     mkdir -p $BUILDDIR/$ARCH
 
-    # basescrap the rootfs filesystem
-    pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH pacman
+    #basescrap the rootfs filesystem
+    basestrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH pacman
 
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
