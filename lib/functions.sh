@@ -381,7 +381,7 @@ create_rootfs_oem() {
     elif [[ "$EDITION" = "gnome" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable gdm.service 1> /dev/null 2>&1
     elif [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
-    info "No Display manager in $EDITION..."
+    echo "No display manager in $EDITION..."
     else
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
     fi
@@ -396,8 +396,10 @@ create_rootfs_oem() {
     cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
+    echo "Enabling autologin for OEM setup..."
     mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+    echo "Correcting permissions from overlay..."
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
     if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
     chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
@@ -418,7 +420,7 @@ create_rootfs_oem() {
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
-        info "No device specific setups for $DEVICE..."
+        echo "No device specific setups for $DEVICE..."
     fi
     
     info "Cleaning rootfs for unwanted files..."
