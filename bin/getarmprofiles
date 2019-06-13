@@ -23,7 +23,7 @@ while getopts "${opt}" arg; do
       exit 1
       ;;
     h|?)
-      usage_deploy_img
+      usage_getarmprofiles
       exit 1
       ;;
     :)

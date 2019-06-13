@@ -92,6 +92,15 @@ usage_build_oem() {
     exit $1
 }
 
+usage_getarmprofiles() {
+    echo "Usage: ${0##*/} [options]"
+    echo '    -f                 Force download of current profiles from the git repository'
+    echo '    -h                 This help'
+    echo ''
+    echo ''
+    exit $1
+}
+
 msg() {
     ALL_OFF="\e[1;0m"
     BOLD="\e[1;1m"
