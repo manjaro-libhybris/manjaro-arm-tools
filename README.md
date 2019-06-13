@@ -7,7 +7,8 @@ This software is available in the Manjaro Strit repo's, if you run Manjaro or ot
 
 
 ## Known issues
-`deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
+* `deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
+* Rock64 images don't boot from SD card on the Rock64 Rev3. Needs a uboot fix for this.
 
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
@@ -108,6 +109,7 @@ and remove the local files.
 * rock64
 * rockpro64
 * on2
+* rockpi4
 
 **Supported editions:**
 
@@ -150,7 +152,7 @@ sudo buildarmoem -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
 ## buildemmcinstaller
 This script does almost the same as the `buildarmoem` script.
 
-Except that it always creates a minimal image, an already existing image inside it, only to be used for internal storage (eMMC) deployments.
+Except that it always creates a minimal image, with an already existing image inside it, only to be used for internal storage (eMMC) deployments.
 
 **Syntax**
 ```
@@ -165,21 +167,22 @@ Be aware that the device, edition and version, most already exist on the OSDN do
 
 
 ## buildrootfs
-This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmoem`.
+This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmoem`. Right now only supports `aarch64`.
 
 **Syntax**
 ```
-sudo buildrootfs -a arch
+sudo buildrootfs
 ```
 
 To build an aarch64 rootfs:
 ```
-sudo buildrootfs -a aarch64
+sudo buildrootfs
 ```
 
 ## deployarmimg
 This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.
 If you don't, you can't use this.
+PS: The torrents will not have a tracker, until Manjaro comes up with a solution. So torrents won't be useful untl that happens.
 
 **Syntax**
 
@@ -195,12 +198,12 @@ deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.zip -d rpi3 -e minimal -v 18.07 -
 
 ## getarmprofiles
 This script will just clone or update the current profile list in `/usr/share/manjaro-arm-tools/profiles/`.
-So nothing that fancy.
+So nothing fancy.
 
 This would enable users to clone the profiles repository, make any changes they would like to their images and then build them localy.
 So if you made changes to the profiles yourself, don't run `getarmprofiles` and you will still have your edits.
 
 But if you messed up your profiles somehow, you can start with the repo ones with:
 ```
-getarmprofiles -f
+sudo getarmprofiles -f
 ```
