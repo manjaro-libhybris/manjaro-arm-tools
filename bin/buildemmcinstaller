@@ -15,7 +15,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:nxh"
+opt=":e:d:v:i:f:nxh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -37,13 +37,16 @@ while getopts "${opt}" arg; do
     i)
       ADD_PACKAGE="${OPTARG}"
       ;;
+    f)
+      FLASHVERSION="${OPTARG}"
+      ;;
     \?)
       echo "Invalid option: -${OPTARG}"
       exit 1
       ;;
     h|?)
       echo "Only works with existing images on OSDN.net"
-      usage_build_oem
+      usage_build_emmcflasher
       exit 1
       ;;
     :)
@@ -53,8 +56,12 @@ while getopts "${opt}" arg; do
   esac
 done
 
+if [ "x" == "x$VERSION" ]; then
+  echo "-v [option] is required"
+  exit
+fi
 
-IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION-emmc-installer
+IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION-emmc-installer-$FLASHVERSION
 
 
 ARCH='aarch64'

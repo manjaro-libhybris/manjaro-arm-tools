@@ -14,6 +14,7 @@ PROFILES=/usr/share/manjaro-arm-tools/profiles
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 VERSION=$(date +'%y'.'%m')
+FLASHVERSION=$(date + '%y'.'%m')
 ARCH='aarch64'
 DEVICE='rpi3'
 EDITION='minimal'
@@ -83,6 +84,21 @@ usage_build_oem() {
     echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
+    echo "    -i <package>       Install local package into image rootfs."
+    echo "    -n                 Force download of new rootfs."
+    echo "    -x                 Don't compress the image."
+    echo '    -h                 This help'
+    echo ''
+    echo ''
+    exit $1
+}
+
+usage_build_eemcflasher() {
+    echo "Usage: ${0##*/} [options]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
+    echo "    -v <version>       Define the version of the release to download. [Default is current YY.MM]"
+    echo "    -f <flash version> Version of the eMMC flasher image it self. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
