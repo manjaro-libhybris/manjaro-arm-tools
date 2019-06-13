@@ -42,6 +42,7 @@ while getopts "${opt}" arg; do
       exit 1
       ;;
     h|?)
+      echo "Only works with existing images on OSDN.net"
       usage_build_oem
       exit 1
       ;;
