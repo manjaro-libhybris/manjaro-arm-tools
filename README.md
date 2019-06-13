@@ -128,7 +128,7 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-sudo buildarmoem [-d device] [-e edition] [-v version] [-n] [-x] [-i package file]
+sudo buildarmoem [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 3:
@@ -156,12 +156,12 @@ Except that it always creates a minimal image, with an already existing image in
 
 **Syntax**
 ```
-sudo buildemmcinstaller [-d device] [-e edition] [-v version]
+sudo buildemmcinstaller [-d device] [-e edition] -v version [-f flashversion] [-n] [-x] [-i package-file.pkg.tar.xz]
 ```
 
 So to build an eMMC installer image for KDE 19.04 on Pinebook:
 ```
-sudo buildemmcinstaller -d pinebook -e kde -v 19.04
+sudo buildemmcinstaller -d pinebook -e kde -v 19.04 -f first-emmc-flasher
 ```
 Be aware that the device, edition and version, most already exist on the OSDN download page, else it won't work.
 
