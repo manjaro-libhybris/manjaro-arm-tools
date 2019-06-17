@@ -268,6 +268,7 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
+    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
     if [[ "$DEVICE" = "on2" ]]; then
@@ -339,8 +340,9 @@ create_rootfs_img() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
+    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
+    #rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -f $TMPDIR/user $TMPDIR/password
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
@@ -379,6 +381,7 @@ create_rootfs_oem() {
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
+    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
     if [[ "$DEVICE" = "on2" ]]; then
     if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
@@ -449,8 +452,9 @@ create_rootfs_oem() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
+    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
+    #rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
@@ -489,6 +493,7 @@ create_emmc_install() {
     
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
+    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-arm-emmc-flasher --noconfirm
 
     info "Enabling services..."
@@ -505,8 +510,9 @@ create_emmc_install() {
     wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
     
     info "Cleaning rootfs for unwanted files..."
+    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
+    #rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
