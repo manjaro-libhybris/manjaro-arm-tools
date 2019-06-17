@@ -14,7 +14,7 @@ PROFILES=/usr/share/manjaro-arm-tools/profiles
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
 VERSION=$(date +'%y'.'%m')
-FLASHVERSION=$(date + '%y'.'%m')
+FLASHVERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
 DEVICE='rpi3'
 EDITION='minimal'
