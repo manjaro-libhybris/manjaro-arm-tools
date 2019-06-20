@@ -93,7 +93,7 @@ usage_build_oem() {
     exit $1
 }
 
-usage_build_eemcflasher() {
+usage_build_emmcflasher() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
@@ -149,6 +149,11 @@ show_elapsed_time(){
 sign_pkg() {
     info "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
     gpg --detach-sign -u $GPGMAIL "$PACKAGE"
+    #find $PWD -maxdepth 1 -name '*.pkg.tar.xz' -exec gpg --detach-sign -u $GPGMAIL "$PACKAGE" {} \;
+    #if [ ! -f "$PACKAGE.sig" ]
+    #echo "Package not signed. Aborting..."
+    #exit 1
+    #fi
 }
 
 create_torrent() {
@@ -460,6 +465,88 @@ create_rootfs_oem() {
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
 
+    msg "$DEVICE $EDITION rootfs complete"
+}
+
+create_mobilefs() {
+    msg "Creating Mobile rootfs of $EDITION for $DEVICE..."
+    # Remove old rootfs if it exists
+    if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
+    info "Removing old rootfs..."
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    fi
+    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
+    if [[ "$KEEPROOTFS" = "false" ]]; then
+    rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
+    # fetch and extract rootfs
+    info "Downloading latest $ARCH rootfs..."
+    cd $ROOTFS_IMG
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
+    #also fetch it, if it does not exist
+    if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
+    cd $ROOTFS_IMG
+    wget -q --show-progress --progress=bar:force:noscroll https://www.strits.dk/files/Manjaro-ARM-$ARCH-latest.tar.gz
+    fi
+    
+    info "Extracting $ARCH rootfs..."
+    bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
+    
+    info "Setting up keyrings..."
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    
+    msg "Installing packages for $EDITION edition on $DEVICE..."
+    # Install device and editions specific packages
+    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
+    if [[ ! -z "$ADD_PACKAGE" ]]; then
+    info "Installing local package {$ADD_PACKAGE} to rootfs..."
+    cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+    fi
+    
+    info "Enabling services..."
+    # Enable services
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service resize-fs.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
+
+    info "Applying overlay for $EDITION edition..."
+    cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
+
+    info "Setting up system settings..."
+    #system setup
+    rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
+    rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
+    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
+    echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
+    echo "Enabling autologin for OEM setup..."
+    mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
+    cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+    echo "Correcting permissions from overlay..."
+    chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
+    if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
+    chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
+    fi
+    
+    
+    info "Doing device specific setups for $DEVICE..."
+    if [[ "$DEVICE" = "pinephone" ]]; then
+        echo "No setup yet"
+    else
+        echo "No device specific setups for $DEVICE..."
+    fi
+    
+    info "Cleaning rootfs for unwanted files..."
+    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
+    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
+    #rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
+    
     msg "$DEVICE $EDITION rootfs complete"
 }
 
