@@ -14,6 +14,14 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
+compress_rootfs () {
+    msg "Compressing rootfs..."
+    cd $ROOTFS_IMG/rootfs_$ARCH
+    tar -czf $IMGDIR/$IMGNAME.tar.gz .
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    
+}
+
 #Arguments 
 opt=":e:d:v:i:nxh"
 
@@ -42,7 +50,8 @@ while getopts "${opt}" arg; do
       exit 1
       ;;
     h|?)
-      usage_build_oem
+      echo "Usage under development"
+      #usage_build_mobilefs
       exit 1
       ;;
     :)
@@ -80,7 +89,7 @@ if [[ "$EXTRACTED" = "true" ]]; then
 info "Image not compressed, because you supplied the -x option!"
 else
 # Create the .zip file, from the .img file which will get deleted.
-create_zip
+compress_rootfs
 fi
 
 # show timer
