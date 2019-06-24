@@ -40,7 +40,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .zip file."
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, rpi4, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -65,7 +65,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, rpi4, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -81,7 +81,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, rpi4, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -95,7 +95,7 @@ usage_build_oem() {
 
 usage_build_emmcflasher() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi3. Options = rpi3, rpi4, oc2, on2, rock64, rockpro64, rockpi4, sopine and pinebook]"
     echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version of the release to download. [Default is current YY.MM]"
     echo "    -f <flash version> Version of the eMMC flasher image it self. [Default is current YY.MM]"
@@ -328,7 +328,7 @@ create_rootfs_img() {
     fi
     
     info "Doing device specific setups for $DEVICE..."
-    if [[ "$DEVICE" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi4" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
@@ -440,7 +440,7 @@ create_rootfs_oem() {
     
     
     info "Doing device specific setups for $DEVICE..."
-    if [[ "$DEVICE" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi4" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
@@ -610,7 +610,7 @@ create_emmc_install() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" ]]; then
+    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rpi4" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
         echo 'oc2
         on2
@@ -648,7 +648,7 @@ create_img() {
 
 
     ## For Raspberry Pi devices
-    if [[ "$DEVICE" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi4" ]]; then
         #partition with boot and root
         parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
         parted -s $LDEV mkpart primary fat32 0% 100M 1> /dev/null 2>&1
