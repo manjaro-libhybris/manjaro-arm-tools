@@ -440,11 +440,24 @@ create_rootfs_oem() {
     
     
     info "Doing device specific setups for $DEVICE..."
-    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi4" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
+    elif [[ "$DEVICE" = "rpi4" ]]; then
+        echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "kernel=kernel8.img" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "arm_64bit=1" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "device_tree=broadcom/bcm2711-rpi-4-b.dtb" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "enable_gic=1" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "armstub=armstub8-gic.bin" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "total_mem=1024" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
+        echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
+        echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
+        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
+        sed -i s/'boardflags3=0x48200100'/'boardflags3=0x44200100'/ $ROOTFS_IMG/rootfs_$ARCH//usr/lib/firmware/updates/brcm/brcmfmac43455-sdio.txt 1> /dev/null 2>&1
+        cp $LIBDIR/armstub8* $ROOTFS_IMG/rootfs_$ARCH/boot/ 1> /dev/null 2>&1 #only until the firmware package gets updated
     elif [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
@@ -627,7 +640,7 @@ create_img() {
     fi
 
     ARCH='aarch64'
-
+    #if [[ "$DEVICE" != "rpi4" ]]; then
     #get size of blank image
     SIZE=$(du -s --block-size=MB $ROOTFS_IMG/rootfs_$ARCH | awk '{print $1}' | sed -e 's/MB//g')
     EXTRA_SIZE=300
@@ -645,6 +658,7 @@ create_img() {
 
     #mount image to loop device
     losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
+    #fi
 
 
     ## For Raspberry Pi devices
@@ -675,6 +689,11 @@ create_img() {
         rm -r $TMPDIR/root $TMPDIR/boot
         partprobe $LDEV 1> /dev/null 2>&1
 
+    #elif [[ "$DEVICE" = "rpi4" ]]; then
+    #    cd $ROOTFS_IMG/rootfs_$ARCH/boot
+    #    bsdtar -cpf $IMGDIR/$IMGNAME-boot.tar.gz *
+    #    cd $ROOTFS_IMG/rootfs_$ARCH
+    #    bsdtar -cpf $IMGDIR/$IMGNAME-root.tar.gz *
     ## For Odroid devices
     elif [[ "$DEVICE" = "oc2" ]]; then
         #Clear first 8mb
@@ -800,11 +819,13 @@ create_img() {
 }
 
 create_zip() {
+    #if [[ "$DEVICE" != "rpi4" ]]; then
     info "Compressing $IMGNAME.img..."
     #zip img
     cd $IMGDIR
     xz -zv --threads=0 $IMGNAME.img
     chmod 666 $IMGDIR/$IMGNAME.img.xz
+    #fi
 
     info "Removing rootfs_$ARCH"
     rm -rf $ROOTFS_IMG/rootfs_$ARCH
