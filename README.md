@@ -110,6 +110,7 @@ and remove the local files.
 * rockpro64
 * on2
 * rockpi4
+* vim3 (currently under construction)
 
 **Supported editions:**
 
