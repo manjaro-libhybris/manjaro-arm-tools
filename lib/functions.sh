@@ -56,7 +56,7 @@ usage_build_pkg() {
     echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo "    -k                 Keep the previous rootfs for this build"
-    echo "    -i <package>       Install local package into image rootfs."
+    echo "    -i <package>       Install local package into rootfs."
     echo '    -h                 This help'
     echo ''
     echo ''
