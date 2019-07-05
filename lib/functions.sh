@@ -279,10 +279,10 @@ create_rootfs_img() {
     if [[ "$DEVICE" = "on2" ]]; then
     if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-kcm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm --noconfirm
     elif [[ "$EDITION" = "lxqt" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-qt-manjaro-theme --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-qt-manjaro-theme --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-qt-manjaro-theme --noconfirm
     fi
     fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
@@ -391,10 +391,10 @@ create_rootfs_oem() {
     if [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "rpi4" ]]; then
     if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-kcm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm --noconfirm
     elif [[ "$EDITION" = "lxqt" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-qt-manjaro-theme --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-n2 sddm-qt-manjaro-theme --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-qt-manjaro-theme --noconfirm
     fi
     fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
