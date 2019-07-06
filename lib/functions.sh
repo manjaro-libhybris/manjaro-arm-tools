@@ -618,7 +618,7 @@ create_emmc_install() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rpi4" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" && "$DEVICE" != "vim3"]]; then
+    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rpi4" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" && "$DEVICE" != "vim3" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
         echo 'oc2
         on2
