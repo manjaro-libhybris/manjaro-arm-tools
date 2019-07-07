@@ -104,6 +104,7 @@ and remove the local files.
 **Supported devices:**
 * oc2
 * rpi3 (not the A/B+ models it seems)
+* rpi4
 * pinebook
 * sopine
 * rock64
@@ -117,8 +118,8 @@ and remove the local files.
 * minimal
 * lxqt
 * kde
-* mate (not complete yet, unmaintained)
-* i3 (not complete yet)
+* mate
+* i3
 * server (not complete yet, unmaintained)
 
 
