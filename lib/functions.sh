@@ -718,7 +718,7 @@ create_img() {
         rm -r $TMPDIR/root
         partprobe $LDEV 1> /dev/null 2>&1
         
-    elif [[ "$DEVICE" = "on2" ]]; then
+    elif [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "vim3" ]]; then
         #Clear first 8 mb
         dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
         
@@ -742,7 +742,12 @@ create_img() {
         mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
+    if [[ "$DEVICE" = "vim3" ]]; then
+        dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=1 count=444 && sync 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=512 skip=1 seek=1 && sync 1> /dev/null 2>&1
+        else
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
+    fi
         
     #clean up
         umount $TMPDIR/root
