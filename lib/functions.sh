@@ -159,7 +159,7 @@ sign_pkg() {
 create_torrent() {
     info "Creating torrent of $IMAGE..."
     cd $IMGDIR/
-    mktorrent -v -w https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/$IMAGE -o $IMAGE.torrent $IMAGE
+    mktorrent -v -a udp://tracker.opentrackr.org:1337 -w https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/$IMAGE -o $IMAGE.torrent $IMAGE
 }
 
 checksum_img() {
