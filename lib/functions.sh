@@ -357,6 +357,18 @@ create_rootfs_img() {
 }
 
 create_rootfs_oem() {
+    #Check if device file exists
+    if [ ! -f "$PROFILES/arm-profiles/devices/$DEVICE" ]; then 
+    echo 'Invalid device '$DEVICE', please choose one of the following'
+    echo "$(ls $PROFILES/arm-profiles/devices/)"
+    exit 1
+    fi
+    #check if edition file exists
+    if [ ! -f "$PROFILES/arm-profiles/editions/$EDITION" ]; then 
+    echo 'Invalid edition '$EDITION', please choose one of the following'
+    echo "$(ls $PROFILES/arm-profiles/editions/)"
+    exit 1
+    fi
     msg "Creating OEM image of $EDITION for $DEVICE..."
     # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
@@ -617,27 +629,11 @@ create_emmc_install() {
 }
 
 create_img() {
-    # Test for device input
-    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rpi3-fta" && "$DEVICE" != "rpi4" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" && "$DEVICE" != "vim3" ]]; then
-        echo 'Invalid device '$DEVICE', please choose one of the following'
-        echo 'oc2
-        on2
-        pinebook
-        sopine
-        rpi3
-        rock64
-        rockpro64
-        rockpi4
-	    vim3'
-        exit 1
-    else
     msg "Finishing image for $DEVICE $EDITION edition..."
     info "Copying files to image..."
-    fi
 
     ARCH='aarch64'
-    #if [[ "$DEVICE" != "rpi4" ]]; then
-    #get size of blank image
+    
     SIZE=$(du -s --block-size=MB $ROOTFS_IMG/rootfs_$ARCH | awk '{print $1}' | sed -e 's/MB//g')
     EXTRA_SIZE=300
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
@@ -654,7 +650,6 @@ create_img() {
 
     #mount image to loop device
     losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
-    #fi
 
 
     ## For Raspberry Pi devices
@@ -685,11 +680,7 @@ create_img() {
         rm -r $TMPDIR/root $TMPDIR/boot
         partprobe $LDEV 1> /dev/null 2>&1
 
-    #elif [[ "$DEVICE" = "rpi4" ]]; then
-    #    cd $ROOTFS_IMG/rootfs_$ARCH/boot
-    #    bsdtar -cpf $IMGDIR/$IMGNAME-boot.tar.gz *
-    #    cd $ROOTFS_IMG/rootfs_$ARCH
-    #    bsdtar -cpf $IMGDIR/$IMGNAME-root.tar.gz *
+        
     ## For Odroid devices
     elif [[ "$DEVICE" = "oc2" ]]; then
         #Clear first 8mb
@@ -743,8 +734,8 @@ create_img() {
         
     #flash bootloader
     if [[ "$DEVICE" = "vim3" ]]; then
-        dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=1 count=444 && sync 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=512 skip=1 seek=1 && sync 1> /dev/null 2>&1
+    #    dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=1 count=444 && sync 1> /dev/null 2>&1
+    #    dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=512 skip=1 seek=1 && sync 1> /dev/null 2>&1
         else
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
     fi
