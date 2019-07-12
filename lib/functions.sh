@@ -734,6 +734,7 @@ create_img() {
         
     #flash bootloader
     if [[ "$DEVICE" = "vim3" ]]; then
+        echo ""
     #    dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=1 count=444 && sync 1> /dev/null 2>&1
     #    dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=512 skip=1 seek=1 && sync 1> /dev/null 2>&1
         else
