@@ -440,7 +440,7 @@ create_rootfs_oem() {
     
     
     info "Doing device specific setups for $DEVICE..."
-    if [[ "$DEVICE" = "rpi3" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi3-fta" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
         echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
@@ -618,7 +618,7 @@ create_emmc_install() {
 
 create_img() {
     # Test for device input
-    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rpi4" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" && "$DEVICE" != "vim3" ]]; then
+    if [[ "$DEVICE" != "oc2" && "$DEVICE" != "on2" && "$DEVICE" != "pinebook" && "$DEVICE" != "sopine" && "$DEVICE" != "rpi3" && "$DEVICE" != "rpi3-fta" && "$DEVICE" != "rpi4" && "$DEVICE" != "rock64" && "$DEVICE" != "rockpro64" && "$DEVICE" != "rockpi4" && "$DEVICE" != "vim3" ]]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
         echo 'oc2
         on2
@@ -628,7 +628,7 @@ create_img() {
         rock64
         rockpro64
         rockpi4
-	vim3'
+	    vim3'
         exit 1
     else
     msg "Finishing image for $DEVICE $EDITION edition..."
@@ -658,7 +658,7 @@ create_img() {
 
 
     ## For Raspberry Pi devices
-    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi4" ]]; then
+    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi3-fta" ]] || [[ "$DEVICE" = "rpi4" ]]; then
         #partition with boot and root
         parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
         parted -s $LDEV mkpart primary fat32 0% 100M 1> /dev/null 2>&1
