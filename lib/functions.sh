@@ -778,7 +778,7 @@ create_img() {
         partprobe $LDEV 1> /dev/null 2>&1
         
     ## For rockchip devices
-    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
+    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]] || [[ "$DEVICE" = "pbpro" ]]; then
 
     #Clear first 32mb
         dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
