@@ -467,8 +467,10 @@ create_rootfs_oem() {
         cp $LIBDIR/armstub8* $ROOTFS_IMG/rootfs_$ARCH/boot/ 1> /dev/null 2>&1 #only until the firmware package gets updated
     elif [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "vim3" ]]; then
+    elif [[ "$DEVICE" = "on2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
+        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
+    elif [[ "$DEVICE" = "vim3" ]]; then
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
@@ -479,7 +481,6 @@ create_rootfs_oem() {
     info "Cleaning rootfs for unwanted files..."
     umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    #rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
