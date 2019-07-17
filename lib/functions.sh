@@ -472,7 +472,7 @@ create_rootfs_oem() {
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "vim3" ]]; then
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
-        echo "dhd" | tee --append $ROOTFS_IMG/rootfs_$ARCH/usr/lib/modules-load.d/Bluez.conf 1> /dev/null 2>&1
+        #echo "dhd" | tee --append $ROOTFS_IMG/rootfs_$ARCH/usr/lib/modules-load.d/Bluez.conf 1> /dev/null 2>&1 #disabled because it spams dmesg alot and was unstable
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
