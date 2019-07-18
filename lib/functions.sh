@@ -463,8 +463,6 @@ create_rootfs_oem() {
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
         # fix wifi
         sed -i s/'boardflags3=0x48200100'/'boardflags3=0x44200100'/ $ROOTFS_IMG/rootfs_$ARCH//usr/lib/firmware/updates/brcm/brcmfmac43455-sdio.txt 1> /dev/null 2>&1
-        # needed to boot
-        cp $LIBDIR/armstub8* $ROOTFS_IMG/rootfs_$ARCH/boot/ 1> /dev/null 2>&1 #only until the firmware package gets updated
     elif [[ "$DEVICE" = "oc2" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
