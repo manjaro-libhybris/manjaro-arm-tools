@@ -67,7 +67,7 @@ You can also build `any` packages, which will use the aarch64 architecture to bu
 sudo buildarmpkg -p package -a any
 ```
 
-This places the packages created inside `/var/cache/manjaro-arm-tools/pkg/` in either armv7h folder or aarch64 folder.
+This places the packages created inside `/var/cache/manjaro-arm-tools/pkg/` in the architecture folder.
 
 ## deployarmpkg
 This script is only for package maintainers of Manjaro-ARM.
@@ -111,7 +111,7 @@ and remove the local files.
 * rockpro64
 * on2
 * rockpi4
-* vim3 (currently under construction)
+* vim3
 
 **Supported editions:**
 
