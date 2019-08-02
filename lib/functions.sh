@@ -796,9 +796,6 @@ create_img() {
         cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         
     #flash bootloader
-    if [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-        DEVICE=sopine
-        fi
         dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
 
     #clean up
