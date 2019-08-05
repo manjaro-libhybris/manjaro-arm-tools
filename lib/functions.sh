@@ -402,11 +402,11 @@ create_rootfs_oem() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
     if [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "rpi4" ]] || [[ "$DEVICE" = "vim3" ]]; then
     if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm matcha-dynamic-sddm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm matcha-dynamic-sddm --noconfirm
     elif [[ "$EDITION" = "lxqt" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-qt-manjaro-theme --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-qt-manjaro-theme --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm matcha-dynamic-sddm --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat matcha-dynamic-sddm --noconfirm
     fi
     fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
