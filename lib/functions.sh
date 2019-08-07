@@ -474,6 +474,7 @@ create_rootfs_oem() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "rockpi4" ]]; then
         echo 'SUBSYSTEM=="net", ACTION=="add", DRIVERS=="brcmfmac", KERNEL=="wlan0", RUN="/sbin/iw dev wlan0 set power_save off"' | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/udev/rules.d/70-persistant-wifi.rules 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable tlp.service 1> /dev/null 2>&1
     else
         echo "No device specific setups for $DEVICE..."
     fi
