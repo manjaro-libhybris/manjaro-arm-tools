@@ -680,7 +680,7 @@ create_img() {
         partprobe $LDEV 1> /dev/null 2>&1
 
         
-    ## For Odroid devices
+    ## For Amlogic devices
     elif [[ "$DEVICE" = "oc2" ]]; then
         #Clear first 8mb
         dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
@@ -708,42 +708,7 @@ create_img() {
         rm -r $TMPDIR/root
         partprobe $LDEV 1> /dev/null 2>&1
         
-    elif [[ "$DEVICE" = "on2" ]]; then
-        #Clear first 8 mb
-        dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
-        
-    #partition with 2 partitions
-        parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        parted -s $LDEV mkpart primary fat32 0% 256M 1> /dev/null 2>&1
-        START=`cat /sys/block/$DEV/${DEV}p1/start`
-        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-        partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.vfat "${LDEV}p1" -n BOOT 1>/dev/null 2>&1
-        mkfs.ext4 "${LDEV}p2" -L ROOT 1> /dev/null 2>&1
-        
-    #copy rootfs contents over to the FS
-        mkdir -p $TMPDIR/root
-        mkdir -p $TMPDIR/boot
-        mount ${LDEV}p1 $TMPDIR/boot
-        mount ${LDEV}p2 $TMPDIR/root
-        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        mv $TMPDIR/root/boot/* $TMPDIR/boot
-        
-    #flash bootloader
-        dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
-        
-    #clean up
-        umount $TMPDIR/root
-        umount $TMPDIR/boot
-        losetup -d $LDEV 1> /dev/null 2>&1
-        rm -r $TMPDIR/root $TMPDIR/boot
-        partprobe $LDEV 1> /dev/null 2>&1
-        
-    
-    ## For Khadas devices
-        elif [[ "$DEVICE" = "vim3" ]]; then
+    elif [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "vim3" ]]; then
         #Clear first 8 mb
         dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
         
@@ -767,8 +732,12 @@ create_img() {
         mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
+    if [[ "$DEVICE" = "vim3" ]]; then
         dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=1 count=444 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=512 skip=1 seek=1 1> /dev/null 2>&1
+        else
+        dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
+    fi
         
     #clean up
         umount $TMPDIR/root
@@ -776,8 +745,9 @@ create_img() {
         losetup -d $LDEV 1> /dev/null 2>&1
         rm -r $TMPDIR/root $TMPDIR/boot
         partprobe $LDEV 1> /dev/null 2>&1
+        
 
-    ## For pine devices
+    ## For Allwinner devices
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
 
     #Clear first 8mb
@@ -841,13 +811,11 @@ create_img() {
 }
 
 create_zip() {
-    #if [[ "$DEVICE" != "rpi4" ]]; then
     info "Compressing $IMGNAME.img..."
     #zip img
     cd $IMGDIR
     xz -zv --threads=0 $IMGNAME.img
     chmod 666 $IMGDIR/$IMGNAME.img.xz
-    #fi
 
     info "Removing rootfs_$ARCH"
     rm -rf $ROOTFS_IMG/rootfs_$ARCH
