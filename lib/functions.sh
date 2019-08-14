@@ -150,10 +150,10 @@ sign_pkg() {
     info "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
     gpg --detach-sign -u $GPGMAIL "$PACKAGE"
     #find $PWD -maxdepth 1 -name '*.pkg.tar.xz' -exec gpg --detach-sign -u $GPGMAIL "$PACKAGE" {} \;
-    #if [ ! -f "$PACKAGE.sig" ]
-    #echo "Package not signed. Aborting..."
-    #exit 1
-    #fi
+    if [ ! -f "$PACKAGE.sig" ]
+    echo "Package not signed. Aborting..."
+    exit 1
+    fi
 }
 
 create_torrent() {
