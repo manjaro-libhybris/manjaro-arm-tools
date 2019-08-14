@@ -150,7 +150,7 @@ sign_pkg() {
     info "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
     gpg --detach-sign -u $GPGMAIL "$PACKAGE"
     #find $PWD -maxdepth 1 -name '*.pkg.tar.xz' -exec gpg --detach-sign -u $GPGMAIL "$PACKAGE" {} \;
-    if [ ! -f "$PACKAGE.sig" ]
+    if [ ! -f "$PACKAGE.sig" ]; then
     echo "Package not signed. Aborting..."
     exit 1
     fi
@@ -170,7 +170,7 @@ checksum_img() {
     sha256sum $IMAGE > $IMAGE.sha256
     info "Creating signature for [$IMAGE]..."
     gpg --detach-sign -u $GPGMAIL "$IMAGE"
-    if [ ! -f "$IMAGE.sig" ]
+    if [ ! -f "$IMAGE.sig" ]; then
     echo "Image not signed. Aborting..."
     exit 1
     fi
