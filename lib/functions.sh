@@ -170,6 +170,10 @@ checksum_img() {
     sha256sum $IMAGE > $IMAGE.sha256
     info "Creating signature for [$IMAGE]..."
     gpg --detach-sign -u $GPGMAIL "$IMAGE"
+    if [ ! -f "$IMAGE.sig" ]
+    echo "Image not signed. Aborting..."
+    exit 1
+    fi
 }
 
 pkg_upload() {
