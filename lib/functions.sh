@@ -40,7 +40,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .xz file."
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -65,7 +65,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3,  rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3,  rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -81,7 +81,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, xfce, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -95,7 +95,7 @@ usage_build_oem() {
 
 usage_build_emmcflasher() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3, rock64, rockpro64, rockpi4, sopine and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
     echo "    -v <version>       Define the version of the release to download. [Default is current YY.MM]"
     echo "    -f <flash version> Version of the eMMC flasher image it self. [Default is current YY.MM]"
@@ -474,7 +474,7 @@ create_rootfs_oem() {
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable bluetooth-khadas.service 1> /dev/null 2>&1
         #echo "dhd" | tee --append $ROOTFS_IMG/rootfs_$ARCH/usr/lib/modules-load.d/Bluez.conf 1> /dev/null 2>&1 #disabled because it spams dmesg alot and was unstable
-    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
+    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
     else
         echo "No device specific setups for $DEVICE..."
@@ -752,7 +752,7 @@ create_img() {
         
 
     ## For Allwinner devices
-    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
+    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
 
     #Clear first 8mb
         dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
