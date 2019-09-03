@@ -739,10 +739,7 @@ create_img() {
         mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     #flash bootloader
-    if [[ "$DEVICE" = "vim3" ]]; then
-        dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=1 count=444 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/u-boot.bin.sd.bin of=${LDEV} bs=512 skip=1 seek=1 1> /dev/null 2>&1
-        else
+    if [[ "$DEVICE" = "on2" ]]; then
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
     fi
         
