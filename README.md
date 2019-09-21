@@ -8,7 +8,6 @@ This software is available in the Manjaro Strit repo's, if you run Manjaro or ot
 
 ## Known issues
 * `deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
-* Rock64 images don't boot from SD card on the Rock64 Rev3. Needs a uboot fix for this.
 
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
@@ -111,6 +110,7 @@ and remove the local files.
 * rockpro64
 * on2
 * rockpi4
+* vim1
 * vim3
 
 **Supported editions:**
@@ -119,7 +119,9 @@ and remove the local files.
 * lxqt
 * kde
 * mate
+* xfce
 * i3
+* cubocore (not complete yet)
 * server (not complete yet, unmaintained)
 
 
