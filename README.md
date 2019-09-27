@@ -111,6 +111,7 @@ and remove the local files.
 * on2
 * rockpi4
 * vim1
+* vim2
 * vim3
 
 **Supported editions:**

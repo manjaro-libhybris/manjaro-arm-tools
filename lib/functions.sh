@@ -40,7 +40,7 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .xz file."
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
@@ -65,7 +65,7 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim3,  rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3,  rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
@@ -81,7 +81,7 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, xfce, kde, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -95,7 +95,7 @@ usage_build_oem() {
 
 usage_build_emmcflasher() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
     echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
     echo "    -v <version>       Define the version of the release to download. [Default is current YY.MM]"
     echo "    -f <flash version> Version of the eMMC flasher image it self. [Default is current YY.MM]"
@@ -450,23 +450,24 @@ create_rootfs_oem() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     if [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-    echo "No OEM setup!"
+        echo "No OEM setup!"
     else
-    echo "Enabling SSH login for root user for headless setup..."
-    sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
-    sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
-    echo "Enabling autologin for OEM setup..."
-    mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
-    cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+        echo "Enabling SSH login for root user for headless setup..."
+        sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
+        sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
+        echo "Enabling autologin for OEM setup..."
+        mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
+        cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     fi
     echo "Correcting permissions from overlay..."
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
     if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
-    chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
-    fi
-    if [[ "$EDITION" = "plasma-mobile" ]]; then
-    sed -i s/"phablet"/"manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/etc/init/simplelogin.conf
-    sed -i s/"phablet"/"manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/simplelogin.service
+        chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
+    #elif [[ "$EDITION" = "plasma-mobile" ]]; then
+    #    sed -i s/"phablet"/"manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/etc/init/simplelogin.conf
+    #    sed -i s/"phablet"/"manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/simplelogin.service
+    elif [[ "$EDITION" = "cubocore" ]]; then
+        cp $ROOTFS_IMG/rootfs_$ARCH/usr/share/applications/corestuff.desktop $ROOTFS_IMG/rootfs_$ARCH/etc/xdg/autostart/
     fi
     
     
@@ -485,7 +486,7 @@ create_rootfs_oem() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "vim1" ]] || [[ "$DEVICE" = "vim3" ]]; then
+    elif [[ "$DEVICE" = "vim1" ]] || [[ "$DEVICE" = "vim2" ]] || [[ "$DEVICE" = "vim3" ]]; then
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable bluetooth-khadas.service 1> /dev/null 2>&1
         #echo "dhd" | tee --append $ROOTFS_IMG/rootfs_$ARCH/usr/lib/modules-load.d/Bluez.conf 1> /dev/null 2>&1 #disabled because it spams dmesg alot and was unstable
@@ -502,15 +503,17 @@ create_rootfs_oem() {
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(python -c 'import crypt; print(crypt.crypt('"$(cat $TMPDIR/rootpassword)"', crypt.mksalt(crypt.METHOD_SHA512)))') -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
-        if [[ "$EDITION" = "kde" ]]; then
+        if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
         sed -i s/"Session="/"Session=plasma.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
-        elif [[ "$EDITION" = "cubocore" ]] || [[ "$EDITION" = "lxqt" ]]; then
+        elif [[ "$EDITION" = "lxqt" ]]; then
         sed -i s/"Session="/"Session=lxqt.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+        elif [[ "$EDITION" = "plasma-mobile" ]]; then
+        sed -i s/"Session="/"Session=plasma-mobile.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         fi
         sed -i s/"User="/"User=manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sddm 1> /dev/null 2>&1
     else
-        echo "No device specific setups for $DEVICE..."
+            echo "No device specific setups for $DEVICE..."
     fi
     
     info "Cleaning rootfs for unwanted files..."
@@ -745,7 +748,7 @@ create_img() {
         rm -r $TMPDIR/root
         partprobe $LDEV 1> /dev/null 2>&1
         
-    elif [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "vim1" ]] || [[ "$DEVICE" = "vim3" ]]; then
+    elif [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "vim1" ]] || [[ "$DEVICE" = "vim2" ]] || [[ "$DEVICE" = "vim3" ]]; then
         #Clear first 8 mb
         dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
         
