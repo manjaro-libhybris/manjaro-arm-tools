@@ -1,9 +1,9 @@
 # Manjaro ARM Tools
 Contains scripts and files needed to build and manage manjaro-arm packages and images.
 
-This software is available in the Manjaro Strit repo's, if you run Manjaro or other Arch derivatives.
+This software is available in the Manjaro repository.
 
-*These tools only work on Arch based distributions!*
+*These tools only work on Manjaro based distributions!*
 
 
 ## Known issues
@@ -17,19 +17,23 @@ These scripts rely on certain packages to be able to function. These packages ar
 * git (arch repo)
 * zip (arch repo) (for `buildrootfs`)
 
+### Optional Dependencies
+* gzip (arch repo) (for `builddockerimg`)
+* docker (arch repo) (for `builddockkerimg`)
+
 This package also provides `binfmt-qemu-static`.
 
-# Installation (Arch based distributions only)
-## From Manjaro Strit repo
+# Installation (Manjaro based distributions only)
+## GIT version from Manjaro Strit repo
 Add my repo to your `/etc/pacman.conf`:
 ```
 [manjaro-strit]
 SigLevel = Optional
 Server = https://www.strits.dk/files/manjaro-strit/manjaro-strit-repo/$arch
 ```
-Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools`.
+Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools-git`.
 
-## From gitlab
+## From gitlab (tagged or GIT version)
 * Download the `.zip` or `.tar.gz` file from https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-arm-tools.
 * Extract it.
 * Copy the contents of `lib/` to `/usr/share/manjaro-arm-tools/lib/`.
@@ -183,6 +187,16 @@ To build an aarch64 rootfs:
 ```
 sudo buildrootfs
 ```
+
+## builddockerimg
+This script is similar to `buildrootfs`, except that it builds a rootfs ready for package building and turns it into a docker image, that can be uploaded to DockerHub.
+
+**Syntax**
+```
+sudo builddockerimg
+```
+This results in a .tar.gz file in /var/cache/manjaro-arm-tools/img/ that contains the docker image.
+
 
 ## deployarmimg
 This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.

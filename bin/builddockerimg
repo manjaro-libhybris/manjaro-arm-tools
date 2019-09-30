@@ -1,0 +1,94 @@
+#! /bin/bash
+
+# Set globals
+LIBDIR=/usr/share/manjaro-arm-tools/lib
+ARCH="aarch64"
+DOCKER_IMAGE_NAME="manjaro-$ARCH-base"
+
+#imports
+source $LIBDIR/functions.sh 
+
+# check if root
+if [ "$EUID" -ne 0 ]
+  then echo "This script requires root permissions to run. Please run as root or with sudo!"
+  exit
+fi
+
+# Functions
+
+create_rootfs () {
+    msg "Creating rootfs..."
+    # backup host mirrorlist
+    mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
+
+    # Create arm mirrorlist
+    echo "Server = https://manjaro-arm.moson.eu/stable/\$arch/\$repo/" > mirrorlist
+    mv mirrorlist /etc/pacman.d/mirrorlist
+    
+    # Remove old rootfs if it exists
+    if [ -d $BUILDDIR/$ARCH ]; then
+    echo "Removing old rootfs..."
+    rm -rf $BUILDDIR/$ARCH
+    fi
+
+    # cd to root_fs
+    mkdir -p $BUILDDIR/$ARCH
+
+    #basescrap the rootfs filesystem
+    basestrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
+
+    # Enable cross architecture Chrooting
+    cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
+    
+    # fix SSL in the rootfs
+    rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
+    rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
+    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
+    
+    # restore original mirrorlist to host system
+    mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
+    pacman -Syy
+    
+    info "Setting up keyrings..."
+    $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+}
+
+compress_docker () {
+    msg "Making Docker image..."
+    # make sure docker service is running
+    systemctl start docker
+    tar --numeric-owner --xattrs --acls -C $BUILDDIR/$ARCH -c . | docker import - $DOCKER_IMAGE_NAME 1> /dev/null 2>&1
+    docker save $DOCKER_IMAGE_NAME:latest | gzip > $IMGDIR/$DOCKER_IMAGE_NAME-latest.tar.gz 1> /dev/null 2>&1
+    rm -rf $BUILDDIR/$ARCH
+    
+}
+
+#Arguments 
+opt=":a:h"
+
+while getopts "${opt}" arg; do
+  case $arg in
+    a)
+      ARCH="${OPTARG}"
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}"
+      exit 1
+      ;;
+    h|?)
+ #     echo "-a <arch>       Architecture"
+      echo "-h <help>       This help"
+      exit 1
+      ;;
+    :)
+      echo "Option -${OPTARG} requires an argument."
+      exit 1
+      ;;
+  esac
+done
+
+# Commands
+create_rootfs
+compress_docker
