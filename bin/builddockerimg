@@ -59,10 +59,15 @@ compress_docker () {
     msg "Making Docker image..."
     # make sure docker service is running
     systemctl start docker
+    # create the docker image itself
     tar --numeric-owner --xattrs --acls -C $BUILDDIR/$ARCH -c . | docker import - $DOCKER_IMAGE_NAME 1> /dev/null 2>&1
-    docker save $DOCKER_IMAGE_NAME:latest | gzip > $IMGDIR/$DOCKER_IMAGE_NAME-latest.tar.gz 1> /dev/null 2>&1
+    docker image tag $DOCKER_IMAGE_NAME:latest manjaroarm/$DOCKER_IMAGE_NAME:latest
+    # upload the docker image to DockerHub and remove it from local docker
+    docker push manjaroarm/$DOCKER_IMAGE_NAME:latest
     rm -rf $BUILDDIR/$ARCH
-    
+    docker image rm $DOCKER_IMAGE_NAME
+    # for local docker image creation
+    #docker save $DOCKER_IMAGE_NAME | gzip > $IMGDIR/$DOCKER_IMAGE_NAME.tar.gz
 }
 
 #Arguments 
