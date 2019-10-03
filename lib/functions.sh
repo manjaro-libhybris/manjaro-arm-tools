@@ -507,11 +507,13 @@ create_rootfs_oem() {
         sed -i s/"Session="/"Session=plasma.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         elif [[ "$EDITION" = "lxqt" ]]; then
         sed -i s/"Session="/"Session=lxqt.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
-        elif [[ "$EDITION" = "plasma-mobile" ]]; then
-        sed -i s/"Session="/"Session=plasma-mobile.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+        #elif [[ "$EDITION" = "plasma-mobile" ]]; then
+        #sed -i s/"Session="/"Session=plasma-mobile.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         fi
+        if [[ "$EDITION" != "plasma-mobile" ]]; then
         sed -i s/"User="/"User=manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sddm 1> /dev/null 2>&1
+        fi
     else
             echo "No device specific setups for $DEVICE..."
     fi
