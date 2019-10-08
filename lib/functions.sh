@@ -41,7 +41,7 @@ usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .xz file."
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
-    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
+    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde-plasma, xfce, cubocore, mate and server]'
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
     echo "    -t                 Create a torrent of the image"
@@ -66,7 +66,7 @@ usage_build_pkg() {
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3,  rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
-    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
+    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde-plasma, xfce, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
     echo "    -p <password>      Password of default user. [Default = manjaro]"
@@ -82,7 +82,7 @@ usage_build_img() {
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
-    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, xfce, kde, cubocore, mate and server]'
+    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, xfce, kde-plasma, cubocore, mate and server]'
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -n                 Force download of new rootfs."
@@ -96,7 +96,7 @@ usage_build_oem() {
 usage_build_emmcflasher() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64 and pinebook]"
-    echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde, xfce, cubocore, mate and server]'
+    echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde-plasma, xfce, cubocore, mate and server]'
     echo "    -v <version>       Define the version of the release to download. [Default is current YY.MM]"
     echo "    -f <flash version> Version of the eMMC flasher image it self. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
@@ -281,7 +281,7 @@ create_rootfs_img() {
     # Install device and editions specific packages
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
     if [[ "$DEVICE" = "on2" ]]; then
-    if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
+    if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm --noconfirm
     elif [[ "$EDITION" = "lxqt" ]]; then
@@ -409,7 +409,7 @@ create_rootfs_oem() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
     fi
     if [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "rpi4" ]]; then
-    if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
+    if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm matcha-dynamic-sddm --noconfirm
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm matcha-dynamic-sddm --noconfirm
     elif [[ "$EDITION" = "lxqt" ]]; then
@@ -503,7 +503,7 @@ create_rootfs_oem() {
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(python -c 'import crypt; print(crypt.crypt('"$(cat $TMPDIR/rootpassword)"', crypt.mksalt(crypt.METHOD_SHA512)))') -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
-        if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
+        if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
         sed -i s/"Session="/"Session=plasma.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         elif [[ "$EDITION" = "lxqt" ]]; then
         sed -i s/"Session="/"Session=lxqt.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf

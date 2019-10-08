@@ -122,7 +122,7 @@ and remove the local files.
 
 * minimal
 * lxqt
-* kde
+* kde-plasma
 * mate
 * xfce
 * i3
@@ -168,9 +168,9 @@ Except that it always creates a minimal image, with an already existing image in
 sudo buildemmcinstaller [-d device] [-e edition] -v version [-f flashversion] [-n] [-x] [-i package-file.pkg.tar.xz]
 ```
 
-So to build an eMMC installer image for KDE 19.04 on Pinebook:
+So to build an eMMC installer image for KDE Plasma 19.04 on Pinebook:
 ```
-sudo buildemmcinstaller -d pinebook -e kde -v 19.04 -f first-emmc-flasher
+sudo buildemmcinstaller -d pinebook -e kde-plasma -v 19.04 -f first-emmc-flasher
 ```
 Be aware that the device, edition and version, most already exist on the OSDN download page, else it won't work.
 
