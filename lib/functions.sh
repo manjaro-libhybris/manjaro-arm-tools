@@ -221,7 +221,7 @@ create_rootfs_pkg() {
     mkdir -p $BUILDDIR/$ARCH
 
     # basescrap the rootfs filesystem
-    basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel manjaro-arm-keyring
+    basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel manjaro-arm-keyring manjaro-system
 
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
