@@ -279,7 +279,7 @@ create_rootfs_img() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     # Install device and editions specific packages
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release --noconfirm
     if [[ "$DEVICE" = "on2" ]]; then
     if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
@@ -404,9 +404,9 @@ create_rootfs_oem() {
     # Install device and editions specific packages
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     if [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release --noconfirm
     else
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install manjaro-system manjaro-release --noconfirm
     fi
     if [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "rpi4" ]]; then
     if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
@@ -501,19 +501,20 @@ create_rootfs_oem() {
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(python -c 'import crypt; print(crypt.crypt('"$(cat $TMPDIR/rootpassword)"', crypt.mksalt(crypt.METHOD_SHA512)))')\"} 1" /etc/shadow 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(mkpasswd --hash=SHA-512 $(cat $TMPDIR/password)) -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(python -c 'import crypt; print(crypt.crypt('"$(cat $TMPDIR/rootpassword)"', crypt.mksalt(crypt.METHOD_SHA512)))') -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
-        if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
-        sed -i s/"Session="/"Session=plasma.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+        #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
+        #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
+        if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
+        sed -i '0,/Session=//s//Session=plasma.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         elif [[ "$EDITION" = "lxqt" ]]; then
-        sed -i s/"Session="/"Session=lxqt.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+        sed -i '0,/Session=/s//Session=/Session=lxqt.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         #elif [[ "$EDITION" = "plasma-mobile" ]]; then
-        #sed -i s/"Session="/"Session=plasma-mobile.desktop"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+        #sed -i '0,/Session/{Session=plasma-mobile.desktop/}' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         fi
         if [[ "$EDITION" != "plasma-mobile" ]]; then
-        sed -i s/"User="/"User=manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sddm 1> /dev/null 2>&1
+        sed -i '0,/User=/s//User=manjaro/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         fi
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sddm 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
     else
             echo "No device specific setups for $DEVICE..."
     fi
