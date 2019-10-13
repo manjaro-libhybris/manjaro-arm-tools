@@ -492,8 +492,12 @@ create_rootfs_oem() {
         #echo "dhd" | tee --append $ROOTFS_IMG/rootfs_$ARCH/usr/lib/modules-load.d/Bluez.conf 1> /dev/null 2>&1 #disabled because it spams dmesg alot and was unstable
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pine64" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+        #sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
+        #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+        sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
         echo "manjaro" > $TMPDIR/user
         echo "manjaro" > $TMPDIR/password
         echo "root" > $TMPDIR/rootpassword
@@ -504,7 +508,7 @@ create_rootfs_oem() {
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
         if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
-        sed -i '0,/Session=//s//Session=plasma.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+        sed -i '0,/Session=/s//Session=plasma.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         elif [[ "$EDITION" = "lxqt" ]]; then
         sed -i '0,/Session=/s//Session=/Session=lxqt.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         #elif [[ "$EDITION" = "plasma-mobile" ]]; then
