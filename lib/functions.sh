@@ -12,7 +12,7 @@ IMGDIR=/var/cache/manjaro-arm-tools/img
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
-OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm/'
+OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm'
 VERSION=$(date +'%y'.'%m')
 FLASHVERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
