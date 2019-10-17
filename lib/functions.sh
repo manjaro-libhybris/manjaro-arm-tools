@@ -649,7 +649,7 @@ create_emmc_install() {
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-arm-emmc-flasher --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release manjaro-arm-emmc-flasher --noconfirm
 
     info "Enabling services..."
     # Enable services
