@@ -41,24 +41,17 @@ unset CDPATH
 # Ensure GREP_OPTIONS doesn't screw with our grep calls
 unset GREP_OPTIONS
 
-declare -r makepkg_version='5.1.0'
+declare -r makepkg_version='5.2.0'
 declare -r confdir='/etc'
 declare -r BUILDSCRIPT='PKGBUILD'
-declare -r startdir="$PWD"
+declare -r startdir="$(pwd -P)"
 
 LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
-
-build_options=('ccache' 'distcc' 'buildflags' 'makeflags')
-splitpkg_overrides=('pkgdesc' 'arch' 'url' 'license' 'groups' 'depends'
-                    'optdepends' 'provides' 'conflicts' 'replaces' 'backup'
-                    'options' 'install' 'changelog')
-readonly -a build_options splitpkg_overrides
-
-known_hash_algos=('md5' 'sha1' 'sha224' 'sha256' 'sha384' 'sha512' 'whirlpool')
 
 # Options
 ASDEPS=0
 BUILDFUNC=0
+BUILDPKG=1
 CHECKFUNC=0
 CLEANBUILD=0
 CLEANUP=0
@@ -133,7 +126,11 @@ clean_up() {
 
 	if (( INFAKEROOT )); then
 		# Don't clean up when leaving fakeroot, we're not done yet.
-		return
+		return 0
+	fi
+
+	if [[ -p $logpipe ]]; then
+		rm "$logpipe"
 	fi
 
 	if (( (EXIT_CODE == E_OK || EXIT_CODE == E_INSTALL_FAILED) && CLEANUP )); then
@@ -176,18 +173,26 @@ clean_up() {
 		fi
 	fi
 
-	remove_deps
+	if ! remove_deps && (( EXIT_CODE == E_OK )); then
+	    exit $E_REMOVE_DEPS_FAILED
+	else
+	    exit $EXIT_CODE
+	fi
 }
 
 enter_fakeroot() {
 	msg "$(gettext "Entering %s environment...")" "fakeroot"
-	fakeroot -- $0 -F "${ARGLIST[@]}" || exit $?
+	fakeroot -- bash -$- "${BASH_SOURCE[0]}" -F "${ARGLIST[@]}" || exit $?
 }
 
 # Automatically update pkgver variable if a pkgver() function is provided
 # Re-sources the PKGBUILD afterwards to allow for other variables that use $pkgver
 update_pkgver() {
+	msg "$(gettext "Starting %s()...")" "pkgver"
 	newpkgver=$(run_function_safe pkgver)
+	if (( $? != 0 )); then
+		error_function pkgver
+	fi
 	if ! check_pkgver "$newpkgver"; then
 		error "$(gettext "pkgver() generated an invalid version: %s")" "$newpkgver"
 		exit $E_PKGBUILD_ERROR
@@ -220,17 +225,24 @@ missing_source_file() {
 
 run_pacman() {
 	local cmd
-	if [[ $1 != -@(T|Q)*([[:alpha:]]) ]]; then
-		cmd=("$PACMAN_PATH" "${PACMAN_OPTS[@]}" "$@")
-	else
+	if [[ $1 = -@(T|Q)*([[:alpha:]]) ]]; then
 		cmd=("$PACMAN_PATH" "$@")
-	fi
-	if [[ $1 != -@(T|Q)*([[:alpha:]]) ]]; then
+	else
+		cmd=("$PACMAN_PATH" "${PACMAN_OPTS[@]}" "$@")
 		if type -p sudo >/dev/null; then
 			cmd=(sudo "${cmd[@]}")
 		else
 			cmd=(su root -c "$(printf '%q ' "${cmd[@]}")")
 		fi
+		local lockfile="$(pacman-conf DBPath)/db.lck"
+		while [[ -f $lockfile ]]; do
+			local timer=0
+			msg "$(gettext "Pacman is currently in use, please wait...")"
+			while [[ -f $lockfile ]] && (( timer < 10 )); do
+				(( ++timer ))
+				sleep 3
+			done
+		done
 	fi
 	"${cmd[@]}"
 }
@@ -269,7 +281,7 @@ handle_deps() {
 
 		if ! run_pacman -S --asdeps "${deplist[@]}"; then
 			error "$(gettext "'%s' failed to install missing dependencies.")" "$PACMAN"
-			exit $E_INSTALL_DEPS_FAILED
+			return $R_DEPS_MISSING
 		fi
 	fi
 
@@ -299,7 +311,7 @@ resolve_deps() {
 
 	if handle_deps "${deplist[@]}"; then
 		# check deps again to make sure they were resolved
-		deplist=$(check_deps "$@") || exit $E_INSTALL_DEPS_FAILED
+		deplist=$(check_deps "$@")
 		[[ -z $deplist ]] && return $R_DEPS_SATISFIED
 	fi
 
@@ -313,7 +325,7 @@ resolve_deps() {
 }
 
 remove_deps() {
-	(( ! RMDEPS )) && return
+	(( ! RMDEPS )) && return 0
 
 	# check for packages removed during dependency install (e.g. due to conflicts)
 	# removing all installed packages is risky in this case
@@ -332,31 +344,19 @@ remove_deps() {
 
 	msg "Removing installed dependencies..."
 	# exit cleanly on failure to remove deps as package has been built successfully
-	if ! run_pacman -Rn ${deplist[@]}; then
+	if ! run_pacman -Rnu ${deplist[@]}; then
 		warning "$(gettext "Failed to remove installed dependencies.")"
 		return $E_REMOVE_DEPS_FAILED
 	fi
 }
 
 error_function() {
-	if [[ -p $logpipe ]]; then
-		rm "$logpipe"
-	fi
 	# first exit all subshells, then print the error
 	if (( ! BASH_SUBSHELL )); then
 		error "$(gettext "A failure occurred in %s().")" "$1"
 		plain "$(gettext "Aborting...")"
 	fi
 	exit $E_USER_FUNCTION_FAILED
-}
-
-source_safe() {
-	shopt -u extglob
-	if ! source "$@"; then
-		error "$(gettext "Failed to source %s")" "$1"
-		exit $E_MISSING_FILE
-	fi
-	shopt -s extglob
 }
 
 merge_arch_attrs() {
@@ -376,55 +376,15 @@ source_buildfile() {
 	source_safe "$@"
 }
 
-prepare_buildenv() {
-	# clear user-specified buildflags if requested
-	if check_option "buildflags" "n"; then
-		unset CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
-	fi
-
-	if check_option "debug" "y"; then
-		DEBUG_CFLAGS+=" -fdebug-prefix-map=$srcdir=${DBGSRCDIR:-/usr/src/debug}"
-		DEBUG_CXXFLAGS+=" -fdebug-prefix-map=$srcdir=${DBGSRCDIR:-/usr/src/debug}"
-		CFLAGS+=" $DEBUG_CFLAGS"
-		CXXFLAGS+=" $DEBUG_CXXFLAGS"
-	fi
-
-	# clear user-specified makeflags if requested
-	if check_option "makeflags" "n"; then
-		unset MAKEFLAGS
-	fi
-
-	# ensure all necessary build variables are exported
-	export CPPFLAGS CFLAGS CXXFLAGS LDFLAGS MAKEFLAGS CHOST
-
-	local ccache=0
-
-	# use ccache if it is requested (check buildenv and PKGBUILD opts)
-	if check_buildoption "ccache" "y" && [[ -d /usr/lib/ccache/bin ]]; then
-		export PATH="/usr/lib/ccache/bin:$PATH"
-		ccache=1
-	fi
-
-	# use distcc if it is requested (check buildenv and PKGBUILD opts)
-	if check_buildoption "distcc" "y"; then
-		if (( ccache )); then
-			export CCACHE_PREFIX="${CCACHE_PREFIX:+$CCACHE_PREFIX }distcc"
-			export CCACHE_BASEDIR="$srcdir"
-		elif [[ -d /usr/lib/distcc/bin ]]; then
-			export PATH="/usr/lib/distcc/bin:$PATH"
-		fi
-		export DISTCC_HOSTS
-	fi
-}
-
 run_function_safe() {
-	local restoretrap restoreset restoreshopt
+	local restoretrap restoreshopt
 
 	# we don't set any special shopts of our own, but we don't want the user to
 	# muck with our environment.
 	restoreshopt=$(shopt -p)
 
-	restoreset=$(shopt -o -p)
+	# localize 'set' shell options to this function - this does not work for shopt
+	local -
 	shopt -o -s errexit errtrace
 
 	restoretrap=$(trap -p ERR)
@@ -432,8 +392,8 @@ run_function_safe() {
 
 	run_function "$1"
 
+	trap - ERR
 	eval "$restoretrap"
-	eval "$restoreset"
 	eval "$restoreshopt"
 }
 
@@ -443,11 +403,10 @@ run_function() {
 	fi
 	local pkgfunc="$1"
 
-	msg "$(gettext "Starting %s()...")" "$pkgfunc"
+	if (( ! BASH_SUBSHELL )); then
+		msg "$(gettext "Starting %s()...")" "$pkgfunc"
+	fi
 	cd_safe "$srcdir"
-
-	# save our shell options so pkgfunc() can't override what we need
-	local shellopts=$(shopt -p)
 
 	local ret=0
 	if (( LOGGING )); then
@@ -473,13 +432,11 @@ run_function() {
 
 		$pkgfunc &>"$logpipe"
 
-		wait $teepid
+		wait -f $teepid
 		rm "$logpipe"
 	else
 		"$pkgfunc"
 	fi
-	# reset our shell options
-	eval "$shellopts"
 }
 
 run_prepare() {
@@ -495,34 +452,27 @@ run_check() {
 }
 
 run_package() {
-	local pkgfunc
-	if [[ -z $1 ]]; then
-		pkgfunc="package"
-	else
-		pkgfunc="package_$1"
-	fi
-
-	run_function_safe "$pkgfunc"
+	run_function_safe "package${1:+_$1}"
 }
 
 find_libdepends() {
-	local d sodepends;
+	local d sodepends
 
-	sodepends=0;
+	sodepends=0
 	for d in "${depends[@]}"; do
 		if [[ $d = *.so ]]; then
-			sodepends=1;
-			break;
+			sodepends=1
+			break
 		fi
 	done
 
 	if (( sodepends == 0 )); then
 		(( ${#depends[@]} )) && printf '%s\n' "${depends[@]}"
-		return;
+		return 0
 	fi
 
-	local libdeps filename soarch sofile soname soversion;
-	declare -A libdeps;
+	local libdeps filename soarch sofile soname soversion
+	declare -A libdeps
 
 	while read -r filename; do
 		# get architecture of the file; if soarch is empty it's not an ELF binary
@@ -634,12 +584,10 @@ write_kv_pair() {
 }
 
 write_pkginfo() {
-	local size="$(/usr/bin/du -sk --apparent-size)"
-	size="$(( ${size%%[^0-9]*} * 1024 ))"
+	local size="$(find . -type f -exec cat {} + 2>/dev/null | wc -c)"
 
 	merge_arch_attrs
 
-	msg2 "$(gettext "Generating %s file...")" ".PKGINFO"
 	printf "# Generated by makepkg %s\n" "$makepkg_version"
 	printf "# using %s\n" "$(fakeroot -v)"
 
@@ -677,8 +625,6 @@ write_pkginfo() {
 }
 
 write_buildinfo() {
-	msg2 "$(gettext "Generating %s file...")" ".BUILDINFO"
-
 	write_kv_pair "format" "1"
 
 	write_kv_pair "pkgname" "$pkgname"
@@ -699,13 +645,11 @@ write_buildinfo() {
 	write_kv_pair "buildenv" "${BUILDENV[@]}"
 	write_kv_pair "options" "${OPTIONS[@]}"
 
-	local pkglist=($(run_pacman -Qq))
-	local pkginfos="$(LC_ALL=C run_pacman -Qi ${pkglist[@]})"
-	local pkginfos_parsed=($(awk -F': ' '\
-		/^Name .*/ {printf $2} \
-		/^Version .*/ {printf "-"$2} \
+	local pkginfos_parsed=($(LC_ALL=C run_pacman -Qi | awk -F': ' '\
+		/^Name .*/ {printf "%s", $2} \
+		/^Version .*/ {printf "-%s", $2} \
 		/^Architecture .*/ {print "-"$2} \
-		' <<< "${pkginfos}"))
+		'))
 
 	write_kv_pair "installed" "${pkginfos_parsed[@]}"
 }
@@ -715,12 +659,16 @@ write_buildinfo() {
 # database files are placed at the beginning of the package regardless of
 # sorting
 list_package_files() {
-	(find . -path './.*' \! -name '.'; find . \! -path './.*' \! -name '.' | LC_ALL=C sort) |
-	sed -e 's|^\./||' | tr '\n' '\0'
+	(
+		export LC_COLLATE=C
+		shopt -s dotglob globstar
+		# bash 5.0 only works with combo directory + file globs
+		printf '%s\0' **/*
+	)
 }
 
 create_package() {
-	(( NOARCHIVE )) && return
+	(( NOARCHIVE )) && return 0
 
 	if [[ ! -d $pkgdir ]]; then
 		error "$(gettext "Missing %s directory.")" "\$pkgdir/"
@@ -732,7 +680,9 @@ create_package() {
 	msg "$(gettext "Creating package \"%s\"...")" "$pkgname"
 
 	pkgarch=$(get_pkg_arch)
+	msg2 "$(gettext "Generating %s file...")" ".PKGINFO"
 	write_pkginfo > .PKGINFO
+	msg2 "$(gettext "Generating %s file...")" ".BUILDINFO"
 	write_buildinfo > .BUILDINFO
 
 	# check for changelog/install files
@@ -769,7 +719,7 @@ create_package() {
 	msg2 "$(gettext "Compressing package...")"
 	# TODO: Maybe this can be set globally for robustness
 	shopt -s -o pipefail
-	list_package_files | LANG=C bsdtar -cnf - --null --files-from - |
+	list_package_files | LANG=C bsdtar --no-fflags -cnf - --null --files-from - |
 		compress_as "$PKGEXT" > "${pkg_file}" || ret=$?
 
 	shopt -u -o pipefail
@@ -783,14 +733,14 @@ create_package() {
 create_debug_package() {
 	# check if a debug package was requested
 	if ! check_option "debug" "y" || ! check_option "strip" "y"; then
-		return
+		return 0
 	fi
 
-	pkgdir="$pkgdirbase/$pkgbase-debug"
+	local pkgdir="$pkgdirbase/$pkgbase-debug"
 
 	# check if we have any debug symbols to package
 	if dir_is_empty "$pkgdir/usr/lib/debug"; then
-		return
+		return 0
 	fi
 
 	unset groups depends optdepends provides conflicts replaces backup install changelog
@@ -860,7 +810,7 @@ create_srcpackage() {
 
 	# TODO: Maybe this can be set globally for robustness
 	shopt -s -o pipefail
-	LANG=C bsdtar -cLf - ${pkgbase} | compress_as "$SRCEXT" > "${pkg_file}" || ret=$?
+	LANG=C bsdtar --no-fflags -cLf - ${pkgbase} | compress_as "$SRCEXT" > "${pkg_file}" || ret=$?
 
 	shopt -u -o pipefail
 
@@ -874,7 +824,10 @@ create_srcpackage() {
 }
 
 install_package() {
-	(( ! INSTALL )) && return
+	(( ! INSTALL )) && return 0
+
+	remove_deps || return $?
+	RMDEPS=0
 
 	if (( ! SPLITPKG )); then
 		msg "$(gettext "Installing package %s with %s...")" "$pkgname" "$PACMAN -U"
@@ -900,178 +853,6 @@ install_package() {
 		warning "$(gettext "Failed to install built package(s).")"
 		return $E_INSTALL_FAILED
 	fi
-}
-
-get_vcsclient() {
-	local proto=${1%%+*}
-
-	local i
-	for i in "${VCSCLIENTS[@]}"; do
-		local handler="${i%%::*}"
-		if [[ $proto = "$handler" ]]; then
-			local client="${i##*::}"
-			break
-		fi
-	done
-
-	# if we didn't find an client, return an error
-	if [[ -z $client ]]; then
-		error "$(gettext "Unknown download protocol: %s")" "$proto"
-		plain "$(gettext "Aborting...")"
-		exit $E_CONFIG_ERROR
-	fi
-
-	printf "%s\n" "$client"
-}
-
-check_vcs_software() {
-	local netfile all_sources all_deps deps ret=0
-
-	if (( SOURCEONLY == 1 )); then
-		# we will not download VCS sources
-		return $ret
-	fi
-
-	if [[ -z $PACMAN_PATH ]]; then
-		warning "$(gettext "Cannot find the %s binary needed to check VCS source requirements.")" "$PACMAN"
-		return $ret
-	fi
-
-	# we currently only use global depends/makedepends arrays for --syncdeps
-	for attr in depends makedepends; do
-		get_pkgbuild_attribute "$pkg" "$attr" 1 'deps'
-		all_deps+=("${deps[@]}")
-
-		get_pkgbuild_attribute "$pkg" "${attr}_$CARCH" 1 'deps'
-		all_deps+=("${deps[@]}")
-	done
-
-	get_all_sources_for_arch 'all_sources'
-	for netfile in ${all_sources[@]}; do
-		local proto=$(get_protocol "$netfile")
-
-		case $proto in
-			bzr*|git*|hg*|svn*)
-				if ! type -p ${proto%%+*} > /dev/null; then
-					local client
-					client=$(get_vcsclient "$proto") || exit $?
-					# ensure specified program is installed
-					local uninstalled
-					uninstalled=$(check_deps "$client") || exit $E_INSTALL_DEPS_FAILED
-					# if not installed, check presence in depends or makedepends
-					if [[ -n "$uninstalled" ]] && (( ! NODEPS || ( VERIFYSOURCE && !DEP_BIN ) )); then
-						if ! in_array "$client" ${all_deps[@]}; then
-							error "$(gettext "Cannot find the %s package needed to handle %s sources.")" \
-									"$client" "${proto%%+*}"
-							ret=1
-						fi
-					fi
-				fi
-				;;
-			*)
-				# non VCS source
-				;;
-		esac
-	done
-
-	return $ret
-}
-
-check_software() {
-	# check for needed software
-	local ret=0
-
-	# check for PACMAN if we need it
-	if (( ! NODEPS || DEP_BIN || RMDEPS || INSTALL )); then
-		if [[ -z $PACMAN_PATH ]]; then
-			error "$(gettext "Cannot find the %s binary required for dependency operations.")" "$PACMAN"
-			ret=1
-		fi
-	fi
-
-	# check for sudo if we will need it during makepkg execution
-	if (( DEP_BIN || RMDEPS || INSTALL )); then
-		if ! type -p sudo >/dev/null; then
-			warning "$(gettext "Cannot find the %s binary. Will use %s to acquire root privileges.")" "sudo" "su"
-		fi
-	fi
-
-	# fakeroot - correct package file permissions
-	if check_buildenv "fakeroot" "y" && (( EUID > 0 )); then
-		if ! type -p fakeroot >/dev/null; then
-			error "$(gettext "Cannot find the %s binary.")" "fakeroot"
-			ret=1
-		fi
-	fi
-
-	# gpg - package signing
-	if [[ $SIGNPKG == 'y' ]] || { [[ -z $SIGNPKG ]] && check_buildenv "sign" "y"; }; then
-		if ! type -p gpg >/dev/null; then
-			error "$(gettext "Cannot find the %s binary required for signing packages.")" "gpg"
-			ret=1
-		fi
-	fi
-
-	# gpg - source verification
-	if (( ! SKIPPGPCHECK )) && source_has_signatures; then
-		if ! type -p gpg >/dev/null; then
-			error "$(gettext "Cannot find the %s binary required for verifying source files.")" "gpg"
-			ret=1
-		fi
-	fi
-
-	# checksum operations
-	if (( GENINTEG || ! SKIPCHECKSUMS )); then
-		local integlist
-		IFS=$'\n' read -rd '' -a integlist < <(get_integlist)
-
-		local integ
-		for integ in "${integlist[@]}"; do
-			if ! type -p "${integ}sum" >/dev/null; then
-				error "$(gettext "Cannot find the %s binary required for source file checksums operations.")" "${integ}sum"
-				ret=1
-			fi
-		done
-	fi
-
-	# distcc - compilation with distcc
-	if check_buildoption "distcc" "y"; then
-		if ! type -p distcc >/dev/null; then
-			error "$(gettext "Cannot find the %s binary required for distributed compilation.")" "distcc"
-			ret=1
-		fi
-	fi
-
-	# ccache - compilation with ccache
-	if check_buildoption "ccache" "y"; then
-		if ! type -p ccache >/dev/null; then
-			error "$(gettext "Cannot find the %s binary required for compiler cache usage.")" "ccache"
-			ret=1
-		fi
-	fi
-
-	# strip - strip symbols from binaries/libraries
-	if check_option "strip" "y"; then
-		if ! type -p strip >/dev/null; then
-			error "$(gettext "Cannot find the %s binary required for object file stripping.")" "strip"
-			ret=1
-		fi
-	fi
-
-	# gzip - compressig man and info pages
-	if check_option "zipman" "y"; then
-		if ! type -p gzip >/dev/null; then
-			error "$(gettext "Cannot find the %s binary required for compressing man and info pages.")" "gzip"
-			ret=1
-		fi
-	fi
-
-	# tools to download vcs sources
-	if ! check_vcs_software; then
-		ret=1
-	fi
-
-	return $ret
 }
 
 check_build_status() {
@@ -1123,26 +904,43 @@ check_build_status() {
 
 backup_package_variables() {
 	local var
-	for var in ${splitpkg_overrides[@]}; do
-		declare -p $var 2>/dev/null || printf '%s\n'  "unset $var"
+	for var in ${pkgbuild_schema_package_overrides[@]}; do
+		local indirect="${var}_backup"
+		eval "${indirect}=(\"\${$var[@]}\")"
 	done
+}
+
+restore_package_variables() {
+	local var
+	for var in ${pkgbuild_schema_package_overrides[@]}; do
+		local indirect="${var}_backup"
+		if [[ -n ${!indirect} ]]; then
+			eval "${var}=(\"\${$indirect[@]}\")"
+		else
+			unset ${var}
+		fi
+	done
+}
+
+run_single_packaging() {
+	local pkgdir="$pkgdirbase/$pkgname"
+	mkdir "$pkgdir"
+	if [[ -n $1 ]] || (( PKGFUNC )); then
+		run_package $1
+	fi
+	tidy_install
+	lint_package || exit $E_PACKAGE_FAILED
+	create_package
 }
 
 run_split_packaging() {
 	local pkgname_backup=("${pkgname[@]}")
-	local restore_package_variables
+	backup_package_variables
 	for pkgname in ${pkgname_backup[@]}; do
-		pkgdir="$pkgdirbase/$pkgname"
-		mkdir "$pkgdir"
-		restore_package_variables="$(backup_package_variables)"
-		run_package $pkgname
-		tidy_install
-		lint_package || exit $E_PACKAGE_FAILED
-		create_package
-		eval "$restore_package_variables"
+		run_single_packaging $pkgname
+		restore_package_variables
 	done
 	pkgname=("${pkgname_backup[@]}")
-	create_debug_package
 }
 
 usage() {
@@ -1180,7 +978,7 @@ usage() {
 	printf -- "$(gettext "  --nocheck        Do not run the %s function in the %s")\n" "check()" "$BUILDSCRIPT"
 	printf -- "$(gettext "  --noprepare      Do not run the %s function in the %s")\n" "prepare()" "$BUILDSCRIPT"
 	printf -- "$(gettext "  --nosign         Do not create a signature for the package")\n"
-	printf -- "$(gettext "  --packagelist    Only list packages that would be produced, without PKGEXT")\n"
+	printf -- "$(gettext "  --packagelist    Only list package filepaths that would be produced")\n"
 	printf -- "$(gettext "  --printsrcinfo   Print the generated SRCINFO and exit")\n"
 	printf -- "$(gettext "  --sign           Sign the resulting package with %s")\n" "gpg"
 	printf -- "$(gettext "  --skipchecksums  Do not verify checksums of the source files")\n"
@@ -1201,9 +999,10 @@ usage() {
 
 version() {
 	printf "makepkg (pacman) %s\n" "$makepkg_version"
+	printf -- "Copyright (c) 2006-2018 Pacman Development Team <pacman-dev@archlinux.org>.\n"
+	printf -- "Copyright (C) 2002-2006 Judd Vinet <jvinet@zeroflux.org>.\n"
+	printf '\n'
 	printf -- "$(gettext "\
-Copyright (c) 2006-2018 Pacman Development Team <pacman-dev@archlinux.org>.\n\
-Copyright (C) 2002-2006 Judd Vinet <jvinet@zeroflux.org>.\n\n\
 This is free software; see the source for copying conditions.\n\
 There is NO WARRANTY, to the extent permitted by law.\n")"
 }
@@ -1228,13 +1027,13 @@ OPT_LONG=('allsource' 'check' 'clean' 'cleanbuild' 'config:' 'force' 'geninteg'
           'help' 'holdver' 'ignorearch' 'install' 'key:' 'log' 'noarchive' 'nobuild'
           'nocolor' 'nocheck' 'nodeps' 'noextract' 'noprepare' 'nosign' 'packagelist'
           'printsrcinfo' 'repackage' 'rmdeps' 'sign' 'skipchecksums' 'skipinteg'
-          'skippgpcheck' 'source' 'syncdeps' 'verifysource' 'version' 'asroot')
+          'skippgpcheck' 'source' 'syncdeps' 'verifysource' 'version')
 
 # Pacman Options
 OPT_LONG+=('asdeps' 'noconfirm' 'needed' 'noprogressbar')
 
 if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-	exit $E_INVALID_OPTION;
+	exit $E_INVALID_OPTION
 fi
 set -- "${OPTRET[@]}"
 unset OPT_SHORT OPT_LONG OPTRET
@@ -1248,7 +1047,7 @@ while true; do
 		--noprogressbar)  PACMAN_OPTS+=("--noprogressbar") ;;
 
 		# Makepkg Options
-		--allsource)      SOURCEONLY=2 ;;
+		--allsource)      BUILDPKG=0 SOURCEONLY=2 ;;
 		-A|--ignorearch)  IGNOREARCH=1 ;;
 		-c|--clean)       CLEANUP=1 ;;
 		-C|--cleanbuild)  CLEANBUILD=1 ;;
@@ -1259,20 +1058,20 @@ while true; do
 		-f|--force)       FORCE=1 ;;
 		-F)               INFAKEROOT=1 ;;
 		# generating integrity checks does not depend on architecture
-		-g|--geninteg)    GENINTEG=1 IGNOREARCH=1;;
+		-g|--geninteg)    BUILDPKG=0 GENINTEG=1 IGNOREARCH=1;;
 		--holdver)        HOLDVER=1 ;;
 		-i|--install)     INSTALL=1 ;;
 		--key)            shift; GPGKEY=$1 ;;
 		-L|--log)         LOGGING=1 ;;
-		-m|--nocolor)     USE_COLOR='n'; PACMAN_OPTS+=("--color never") ;;
+		-m|--nocolor)     USE_COLOR='n'; PACMAN_OPTS+=("--color" "never") ;;
 		--noarchive)      NOARCHIVE=1 ;;
 		--nocheck)        RUN_CHECK='n' ;;
 		--noprepare)      RUN_PREPARE='n' ;;
 		--nosign)         SIGNPKG='n' ;;
-		-o|--nobuild)     NOBUILD=1 ;;
+		-o|--nobuild)     BUILDPKG=0 NOBUILD=1 ;;
 		-p)               shift; BUILDFILE=$1 ;;
-		--packagelist)    PACKAGELIST=1 IGNOREARCH=1;;
-		--printsrcinfo)   PRINTSRCINFO=1 IGNOREARCH=1;;
+		--packagelist)    BUILDPKG=0 PACKAGELIST=1 IGNOREARCH=1;;
+		--printsrcinfo)   BUILDPKG=0 PRINTSRCINFO=1 IGNOREARCH=1;;
 		-r|--rmdeps)      RMDEPS=1 ;;
 		-R|--repackage)   REPKG=1 ;;
 		--sign)           SIGNPKG='y' ;;
@@ -1280,13 +1079,13 @@ while true; do
 		--skipinteg)      SKIPCHECKSUMS=1; SKIPPGPCHECK=1 ;;
 		--skippgpcheck)   SKIPPGPCHECK=1;;
 		-s|--syncdeps)    DEP_BIN=1 ;;
-		-S|--source)      SOURCEONLY=1 ;;
-		--verifysource)   VERIFYSOURCE=1 ;;
+		-S|--source)      BUILDPKG=0 SOURCEONLY=1 ;;
+		--verifysource)   BUILDPKG=0 VERIFYSOURCE=1 ;;
 
 		-h|--help)        usage; exit $E_OK ;;
 		-V|--version)     version; exit $E_OK ;;
 
-		--)               OPT_IND=0; shift; break ;;
+		--)               shift; break ;;
 	esac
 	shift
 done
@@ -1309,33 +1108,7 @@ done
 trap 'trap_exit INT "$(gettext "Aborted by user! Exiting...")"' INT
 trap 'trap_exit USR1 "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 
-# preserve environment variables to override makepkg.conf
-restore_envvars=$(declare -p PKGDEST SRCDEST SRCPKGDEST LOGDEST BUILDDIR PKGEXT SRCEXT GPGKEY PACKAGER CARCH 2>/dev/null || true)
-
-# default config is makepkg.conf
-MAKEPKG_CONF=${MAKEPKG_CONF:-$confdir/makepkg.conf}
-
-# Source the config file; fail if it is not found
-if [[ -r $MAKEPKG_CONF ]]; then
-	source_safe "$MAKEPKG_CONF"
-else
-	error "$(gettext "%s not found.")" "$MAKEPKG_CONF"
-	plain "$(gettext "Aborting...")"
-	exit $E_CONFIG_ERROR
-fi
-
-# Source user-specific makepkg.conf overrides, but only if no override config
-# file was specified
-XDG_PACMAN_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/pacman"
-if [[ "$MAKEPKG_CONF" = "$confdir/makepkg.conf" ]]; then
-	if [[ -r "$XDG_PACMAN_DIR/makepkg.conf" ]]; then
-		source_safe "$XDG_PACMAN_DIR/makepkg.conf"
-	elif [[ -r "$HOME/.makepkg.conf" ]]; then
-		source_safe "$HOME/.makepkg.conf"
-	fi
-fi
-
-eval "$restore_envvars"
+load_makepkg_config
 
 # override settings from extra variables on commandline, if any
 if (( ${#extra_environment[*]} )); then
@@ -1344,7 +1117,7 @@ fi
 
 # canonicalize paths and provide defaults if anything is still undefined
 for var in PKGDEST SRCDEST SRCPKGDEST LOGDEST BUILDDIR; do
-	printf -v "$var" "$(canonicalize_path "${!var:-$startdir}")"
+	printf -v "$var" '%s' "$(canonicalize_path "${!var:-$startdir}")"
 done
 unset var
 PACKAGER=${PACKAGER:-"Unknown Packager"}
@@ -1371,7 +1144,6 @@ if ! ensure_writable_dir "BUILDDIR" "$BUILDDIR"; then
 	plain "$(gettext "Aborting...")"
 	exit $E_FS_PERMISSIONS
 fi
-chmod a-s "$BUILDDIR"
 
 if (( ! (NOBUILD || GENINTEG) )) && ! ensure_writable_dir "PKGDEST" "$PKGDEST"; then
 	plain "$(gettext "Aborting...")"
@@ -1401,9 +1173,9 @@ fi
 
 #if (( ! INFAKEROOT )); then
 #	if (( EUID == 0 )); then
-#		warning "$(gettext "Running %s as root is not allowed as it can cause permanent,\n\
+#		error "$(gettext "Running %s as root is not allowed as it can cause permanent,\n\
 #catastrophic damage to your system.")" "makepkg"
-		#exit $E_ROOT
+#		exit $E_ROOT
 #	fi
 #else
 #	if [[ -z $FAKEROOTKEY ]]; then
@@ -1412,18 +1184,18 @@ fi
 #	fi
 #fi
 
-unset pkgname pkgbase pkgver pkgrel epoch pkgdesc url license groups provides
-unset md5sums replaces depends conflicts backup source install changelog build
-unset sha{1,224,256,384,512}sums makedepends optdepends options noextract validpgpkeys
+unset pkgname "${pkgbuild_schema_strings[@]}" "${pkgbuild_schema_arrays[@]}"
+unset "${known_hash_algos[@]/%/sums}"
+unset -f pkgver prepare build check package "${!package_@}"
 unset "${!makedepends_@}" "${!depends_@}" "${!source_@}" "${!checkdepends_@}"
 unset "${!optdepends_@}" "${!conflicts_@}" "${!provides_@}" "${!replaces_@}"
 unset "${!md5sums_@}" "${!sha1sums_@}" "${!sha224sums_@}" "${!sha256sums_@}"
-unset "${!sha384sums_@}" "${!sha512sums_@}"
+unset "${!sha384sums_@}" "${!sha512sums_@}" "${!b2sums_@}"
 
 BUILDFILE=${BUILDFILE:-$BUILDSCRIPT}
 if [[ ! -f $BUILDFILE ]]; then
 	error "$(gettext "%s does not exist.")" "$BUILDFILE"
-	exit $E_USER_FUNCTION_FAILED
+	exit $E_PKGBUILD_ERROR
 
 else
 	if [[ $(<"$BUILDFILE") = *$'\r'* ]]; then
@@ -1453,7 +1225,7 @@ fi
 
 basever=$(get_full_version)
 
-if [[ $BUILDDIR = "$startdir" ]]; then
+if [[ $BUILDDIR -ef "$startdir" ]]; then
 	srcdir="$BUILDDIR/src"
 	pkgdirbase="$BUILDDIR/pkg"
 else
@@ -1469,7 +1241,7 @@ if (( GENINTEG )); then
 	mkdir -p "$srcdir"
 	chmod a-s "$srcdir"
 	cd_safe "$srcdir"
-	download_sources novcs allarch
+	download_sources novcs allarch >&2
 	generate_checksums
 	exit $E_OK
 fi
@@ -1481,7 +1253,7 @@ fi
 # check we have the software required to process the PKGBUILD
 check_software || exit $E_MISSING_MAKEPKG_DEPS
 
-if (( ${#pkgname[@]} > 1 )); then
+if (( ${#pkgname[@]} > 1 )) || have_function package_${pkgname}; then
 	SPLITPKG=1
 fi
 
@@ -1503,8 +1275,6 @@ if have_function check; then
 fi
 if have_function package; then
 	PKGFUNC=1
-elif [[ $SPLITPKG -eq 0 ]] && have_function package_${pkgname}; then
-	SPLITPKG=1
 fi
 
 # check if gpg signature is to be created and if signing key is valid
@@ -1546,18 +1316,12 @@ if (( INFAKEROOT )); then
 
 	chmod 755 "$pkgdirbase"
 	if (( ! SPLITPKG )); then
-		pkgdir="$pkgdirbase/$pkgname"
-		mkdir "$pkgdir"
-		if (( PKGFUNC )); then
-			run_package
-		fi
-		tidy_install
-		lint_package || exit $E_PACKAGE_FAILED
-		create_package
-		create_debug_package
+		run_single_packaging
 	else
 		run_split_packaging
 	fi
+	
+	create_debug_package
 
 	msg "$(gettext "Leaving %s environment.")" "fakeroot"
 	exit $E_OK
@@ -1690,7 +1454,7 @@ else
 
 	enter_fakeroot
 
-	create_package_signatures
+	create_package_signatures || exit $E_PRETTY_BAD_PRIVACY
 fi
 
 # if inhibiting archive creation, go no further
