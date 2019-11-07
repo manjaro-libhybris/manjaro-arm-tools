@@ -179,7 +179,7 @@ checksum_img() {
 pkg_upload() {
     msg "Uploading package to server..."
     info "Please use your server login details..."
-    scp $PACKAGE* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
+    scp ./"$PACKAGE"* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
     #msg "Adding [$PACKAGE] to repo..."
     #info "Please use your server login details..."
     #ssh $SERVER 'bash -s' < $LIBDIR/repo-add.sh "$@"
@@ -196,7 +196,7 @@ remove_local_pkg() {
     # remove local packages if remote packages exists, eg, if upload worked
     if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$PACKAGE ]"; then
     msg "Removing local files..."
-    rm $PACKAGE*
+    rm ./"$PACKAGE"*
     else
     info "Package did not get uploaded correctly! Files not removed..."
     fi
