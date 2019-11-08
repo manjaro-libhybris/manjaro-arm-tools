@@ -431,12 +431,15 @@ create_rootfs_oem() {
     #disabling services depending on edition
     if [[ "$EDITION" = "mate" ]] || [[ "$EDITION" = "mate-fta" ]] || [[ "$EDITION" = "i3" ]] || [[ "$EDITION" = "xfce" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
     elif [[ "$EDITION" = "gnome" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable gdm.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= gdm 1> /dev/null 2>&1
     elif [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]] || [[ "$EDITION" = "plasma-mobile" ]]; then
     echo "No display manager to disable in $EDITION..."
     else
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
     fi
 
     info "Applying overlay for $EDITION edition..."
@@ -496,6 +499,10 @@ create_rootfs_oem() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
+    elif [[ "$DEVICE" = "pbpro" ]]; then
+        sed -i s/"WIFI_PWR_ON_BAT=on"/"WIFI_PWR_ON_BAT=off"/ $ROOTFS_IMG/rootfs_$ARCH/etc/default/tlp
+    elif [[ "$DEVICE" = "rockpi4" ]]; then
+        sed -i s/"WIFI_PWR_ON_BAT=on"/"WIFI_PWR_ON_BAT=off"/ $ROOTFS_IMG/rootfs_$ARCH/etc/default/tlp
     elif [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
