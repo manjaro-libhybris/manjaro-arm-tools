@@ -489,6 +489,7 @@ create_rootfs_oem() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "on2" ]]; then
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
+        sed -i s/'meson64_odroidn2.dtb'/'meson-g12b-odroid-n2.dtb'/ $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "vim1" ]] || [[ "$DEVICE" = "vim2" ]] || [[ "$DEVICE" = "vim3" ]]; then
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable bluetooth-khadas.service khadas-utils.service 1> /dev/null 2>&1
