@@ -109,6 +109,7 @@ and remove the local files.
 * rpi3 (not the A/B+ models it seems)
 * rpi4
 * pinebook
+* pbpro
 * sopine
 * rock64
 * rockpro64
