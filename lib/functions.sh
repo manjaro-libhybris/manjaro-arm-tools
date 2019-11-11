@@ -408,13 +408,18 @@ create_rootfs_oem() {
     else
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install manjaro-system manjaro-release --noconfirm
     fi
-    if [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "rpi4" ]]; then
+    if [[ "$DEVICE" = "rpi4" ]]; then
     if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm matcha-dynamic-sddm --noconfirm
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm matcha-dynamic-sddm --noconfirm
     elif [[ "$EDITION" = "lxqt" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm matcha-dynamic-sddm --noconfirm
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat matcha-dynamic-sddm --noconfirm
+    fi
+    fi
+    if [[ "$DEVICE" = "pbpro" ]]; then
+    if [[ "$EDITION" = "xfce" ]]; then
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S xf86-video-fbturbo-git --noconfirm
     fi
     fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
