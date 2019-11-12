@@ -40,8 +40,8 @@ usage_deploy_pkg() {
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .xz file."
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64, pinebook and pbpro]"
-    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde-plasma, xfce, cubocore, mate and server]'
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
+    echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
     echo "    -t                 Create a torrent of the image"
@@ -65,8 +65,8 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3,  rock64, rockpro64, rockpi4, sopine, pine64, pinebook and pbpro]"
-    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, kde-plasma, xfce, cubocore, mate and server]'
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
+    echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -u <user>          Username for default user. [Default = manjaro]"
     echo "    -p <password>      Password of default user. [Default = manjaro]"
@@ -81,8 +81,8 @@ usage_build_img() {
 
 usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64, pinebook and pbpro]"
-    echo '    -e <edition>       Edition of the image. [Default = minimal. Options = minimal, lxqt, xfce, kde-plasma, cubocore, mate and server]'
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
+    echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -n                 Force download of new rootfs."
@@ -95,8 +95,8 @@ usage_build_oem() {
 
 usage_build_emmcflasher() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = rpi3, rpi4, oc2, on2, vim1, vim2, vim3, rock64, rockpro64, rockpi4, sopine, pine64, pinebook and pbpro]"
-    echo '    -e <edition>       Edition of the image to download. [Default = minimal. Options = minimal, lxqt, kde-plasma, xfce, cubocore, mate and server]'
+    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
+    echo "    -e <edition>       Edition of the image to download. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version of the release to download. [Default is current YY.MM]"
     echo "    -f <flash version> Version of the eMMC flasher image it self. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
