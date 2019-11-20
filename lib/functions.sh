@@ -408,20 +408,20 @@ create_rootfs_oem() {
     else
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install manjaro-system manjaro-release --noconfirm
     fi
-    if [[ "$DEVICE" = "rpi4" ]]; then
-    if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm matcha-dynamic-sddm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm matcha-dynamic-sddm --noconfirm
-    elif [[ "$EDITION" = "lxqt" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm matcha-dynamic-sddm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat matcha-dynamic-sddm --noconfirm
-    fi
-    fi
-    if [[ "$DEVICE" = "pbpro" ]]; then
-    if [[ "$EDITION" = "xfce" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S xf86-video-fbturbo-git --noconfirm
-    fi
-    fi
+    #if [[ "$DEVICE" = "???" ]]; then
+    #if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
+    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm matcha-dynamic-sddm --noconfirm
+    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm matcha-dynamic-sddm --noconfirm
+    #elif [[ "$EDITION" = "lxqt" ]]; then
+    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm matcha-dynamic-sddm --noconfirm
+    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat matcha-dynamic-sddm --noconfirm
+    #fi
+    #fi
+    #if [[ "$DEVICE" = "pbpro" ]]; then
+    #if [[ "$EDITION" = "xfce" ]]; then
+    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S xf86-video-fbturbo-git --noconfirm
+    #fi
+    #fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
