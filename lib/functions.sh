@@ -498,9 +498,6 @@ create_rootfs_oem() {
     elif [[ "$DEVICE" = "vim1" ]] || [[ "$DEVICE" = "vim2" ]] || [[ "$DEVICE" = "vim3" ]]; then
         echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable bluetooth-khadas.service khadas-utils.service 1> /dev/null 2>&1
-        #sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
-        #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
-        #echo "dhd" | tee --append $ROOTFS_IMG/rootfs_$ARCH/usr/lib/modules-load.d/Bluez.conf 1> /dev/null 2>&1 #disabled because it spams dmesg alot and was unstable
     elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pine64" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
@@ -516,10 +513,8 @@ create_rootfs_oem() {
         echo "manjaro" > $TMPDIR/user
         echo "manjaro" > $TMPDIR/password
         echo "root" > $TMPDIR/rootpassword
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(mkpasswd --hash=SHA-512 $(cat $TMPDIR/rootpassword))\"} 1" /etc/shadow 1> /dev/null 2>&1
-        #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(python -c 'import crypt; print(crypt.crypt('"$(cat $TMPDIR/rootpassword)"', crypt.mksalt(crypt.METHOD_SHA512)))')\"} 1" /etc/shadow 1> /dev/null 2>&1
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(mkpasswd --hash=SHA-512 $(cat $TMPDIR/password)) -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
-        #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(python -c 'import crypt; print(crypt.crypt('"$(cat $TMPDIR/rootpassword)"', crypt.mksalt(crypt.METHOD_SHA512)))') -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -1 $(cat $TMPDIR/rootpassword))\"} 1" /etc/shadow 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(openssl passwd -1 $(cat $TMPDIR/password)) -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
         if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
