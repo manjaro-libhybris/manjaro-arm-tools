@@ -127,6 +127,7 @@ and remove the local files.
 * mate
 * xfce
 * i3
+* gnome (experimental
 * cubocore (not complete yet)
 * server (not complete yet, unmaintained)
 

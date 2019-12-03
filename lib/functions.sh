@@ -240,7 +240,7 @@ create_rootfs_pkg() {
     cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
-    sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS=-"j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
+    sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
      if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
     cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
@@ -408,10 +408,10 @@ create_rootfs_oem() {
     else
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install manjaro-system manjaro-release --noconfirm
     fi
-    #if [[ "$DEVICE" = "???" ]]; then
-    #if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm matcha-dynamic-sddm --noconfirm
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm matcha-dynamic-sddm --noconfirm
+    #if [[ "$DEVICE" = "pbpro" ]]; then
+    #if [[ "$EDITION" = "kde-plasma" ]]; then
+    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R mesa --noconfirm
+    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S mesa-git --noconfirm
     #elif [[ "$EDITION" = "lxqt" ]]; then
     #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm matcha-dynamic-sddm --noconfirm
     #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat matcha-dynamic-sddm --noconfirm
@@ -502,10 +502,6 @@ create_rootfs_oem() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "pbpro" ]]; then
-        sed -i s/"WIFI_PWR_ON_BAT=on"/"WIFI_PWR_ON_BAT=off"/ $ROOTFS_IMG/rootfs_$ARCH/etc/default/tlp
-    elif [[ "$DEVICE" = "rockpi4" ]]; then
-        sed -i s/"WIFI_PWR_ON_BAT=on"/"WIFI_PWR_ON_BAT=off"/ $ROOTFS_IMG/rootfs_$ARCH/etc/default/tlp
     elif [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
@@ -524,9 +520,9 @@ create_rootfs_oem() {
         #elif [[ "$EDITION" = "plasma-mobile" ]]; then
         #sed -i '0,/Session/{Session=plasma-mobile.desktop/}' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         fi
-        if [[ "$EDITION" != "plasma-mobile" ]]; then
-        sed -i '0,/User=/s//User=manjaro/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
-        fi
+        #if [[ "$EDITION" != "plasma-mobile" ]]; then
+        #sed -i '0,/User=/s//User=phablet/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+        #fi
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sddm 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
     else
