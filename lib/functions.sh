@@ -876,14 +876,13 @@ build_pkg() {
     #cp package to rootfs
     msg "Copying build directory {$PACKAGE} to rootfs..."
     $NSPAWN $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
-    cp -rp "$PACKAGE"/* $BUILDDIR/$ARCH/build/
-
-    #build package
+    mount -o bind "$PACKAGE" $BUILDDIR/$ARCH/build
     msg "Building {$PACKAGE}..."
     $NSPAWN $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
     $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
     umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
+    umount $BUILDDIR/$ARCH/build
 }
 
 export_and_clean() {
