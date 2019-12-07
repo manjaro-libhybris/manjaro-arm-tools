@@ -241,11 +241,6 @@ create_rootfs_pkg() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
-     if [[ ! -z "$ADD_PACKAGE" ]]; then
-    info "Installing local package {$ADD_PACKAGE} to rootfs..."
-    cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
-    $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
-    fi
 }
 
 create_rootfs_img() {
@@ -872,6 +867,12 @@ create_zip() {
 }
 
 build_pkg() {
+    # Install local package to rootfs before building
+    if [[ ! -z "$ADD_PACKAGE" ]]; then
+    info "Installing local package {$ADD_PACKAGE} to rootfs..."
+    cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
+    $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+    fi
     #cp package to rootfs
     msg "Copying build directory {$PACKAGE} to rootfs..."
     $NSPAWN $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
