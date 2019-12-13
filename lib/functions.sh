@@ -873,7 +873,7 @@ build_pkg() {
     cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
     $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
-    #cp package to rootfs
+    # Build the actual package
     msg "Copying build directory {$PACKAGE} to rootfs..."
     $NSPAWN $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
     mount -o bind "$PACKAGE" $BUILDDIR/$ARCH/build
@@ -882,7 +882,6 @@ build_pkg() {
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
     $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
     umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
-    umount $BUILDDIR/$ARCH/build
 }
 
 export_and_clean() {
@@ -894,6 +893,7 @@ export_and_clean() {
         cp $BUILDDIR/$ARCH/build/*.pkg.tar.xz* $PKGDIR/$ARCH/
         chmod 666 $PKGDIR/$ARCH/$PACKAGE*
         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
+        umount $BUILDDIR/$ARCH/build
 
         #clean up rootfs
         info "Cleaning build files from rootfs"
@@ -901,7 +901,7 @@ export_and_clean() {
 
     else
         msg "!!!!! Package failed to build !!!!!"
-        info "Cleaning build files from rootfs"
+        umount $BUILDDIR/$ARCH/build
         rm -rf $BUILDDIR/$ARCH/build/
         exit 1
     fi
