@@ -148,12 +148,15 @@ show_elapsed_time(){
  
 sign_pkg() {
     info "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
-    gpg --detach-sign -u $GPGMAIL "$PACKAGE"
+    for p in $PACKAGE
+    do
+    gpg --detach-sign -u $GPGMAIL "$p"
     #find $PWD -maxdepth 1 -name '*.pkg.tar.xz' -exec gpg --detach-sign -u $GPGMAIL "$PACKAGE" {} \;
-    if [ ! -f "$PACKAGE.sig" ]; then
+    if [ ! -f "$p.sig" ]; then
     echo "Package not signed. Aborting..."
     exit 1
     fi
+    done
 }
 
 create_torrent() {
@@ -177,9 +180,12 @@ checksum_img() {
 }
 
 pkg_upload() {
-    msg "Uploading package to server..."
+    msg "Uploading package(s) to server..."
     info "Please use your server login details..."
-    scp ./"$PACKAGE"* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
+    for p in $PACKAGE
+    do
+    scp ./"$p" $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
+    done
     #msg "Adding [$PACKAGE] to repo..."
     #info "Please use your server login details..."
     #ssh $SERVER 'bash -s' < $LIBDIR/repo-add.sh "$@"
@@ -194,12 +200,15 @@ img_upload() {
 
 remove_local_pkg() {
     # remove local packages if remote packages exists, eg, if upload worked
-    if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$PACKAGE ]"; then
-    msg "Removing local files..."
-    rm ./"$PACKAGE"*
+    for p in $PACKAGE
+    do
+    if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$p ]"; then
+    msg "Removing local file [$p]..."
+    rm ./"$p"
     else
     info "Package did not get uploaded correctly! Files not removed..."
     fi
+    done
 }
 
 create_rootfs_pkg() {
@@ -419,7 +428,7 @@ create_rootfs_oem() {
     #fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
-    cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
+    cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
     
@@ -870,7 +879,7 @@ build_pkg() {
     # Install local package to rootfs before building
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
-    cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
+    cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/
     $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
     # Build the actual package
@@ -878,7 +887,7 @@ build_pkg() {
     $NSPAWN $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
     mount -o bind "$PACKAGE" $BUILDDIR/$ARCH/build
     msg "Building {$PACKAGE}..."
-    $NSPAWN $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
+    #$NSPAWN $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
     $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
     umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
