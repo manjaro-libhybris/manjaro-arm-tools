@@ -7,7 +7,7 @@ This software is available in the Manjaro repository.
 
 
 ## Known issues
-* `deployarmpkg` does not add the packages to the repo. Wait for the server to do the automatic adding.
+* `deployarmpkg` does not add the packages to the repo database. Wait for the server to do the automatic adding.
 
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
@@ -16,12 +16,11 @@ These scripts rely on certain packages to be able to function. These packages ar
 * xz (arch repo)
 * git (arch repo)
 * zip (arch repo) (for `buildrootfs`)
+* binfmt-user-static
 
 ### Optional Dependencies
 * gzip (arch repo) (for `builddockerimg`)
 * docker (arch repo) (for `builddockkerimg`)
-
-This package also provides `binfmt-qemu-static`.
 
 # Installation (Manjaro based distributions only)
 ## GIT version from Manjaro Strit repo
