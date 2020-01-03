@@ -204,7 +204,7 @@ remove_local_pkg() {
     do
     if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$p ]"; then
     msg "Removing local file [$p]..."
-    rm ./"$p"
+    rm ./"$p"*
     else
     info "Package did not get uploaded correctly! Files not removed..."
     fi
