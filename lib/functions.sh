@@ -185,10 +185,23 @@ pkg_upload() {
     for p in $PACKAGE
     do
     scp ./"$p"* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
+
+    msg "Adding [$p] to repo..."
+    info "Please use your server login details..."
+    ssh $SERVER 1> /dev/null 2>&1 <<ENDSSH
+    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$ARCH/$REPO/$REPO.db.tar.gz /mirror/stable/$ARCH/$REPO/$p 
+if [[ "$ARCH" = "any" ]]; then
+    cd /opt/repo/mirror/stable/any/$REPO/ &&
+    for f in *
+    do
+    ln -s ../../any/$REPO/"$f" ../../aarch64/$REPO/"$f"
     done
-    #msg "Adding [$PACKAGE] to repo..."
-    #info "Please use your server login details..."
-    #ssh $SERVER 'bash -s' < $LIBDIR/repo-add.sh "$@"
+    cd /opt/repo/mirror/stable/aarch64/$REPO/ &&
+    for x in * .[!.]* ..?*; do if [ -L "$x" ] && ! [ -e "$x" ]; then rm -- "$x"; fi; done
+    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/aarch64/$REPO/$REPO.db.tar.gz /mirror/stable/aarch64/$REPO/$p
+fi
+ENDSSH
+    done
 }
 
 img_upload() {
@@ -507,7 +520,7 @@ create_rootfs_oem() {
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     elif [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service ofono.service eg25.service ofonoctl.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
         echo "manjaro" > $TMPDIR/user
@@ -529,6 +542,7 @@ create_rootfs_oem() {
         #fi
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sddm 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable systemd-resolved
     else
             echo "No device specific setups for $DEVICE..."
     fi
@@ -846,10 +860,29 @@ create_img() {
         mount ${LDEV}p1 $TMPDIR/root
         cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         
-    #flash bootloader
+        # Flash bootloader
+        #if [[ "$DEVICE" = "pbpro" ]]; then
+        # Flash bootloader with ATF
+        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        #else
+        #echo '' 
         dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+        #fi
+        
+        # Below section is for testing uboot with ATF
+        #if [[ "$DEVICE" = "rock64" ]]; then
+        #flash bootloader
+        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc
+        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc
+        #elif [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
+        #flash bootloader
+        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        #dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        #fi
         
     #clean up
         umount $TMPDIR/root
