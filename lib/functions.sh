@@ -530,6 +530,9 @@ create_rootfs_oem() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(openssl passwd -1 $(cat $TMPDIR/password)) -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
+        if [[ "$DEVICE" = "pinephone" ]]; then
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable ofono.service eg25.service ofonoctl.service 1> /dev/null 2>&1
+        fi
         if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
         sed -i '0,/Session=/s//Session=plasma.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         elif [[ "$EDITION" = "lxqt" ]]; then
@@ -542,7 +545,6 @@ create_rootfs_oem() {
         #fi
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sddm 1> /dev/null 2>&1
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable systemd-resolved
     else
             echo "No device specific setups for $DEVICE..."
     fi
