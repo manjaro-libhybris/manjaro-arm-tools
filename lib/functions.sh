@@ -522,6 +522,7 @@ create_rootfs_oem() {
     elif [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
+        sed -i s/"enable systemd-resolved.service"/"disable systemd-resolved.service"/g $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system-preset/90-systemd.preset
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
         echo "manjaro" > $TMPDIR/user
         echo "manjaro" > $TMPDIR/password
