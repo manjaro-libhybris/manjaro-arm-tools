@@ -186,21 +186,21 @@ pkg_upload() {
     do
     scp ./"$p"* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
 
-    msg "Adding [$p] to repo..."
-    info "Please use your server login details..."
-    ssh $SERVER 1> /dev/null 2>&1 <<ENDSSH
-    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$ARCH/$REPO/$REPO.db.tar.gz /mirror/stable/$ARCH/$REPO/$p 
-if [[ "$ARCH" = "any" ]]; then
-    cd /opt/repo/mirror/stable/any/$REPO/ &&
-    for f in *
-    do
-    ln -s ../../any/$REPO/"$f" ../../aarch64/$REPO/"$f"
-    done
-    cd /opt/repo/mirror/stable/aarch64/$REPO/ &&
-    for x in * .[!.]* ..?*; do if [ -L "$x" ] && ! [ -e "$x" ]; then rm -- "$x"; fi; done
-    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/aarch64/$REPO/$REPO.db.tar.gz /mirror/stable/aarch64/$REPO/$p
-fi
-ENDSSH
+#    msg "Adding [$p] to repo..."
+#    info "Please use your server login details..."
+#    ssh $SERVER 1> /dev/null 2>&1 <<ENDSSH
+#    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$ARCH/$REPO/$REPO.db.tar.gz /mirror/stable/$ARCH/$REPO/$p 
+#if [[ "$ARCH" = "any" ]]; then
+#    cd /opt/repo/mirror/stable/any/$REPO/ &&
+#    for f in *
+#    do
+#    ln -s ../../any/$REPO/"$f" ../../aarch64/$REPO/"$f"
+#    done
+#    cd /opt/repo/mirror/stable/aarch64/$REPO/ &&
+#    for x in * .[!.]* ..?*; do if [ -L "$x" ] && ! [ -e "$x" ]; then rm -- "$x"; fi; done
+#    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/aarch64/$REPO/$REPO.db.tar.gz /mirror/stable/aarch64/$REPO/$p
+#fi
+#ENDSSH
     done
 }
 
