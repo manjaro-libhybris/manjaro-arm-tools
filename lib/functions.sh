@@ -864,16 +864,16 @@ create_img() {
         cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         
         # Flash bootloader
-        #if [[ "$DEVICE" = "pbpro" ]]; then
+        if [[ "$DEVICE" = "pbpro" ]] || [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
         # Flash bootloader with ATF
-        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        #else
-        #echo '' 
+        dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        else
+        echo '' 
         dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
-        #fi
+        fi
         
         # Below section is for testing uboot with ATF
         #if [[ "$DEVICE" = "rock64" ]]; then
