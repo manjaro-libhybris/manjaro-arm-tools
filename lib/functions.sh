@@ -958,6 +958,6 @@ get_profiles() {
         git pull
     else
         cd $PROFILES
-        git clone https://gitlab.com/Strit/arm-profiles.git
+        git clone https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
     fi
 }
