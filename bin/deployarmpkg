@@ -26,7 +26,7 @@ while getopts "${opt}" arg; do
       exit 1
       ;;
     h|?)
-      usage_deploy_package
+      usage_deploy_pkg
       exit 1
       ;;
     :)
