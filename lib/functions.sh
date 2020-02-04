@@ -185,9 +185,9 @@ checksum_img() {
 pkg_upload() {
     msg "Uploading package(s) to server..."
     info "Please use your server login details..."
-    for p in $PACKAGE
-    do
-    scp ./"$p"* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
+    for p in ${PACKAGE[@]}; do
+        pkg=$(find_pkg $p)
+        scp "$pkg" "$SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/"
 
 #    msg "Adding [$p] to repo..."
 #    info "Please use your server login details..."
