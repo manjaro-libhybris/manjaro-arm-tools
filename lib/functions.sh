@@ -153,7 +153,7 @@ find_pkg() {
 sign_pkg() {
     for p in ${PACKAGE[@]}; do
         pkg=$(find_pkg $p)
-        info "Signing [$pkg] with GPG key belonging to $GPGMAIL..."
+        info "Signing [$p] with GPG key belonging to $GPGMAIL..."
         gpg --detach-sign -u $GPGMAIL "$pkg"
         if [ ! -f "$pkg.sig" ]; then
             echo "Package not signed. Aborting..."
