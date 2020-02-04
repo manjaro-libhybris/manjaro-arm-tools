@@ -146,16 +146,19 @@ show_elapsed_time(){
     msg "Time %s: %s minutes..." "$1" "$(elapsed_time $2)"
 }
  
+find_pkg() {
+    echo $(find $PKGDIR -maxdepth 2 -name "$1*.pkg.tar.xz")
+}
+
 sign_pkg() {
-    info "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
-    for p in $PACKAGE
-    do
-    gpg --detach-sign -u $GPGMAIL "$p"
-    #find $PWD -maxdepth 1 -name '*.pkg.tar.xz' -exec gpg --detach-sign -u $GPGMAIL "$PACKAGE" {} \;
-    if [ ! -f "$p.sig" ]; then
-    echo "Package not signed. Aborting..."
-    exit 1
-    fi
+    for p in ${PACKAGE[@]}; do
+        pkg=$(find_pkg $p)
+        info "Signing [$pkg] with GPG key belonging to $GPGMAIL..."
+        gpg --detach-sign -u $GPGMAIL "$pkg"
+        if [ ! -f "$pkg.sig" ]; then
+            echo "Package not signed. Aborting..."
+            exit 1
+        fi
     done
 }
 
