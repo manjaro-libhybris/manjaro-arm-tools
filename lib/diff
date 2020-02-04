@@ -1,0 +1,127 @@
+--- functions.sh	2020-02-04 14:45:26.689673674 +0100
++++ /usr/share/manjaro-arm-tools/lib/functions.sh	2020-02-04 17:36:33.932426169 +0100
+@@ -145,17 +145,20 @@ elapsed_time(){
+ show_elapsed_time(){
+     msg "Time %s: %s minutes..." "$1" "$(elapsed_time $2)"
+ }
+- 
++
++find_pkg() {
++    echo $(find $PKGDIR -maxdepth 2 -name "$1*.pkg.tar.xz")
++}
++
+ sign_pkg() {
+-    info "Signing [$PACKAGE] with GPG key belonging to $GPGMAIL..."
+-    for p in $PACKAGE
+-    do
+-    gpg --detach-sign -u $GPGMAIL "$p"
+-    #find $PWD -maxdepth 1 -name '*.pkg.tar.xz' -exec gpg --detach-sign -u $GPGMAIL "$PACKAGE" {} \;
+-    if [ ! -f "$p.sig" ]; then
+-    echo "Package not signed. Aborting..."
+-    exit 1
+-    fi
++    for p in ${PACKAGE[@]}; do
++        pkg=$(find_pkg $p)
++        info "Signing [$pkg] with GPG key belonging to $GPGMAIL..."
++        gpg --detach-sign -u $GPGMAIL "$pkg"
++        if [ ! -f "$pkg.sig" ]; then
++            echo "Package not signed. Aborting..."
++            exit 1
++        fi
+     done
+ }
+ 
+@@ -185,23 +188,10 @@ pkg_upload() {
+     for p in $PACKAGE
+     do
+     scp ./"$p"* $SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/
+-
+-#    msg "Adding [$p] to repo..."
+-#    info "Please use your server login details..."
+-#    ssh $SERVER 1> /dev/null 2>&1 <<ENDSSH
+-#    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$ARCH/$REPO/$REPO.db.tar.gz /mirror/stable/$ARCH/$REPO/$p 
+-#if [[ "$ARCH" = "any" ]]; then
+-#    cd /opt/repo/mirror/stable/any/$REPO/ &&
+-#    for f in *
+-#    do
+-#    ln -s ../../any/$REPO/"$f" ../../aarch64/$REPO/"$f"
+-#    done
+-#    cd /opt/repo/mirror/stable/aarch64/$REPO/ &&
+-#    for x in * .[!.]* ..?*; do if [ -L "$x" ] && ! [ -e "$x" ]; then rm -- "$x"; fi; done
+-#    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/aarch64/$REPO/$REPO.db.tar.gz /mirror/stable/aarch64/$REPO/$p
+-#fi
+-#ENDSSH
+     done
++    #msg "Adding [$PACKAGE] to repo..."
++    #info "Please use your server login details..."
++    #ssh $SERVER 'bash -s' < $LIBDIR/repo-add.sh "$@"
+ }
+ 
+ img_upload() {
+@@ -522,7 +512,6 @@ create_rootfs_oem() {
+     elif [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
+         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
+         sed -i s/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)"/"HOOKS=(base udev autodetect modconf block filesystems keyboard fsck bootsplash-manjaro)"/g $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
+-        sed -i s/"enable systemd-resolved.service"/"disable systemd-resolved.service"/g $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system-preset/90-systemd.preset
+         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
+         echo "manjaro" > $TMPDIR/user
+         echo "manjaro" > $TMPDIR/password
+@@ -531,9 +520,6 @@ create_rootfs_oem() {
+         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,sys,input,video,storage,lp,network,users,power -p $(openssl passwd -1 $(cat $TMPDIR/password)) -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
+         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod -aG $USERGROUPS $(cat $TMPDIR/user) 1> /dev/null 2>&1
+         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH chfn -f "$FULLNAME" $(cat $TMPDIR/user) 1> /dev/null 2>&1
+-        if [[ "$DEVICE" = "pinephone" ]]; then
+-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable ofono.service eg25.service ofonoctl.service 1> /dev/null 2>&1
+-        fi
+         if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
+         sed -i '0,/Session=/s//Session=plasma.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
+         elif [[ "$EDITION" = "lxqt" ]]; then
+@@ -863,29 +849,10 @@ create_img() {
+         mount ${LDEV}p1 $TMPDIR/root
+         cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+         
+-        # Flash bootloader
+-        if [[ "$DEVICE" = "pbpro" ]] || [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
+-        # Flash bootloader with ATF
+-        dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+-        dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+-        else
+-        echo '' 
++    #flash bootloader
+         dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+         dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+         dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+-        fi
+-        
+-        # Below section is for testing uboot with ATF
+-        #if [[ "$DEVICE" = "rock64" ]]; then
+-        #flash bootloader
+-        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc
+-        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc
+-        #elif [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
+-        #flash bootloader
+-        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+-        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+-        #dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+-        #fi
+         
+     #clean up
+         umount $TMPDIR/root
+@@ -936,7 +903,8 @@ export_and_clean() {
+         info "Extracting finished package out of rootfs..."
+         mkdir -p $PKGDIR/$ARCH
+         cp $BUILDDIR/$ARCH/build/*.pkg.tar.xz* $PKGDIR/$ARCH/
+-        chmod 666 $PKGDIR/$ARCH/$PACKAGE*
++#        chmod 666 $PKGDIR/$ARCH/$PACKAGE*
++        chown -R $SUDO_USER $PKGDIR
+         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
+         umount $BUILDDIR/$ARCH/build
+ 
+@@ -958,6 +926,6 @@ get_profiles() {
+         git pull
+     else
+         cd $PROFILES
+-        git clone https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
++        git clone https://gitlab.com/Strit/arm-profiles.git
+     fi
+ }
