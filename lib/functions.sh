@@ -538,6 +538,12 @@ create_rootfs_oem() {
         if [[ "$DEVICE" = "pinephone" ]]; then
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable ofono.service eg25.service ofonoctl.service 1> /dev/null 2>&1
         fi
+        if [[ "$DEVICE" = "pinetab" && "$EDITION" = "plasma-mobile" ]]; then
+        # Fix scaking of bars
+        sed -i s/"panel.height = 1"/"panel.height = 2"/g $ROOTFS_IMG/rootfs_$ARCH/usr/share/plasma/shells/org.kde.plasma.phone/contents/layout.js
+        sed -i s/"bottomPanel.height = 2"/"bottomPanel.height = 4"/g $ROOTFS_IMG/rootfs_$ARCH/usr/share/plasma/shells/org.kde.plasma.phone/contents/layout.js
+        sed -i s/"bottomPanel.height = 1"/"bottomPanel.height = 2"/g $ROOTFS_IMG/rootfs_$ARCH/usr/share/plasma/shells/org.kde.plasma.phone/contents/layout.js
+        fi
         if [[ "$EDITION" = "kde" ]] || [[ "$EDITION" = "cubocore" ]]; then
         sed -i '0,/Session=/s//Session=plasma.desktop/' $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf
         elif [[ "$EDITION" = "lxqt" ]]; then
