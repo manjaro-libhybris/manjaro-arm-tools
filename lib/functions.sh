@@ -216,14 +216,15 @@ img_upload() {
 
 remove_local_pkg() {
     # remove local packages if remote packages exists, eg, if upload worked
-    for p in $PACKAGE
-    do
-    if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$p ]"; then
-    msg "Removing local file [$p]..."
-    rm ./"$p"*
-    else
-    info "Package did not get uploaded correctly! Files not removed..."
-    fi
+    for p in ${PACKAGE[@]}; do
+        pkg=$(find_pkg $p)
+        pkg_file=${pkg##*/}
+        if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$pkg_file ]"; then
+            msg "Removing local file [$p]..."
+            rm  $pkg{,.sig}
+        else
+            info "Package did not get uploaded correctly! Files not removed..."
+        fi
     done
 }
 
