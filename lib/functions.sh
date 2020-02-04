@@ -939,7 +939,7 @@ export_and_clean() {
         info "Extracting finished package out of rootfs..."
         mkdir -p $PKGDIR/$ARCH
         cp $BUILDDIR/$ARCH/build/*.pkg.tar.xz* $PKGDIR/$ARCH/
-        chmod 666 $PKGDIR/$ARCH/$PACKAGE*
+        chown -R $SUDO_USER $PKGDIR
         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
         umount $BUILDDIR/$ARCH/build
 
