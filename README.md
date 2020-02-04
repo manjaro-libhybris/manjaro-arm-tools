@@ -99,7 +99,7 @@ To upload an any package to the community repo use:
 deployarmpkg -p package -a any -r community -k email@server.org
 ```
 
-This should be used after creating a packages with `buildarmpkg`. It will sign the package(s) with your default secret GPG key, upload the package and signature files
+This should be used after creating packages with `buildarmpkg`. It will sign the package(s) with your default secret GPG key, upload the package and signature files
 and remove the local files.
 
 
