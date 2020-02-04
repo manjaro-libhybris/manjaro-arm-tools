@@ -856,21 +856,22 @@ install_package() {
 }
 
 check_build_status() {
-	if (( ! SPLITPKG )); then
-		fullver=$(get_full_version)
-		pkgarch=$(get_pkg_arch)
-		if [[ -f $PKGDEST/${pkgname}-${fullver}-${pkgarch}${PKGEXT} ]] \
-				 && ! (( FORCE || SOURCEONLY || NOBUILD || NOARCHIVE)); then
-			if (( INSTALL )); then
-				warning "$(gettext "A package has already been built, installing existing package...")"
-				install_package
-				exit $?
-			else
-				error "$(gettext "A package has already been built. (use %s to overwrite)")" "-f"
-				exit $E_ALREADY_BUILT
-			fi
-		fi
-	else
+#	if (( ! SPLITPKG )); then
+#		fullver=$(get_full_version)
+#		pkgarch=$(get_pkg_arch)
+#		if [[ -f $PKGDEST/${pkgname}-${fullver}-${pkgarch}${PKGEXT} ]] \
+#				 && ! (( FORCE || SOURCEONLY || NOBUILD || NOARCHIVE)); then
+#			if (( INSTALL )); then
+#				warning "$(gettext "A package has already been built, installing existing package...")"
+#				install_package
+#				exit $?
+#			else
+#				error "$(gettext "A package has already been built. (use %s to overwrite)")" "-f"
+#				exit $E_ALREADY_BUILT
+#			fi
+#		fi
+#	else
+    if (( SPLITPKG )); then
 		allpkgbuilt=1
 		somepkgbuilt=0
 		for pkg in ${pkgname[@]}; do
