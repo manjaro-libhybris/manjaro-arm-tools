@@ -10,7 +10,7 @@ opt=":p:a:r:k:h"
 while getopts "${opt}" arg; do
   case $arg in
     p)
-      PACKAGE="${OPTARG%/}"
+      PACKAGE+=("${OPTARG%/}")
       ;;
     a)
       ARCH="${OPTARG}"
