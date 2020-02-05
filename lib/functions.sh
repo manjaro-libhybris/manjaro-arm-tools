@@ -187,7 +187,7 @@ pkg_upload() {
     info "Please use your server login details..."
     for p in ${PACKAGE[@]}; do
         pkg=$(find_pkg $p)
-        scp "$pkg" "$SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/"
+        scp $pkg{,.sig} "$SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/"
 
 #    msg "Adding [$p] to repo..."
 #    info "Please use your server login details..."
