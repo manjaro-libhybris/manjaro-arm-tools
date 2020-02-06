@@ -147,7 +147,7 @@ show_elapsed_time(){
 }
  
 find_pkg() {
-    echo $(find $PKGDIR -maxdepth 2 -name "$1*.pkg.tar.xz")
+    echo $(find $PKGDIR -maxdepth 2 -name "$1-[[:digit:]]*.pkg.tar.xz")
 }
 
 sign_pkg() {
