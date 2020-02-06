@@ -189,7 +189,6 @@ pkg_upload() {
     for p in ${PACKAGE[@]}; do
         pkg=$(find_pkg $p)
         pkg_up+=($pkg{,.sig})
-        scp ${pkg_up[@]} "$SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/"
 
 #    msg "Adding [$p] to repo..."
 #    info "Please use your server login details..."
@@ -206,7 +205,9 @@ pkg_upload() {
 #    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/aarch64/$REPO/$REPO.db.tar.gz /mirror/stable/aarch64/$REPO/$p
 #fi
 #ENDSSH
+
     done
+    scp ${pkg_up[@]} "$SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/"
 }
 
 img_upload() {
