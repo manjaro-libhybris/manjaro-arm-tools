@@ -15,7 +15,6 @@ These scripts rely on certain packages to be able to function. These packages ar
 * manjaro-tools-base (manjaro repo)
 * xz (arch repo)
 * git (arch repo)
-* zip (arch repo) (for `buildrootfs`)
 * binfmt-user-static (AUR) or manjaro-arm-qemu-static (manjaro repo)
 
 ### Optional Dependencies
