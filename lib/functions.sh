@@ -913,9 +913,9 @@ create_img() {
     chmod 666 $IMGDIR/$IMGNAME.img
 }
 
-create_zip() {
+compress() {
     info "Compressing $IMGNAME.img..."
-    #zip img
+    #compress img
     cd $IMGDIR
     xz -zv --threads=0 $IMGNAME.img
     chmod 666 $IMGDIR/$IMGNAME.img.xz

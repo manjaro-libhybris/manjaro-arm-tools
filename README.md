@@ -42,7 +42,7 @@ Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools
 * Create `/var/lib/manjaro-arm-tools/tmp` folder.
 * Create `/var/cache/manjaro-arm-tools/img` folder.
 * Create `/var/cache/manjaro-arm-tools/pkg` folder.
-* Install `binfmt-qemu-static` package.
+* Install `binfmt-qemu-static` package and make sure `systemd-binfmt` is running
 
 # Usage
 ## buildarmpkg
@@ -71,6 +71,7 @@ sudo buildarmpkg -p package -a any
 
 The built packages will be copied to `$PKGDIR` as specified in `/usr/share/manjaro-arm-tools/lib/manjaro-arm-tools.conf` and placed in a subdirectory for the respective architecture.
 Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
+
 
 ## deployarmpkg
 This script is only for package maintainers of Manjaro-ARM.
@@ -127,12 +128,12 @@ and remove the local files.
 * mate
 * xfce
 * i3
-* gnome (experimental
+* gnome (experimental)
 * cubocore (not complete yet)
 * server (not complete yet, unmaintained)
 
 
-This script will zip up the image file and place it in `/var/cache/manjaro-arm-tools/img/`
+This script will compress the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
 Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-profiles) website, so they are easier to fork and create merge requests.
 
@@ -203,7 +204,6 @@ This results in a .tar.gz file in /var/cache/manjaro-arm-tools/img/ that contain
 ## deployarmimg
 This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.
 If you don't, you can't use this.
-PS: The torrents will not have a tracker, until Manjaro comes up with a solution. So torrents won't be useful untl that happens.
 
 **Syntax**
 
@@ -214,7 +214,7 @@ deployarmimg -i image [-d device] [-e edition] [-v version] -k email@server.org 
 To upload an image to the raspberry pi minimal 18.07 folder use with torrent:
 
 ```
-deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.zip -d rpi3 -e minimal -v 18.07 -k email@server.org -t
+deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.img.xz -d rpi3 -e minimal -v 18.07 -k email@server.org -t
 ```
 
 ## getarmprofiles

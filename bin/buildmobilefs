@@ -88,7 +88,7 @@ create_mobilefs
 if [[ "$EXTRACTED" = "true" ]]; then
 info "Image not compressed, because you supplied the -x option!"
 else
-# Create the .zip file, from the .img file which will get deleted.
+# Create the compressed file, from the .img file which will get deleted.
 compress_rootfs
 fi
 
