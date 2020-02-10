@@ -243,7 +243,7 @@ create_rootfs_pkg() {
     mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
 
     # Create arm mirrorlist
-    echo "Server = http://manjaro-arm.moson.eu/stable/\$arch/\$repo/" > mirrorlist
+    echo "Server = http://manjaro-arm.moson.eu/\$branch/\$arch/\$repo/" > mirrorlist
     mv mirrorlist /etc/pacman.d/mirrorlist
 
     # cd to root_fs
