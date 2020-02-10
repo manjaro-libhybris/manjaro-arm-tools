@@ -147,7 +147,7 @@ show_elapsed_time(){
 }
  
 find_pkg() {
-    echo $(find $PKGDIR -maxdepth 2 -name "$1-[[:digit:]]*.pkg.tar.xz")
+    echo $(find $PKGDIR -maxdepth 2 -name "$1-[[:digit:]]*.pkg.tar.*")
 }
 
 sign_pkg() {
@@ -943,12 +943,12 @@ build_pkg() {
 }
 
 export_and_clean() {
-    if ls $BUILDDIR/$ARCH/build/*.pkg.tar.xz* 1> /dev/null 2>&1; then
+    if ls $BUILDDIR/$ARCH/build/*.pkg.tar.* 1> /dev/null 2>&1; then
         #pull package out of rootfs
         msg "Package Succeeded..."
         info "Extracting finished package out of rootfs..."
         mkdir -p $PKGDIR/$ARCH
-        cp $BUILDDIR/$ARCH/build/*.pkg.tar.xz* $PKGDIR/$ARCH/
+        cp $BUILDDIR/$ARCH/build/*.pkg.tar.* $PKGDIR/$ARCH/
         chown -R $SUDO_USER $PKGDIR
         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
         umount $BUILDDIR/$ARCH/build
