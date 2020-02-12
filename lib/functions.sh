@@ -243,8 +243,10 @@ create_rootfs_pkg() {
     # cd to root_fs
     mkdir -p $BUILDDIR/$ARCH
     # basescrap the rootfs filesystem
-    #sed -i s/"Server = https://manjaro-arm.moson.eu/stable/$repo/$arch"/"Server = https://manjaro-arm.moson.eu/$BRANCH/$repo/$arch"/ $LIBDIR/pacman.conf.$ARCH
+    #sed -i s/"Server = https://manjaro-arm.moson.eu/stable/\$repo/\$arch"/"Server = https://manjaro-arm.moson.eu/$BRANCH/\$repo/\$arch"/g $LIBDIR/pacman.conf.$ARCH
     basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
+    #sed -i s/"# Branch = stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
+    #sed -i s/"Server = https://manjaro-arm.moson.eu/$BRANCH/\$repo/\$arch"/"Server = https://manjaro-arm.moson.eu/stable/\$repo/\$arch"/g $LIBDIR/pacman.conf.$ARCH
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
 
