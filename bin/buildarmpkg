@@ -14,7 +14,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":p:a:i:kh"
+opt=":p:a:i:b:kh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -26,6 +26,9 @@ while getopts "${opt}" arg; do
       ;;
     k)
       BUILDCLEAN=false
+      ;;
+    b)
+      BRANCH="${OPTARG}"
       ;;
     i)
       ADD_PACKAGE="${OPTARG}"
@@ -56,6 +59,11 @@ if [ $ARCH == "any" ]; then
 	ARCH="aarch64"
 fi
 
+#Make sure only a known branch is used
+if [[ "$BRANCH" != "stable" && "$BRANCH" != "testing" && "$BRANCH" != "unstable" ]]; then
+    msg "Unknown branch. Please use either, stable, testing or unstable!"
+    exit 1
+fi
 # start the timer
 timer_start=$(get_timer)
 
