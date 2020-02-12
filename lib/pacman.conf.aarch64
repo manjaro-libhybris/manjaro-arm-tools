@@ -68,15 +68,15 @@ LocalFileSigLevel = Optional
 
 [core]
 #Include = /etc/pacman.d/mirrorlist
-Server = https://manjaro-arm.moson.eu/stable/$arch/$repo
+Server = https://manjaro-arm.moson.eu/stable/$repo/$arch
 
 [extra]
 #Include = /etc/pacman.d/mirrorlist
-Server = https://manjaro-arm.moson.eu/stable/$arch/$repo
+Server = https://manjaro-arm.moson.eu/stable/$repo/$arch
 
 [community]
 #Include = /etc/pacman.d/mirrorlist
-Server = https://manjaro-arm.moson.eu/stable/$arch/$repo
+Server = https://manjaro-arm.moson.eu/stable/$repo/$arch
 
 # An example of a custom package repository.  See the pacman manpage for
 # tips on creating your own repositories.

@@ -2,6 +2,7 @@
 
 #variables
 SERVER='159.65.88.73'
+BRANCH='stable'
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
@@ -239,25 +240,13 @@ create_rootfs_pkg() {
     rm -rf $BUILDDIR/$ARCH
     fi
     msg "Creating rootfs..."
-    # backup host mirrorlist
-    mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-    # Create arm mirrorlist
-    echo "Server = http://manjaro-arm.moson.eu/\$branch/\$arch/\$repo/" > mirrorlist
-    mv mirrorlist /etc/pacman.d/mirrorlist
-
     # cd to root_fs
     mkdir -p $BUILDDIR/$ARCH
-
     # basescrap the rootfs filesystem
+    #sed -i s/"Server = https://manjaro-arm.moson.eu/stable/$repo/$arch"/"Server = https://manjaro-arm.moson.eu/$BRANCH/$repo/$arch"/ $LIBDIR/pacman.conf.$ARCH
     basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
-
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
-    
-    # restore original mirrorlist to host system
-    mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-    pacman -Syy
 
    msg "Configuring rootfs for building..."
     $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
