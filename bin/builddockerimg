@@ -18,12 +18,6 @@ fi
 
 create_rootfs () {
     msg "Creating rootfs..."
-    # backup host mirrorlist
-    mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-orig
-
-    # Create arm mirrorlist
-    echo "Server = https://manjaro-arm.moson.eu/stable/\$arch/\$repo/" > mirrorlist
-    mv mirrorlist /etc/pacman.d/mirrorlist
     
     # Remove old rootfs if it exists
     if [ -d $BUILDDIR/$ARCH ]; then
@@ -46,10 +40,6 @@ create_rootfs () {
     cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     
-    # restore original mirrorlist to host system
-    mv /etc/pacman.d/mirrorlist-orig /etc/pacman.d/mirrorlist
-    pacman -Syy
-    
     info "Setting up keyrings..."
     $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
@@ -66,8 +56,6 @@ compress_docker () {
     docker push manjaroarm/$DOCKER_IMAGE_NAME:latest
     rm -rf $BUILDDIR/$ARCH
     docker image rm $DOCKER_IMAGE_NAME
-    # for local docker image creation
-    #docker save $DOCKER_IMAGE_NAME | gzip > $IMGDIR/$DOCKER_IMAGE_NAME.tar.gz
 }
 
 #Arguments 
@@ -83,7 +71,6 @@ while getopts "${opt}" arg; do
       exit 1
       ;;
     h|?)
- #     echo "-a <arch>       Architecture"
       echo "-h <help>       This help"
       exit 1
       ;;
