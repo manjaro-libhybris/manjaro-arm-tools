@@ -53,13 +53,13 @@ Options inside [] are optional. Use `-h` to see what the defaults are.
 **Syntax**
 
 ```
-sudo buildarmpkg -p package [-a architecture] [-k] [-i package file]
+sudo buildarmpkg -p package [-a architecture] [-k] [-i package file] [-b branch]
 ```
 
-To build an aarch64 package use the following command:
+To build an aarch64 package against unstable branch use the following command:
 
 ```
-sudo buildarmpkg -p package -a aarch64
+sudo buildarmpkg -p package -a aarch64 -b unstable
 ```
 
 You can also build `any` packages, which will use the aarch64 architecture to build from.
@@ -72,7 +72,7 @@ The built packages will be copied to `$PKGDIR` as specified in `/usr/share/manja
 Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 
 
-## deployarmpkg
+## deployarmpkg (depricated, use boxit instead)
 This script is only for package maintainers of Manjaro-ARM.
 
 It will gpg sign and upload the package(s) you mention to the Manjaro-ARM main server.
@@ -139,13 +139,13 @@ Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-pro
 **Syntax**
 
 ```
-sudo buildarmoem [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz]
+sudo buildarmoem [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz] [-b branch]
 ```
 
-To build a minimal image version 18.07 for the raspberry pi 3:
+To build a minimal image version 18.07 for the raspberry pi 3 on unstable branch:
 
 ```
-sudo buildarmoem -d rpi3 -e minimal -v 18.07
+sudo buildarmoem -d rpi3 -e minimal -v 18.07 -b unstable
 ```
 
 To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:

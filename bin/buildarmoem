@@ -15,7 +15,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:nxh"
+opt=":e:d:v:i:b:nxh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -36,6 +36,9 @@ while getopts "${opt}" arg; do
       ;;
     i)
       ADD_PACKAGE="${OPTARG}"
+      ;;
+    b)
+      BRANCH="${OPTARG}"
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -60,6 +63,12 @@ ARCH='aarch64'
 
 if [ ! -d "$PROFILES/arm-profiles" ]; then
     getarmprofiles
+fi
+
+#Make sure only a known branch is used
+if [[ "$BRANCH" != "stable" && "$BRANCH" != "testing" && "$BRANCH" != "unstable" ]]; then
+    msg "Unknown branch. Please use either, stable, testing or unstable!"
+    exit 1
 fi
 
 # start the timer

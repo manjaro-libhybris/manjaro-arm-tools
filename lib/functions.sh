@@ -57,6 +57,7 @@ usage_build_pkg() {
     echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo "    -k                 Keep the previous rootfs for this build"
+    echo "    -b <branch>        Set the branch used for the build. [Default = stable. Options = stable, testing or unstable]"
     echo "    -i <package>       Install local package into rootfs."
     echo '    -h                 This help'
     echo ''
@@ -86,6 +87,7 @@ usage_build_oem() {
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
+    echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
@@ -191,22 +193,6 @@ pkg_upload() {
         pkg=$(find_pkg $p)
         pkg_up+=($pkg{,.sig})
 
-#    msg "Adding [$p] to repo..."
-#    info "Please use your server login details..."
-#    ssh $SERVER 1> /dev/null 2>&1 <<ENDSSH
-#    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/$ARCH/$REPO/$REPO.db.tar.gz /mirror/stable/$ARCH/$REPO/$p 
-#if [[ "$ARCH" = "any" ]]; then
-#    cd /opt/repo/mirror/stable/any/$REPO/ &&
-#    for f in *
-#    do
-#    ln -s ../../any/$REPO/"$f" ../../aarch64/$REPO/"$f"
-#    done
-#    cd /opt/repo/mirror/stable/aarch64/$REPO/ &&
-#    for x in * .[!.]* ..?*; do if [ -L "$x" ] && ! [ -e "$x" ]; then rm -- "$x"; fi; done
-#    sudo systemd-nspawn -D /opt/repo/ repo-add -q -n -R /mirror/stable/aarch64/$REPO/$REPO.db.tar.gz /mirror/stable/aarch64/$REPO/$p
-#fi
-#ENDSSH
-
     done
     scp ${pkg_up[@]} "$SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/"
 }
@@ -243,10 +229,8 @@ create_rootfs_pkg() {
     # cd to root_fs
     mkdir -p $BUILDDIR/$ARCH
     # basescrap the rootfs filesystem
-    #sed -i s/"Server = https://manjaro-arm.moson.eu/stable/\$repo/\$arch"/"Server = https://manjaro-arm.moson.eu/$BRANCH/\$repo/\$arch"/g $LIBDIR/pacman.conf.$ARCH
     basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
-    #sed -i s/"# Branch = stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
-    #sed -i s/"Server = https://manjaro-arm.moson.eu/$BRANCH/\$repo/\$arch"/"Server = https://manjaro-arm.moson.eu/stable/\$repo/\$arch"/g $LIBDIR/pacman.conf.$ARCH
+    sed -i s/"# Branch = stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
 
@@ -261,6 +245,7 @@ create_rootfs_pkg() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
+    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -g
 }
 
 create_rootfs_img() {
@@ -414,6 +399,10 @@ create_rootfs_oem() {
     info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    
+    info "Setting branch to $BRANCH..."
+    sed -i s/"# Branch = stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
