@@ -134,7 +134,7 @@ and remove the local files.
 
 This script will compress the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
-Profiles that gets used are on the [Gitlab.com](https://gitlab.com/Strit/arm-profiles) website, so they are easier to fork and create merge requests.
+Profiles that gets used are on the [Gitlab.com](https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles) website, so they are easier to fork and create merge requests.
 
 **Syntax**
 
