@@ -482,8 +482,19 @@ create_rootfs_oem() {
         cp $ROOTFS_IMG/rootfs_$ARCH/usr/share/applications/corestuff.desktop $ROOTFS_IMG/rootfs_$ARCH/etc/xdg/autostart/
     fi
     
-    
     info "Doing device specific setups for $DEVICE..."
+    if [[ "$EDITION" = "kde-plasma" ]]; then
+        # Lima devices are not capable of running Plasma with hardware acceleration yet
+        if [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pine64" ]]; then
+        sed -i s/'#QT_QUICK_BACKEND=software'/'QT_QUICK_BACKEND=software'/ $ROOTFS_IMG/rootfs_$ARCH/etc/environment 1> /dev/null 2>&1
+        fi
+    fi
+    if [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]] || [[ "$DEVICE" = "pbpro" ]]; then
+        # XFCE don't work right with panfrost yet
+        if [[ "$EDITION" = "xfce" ]]; then
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S xf86-video-fbturbo-git --noconfirm 1> /dev/null 2>&1
+        fi
+    fi 
     if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi3-fta" ]]; then
         echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
         echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
@@ -918,6 +929,7 @@ build_pkg() {
     msg "Building {$PACKAGE}..."
     #$NSPAWN $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
+    #$NSPAWN $BUILDDIR/$ARCH/ pacman -Syyu --noconfirm
     $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
     umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
 }
