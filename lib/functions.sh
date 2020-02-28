@@ -26,18 +26,6 @@ PASSWORD='manjaro'
 source /etc/manjaro-arm-tools/manjaro-arm-tools.conf 
 
 
-usage_deploy_pkg() {
-    echo "Usage: ${0##*/} [options]"
-    echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
-    echo "    -p <pkg>           Package to upload"
-    echo '    -r <repo>          Repository package belongs to. [Options = core, extra or community]'
-    echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
-    echo '    -h                 This help'
-    echo ''
-    echo ''
-    exit $1
-}
-
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
     echo "    -i <image>         Image to upload. Should be a .xz file."
@@ -66,22 +54,6 @@ usage_build_pkg() {
 }
 
 usage_build_img() {
-    echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
-    echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
-    echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
-    echo "    -u <user>          Username for default user. [Default = manjaro]"
-    echo "    -p <password>      Password of default user. [Default = manjaro]"
-    echo "    -i <package>       Install local package into image rootfs."
-    echo "    -n                 Force download of new rootfs."
-    echo "    -x                 Don't compress the image."
-    echo '    -h                 This help'
-    echo ''
-    echo ''
-    exit $1
-}
-
-usage_build_oem() {
     echo "Usage: ${0##*/} [options]"
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
@@ -148,22 +120,6 @@ elapsed_time(){
 show_elapsed_time(){
     msg "Time %s: %s minutes..." "$1" "$(elapsed_time $2)"
 }
- 
-find_pkg() {
-    echo $(find $PKGDIR -maxdepth 2 -name "$1-[[:digit:]]*.pkg.tar.*")
-}
-
-sign_pkg() {
-    for p in ${PACKAGE[@]}; do
-        pkg=$(find_pkg $p)
-        info "Signing [$p] with GPG key belonging to $GPGMAIL..."
-        gpg --detach-sign -u $GPGMAIL "$pkg"
-        if [ ! -f "$pkg.sig" ]; then
-            echo "Package not signed. Aborting..."
-            exit 1
-        fi
-    done
-}
 
 create_torrent() {
     info "Creating torrent of $IMAGE..."
@@ -185,37 +141,11 @@ checksum_img() {
     fi
 }
 
-pkg_upload() {
-    local pkg_up=()
-    msg "Uploading package(s) to server..."
-    info "Please use your server login details..."
-    for p in ${PACKAGE[@]}; do
-        pkg=$(find_pkg $p)
-        pkg_up+=($pkg{,.sig})
-
-    done
-    scp ${pkg_up[@]} "$SERVER:/opt/repo/mirror/stable/$ARCH/$REPO/"
-}
-
 img_upload() {
     # Upload image + checksums to image server
     msg "Uploading image and checksums to server..."
     info "Please use your server login details..."
     rsync -raP $IMAGE* $OSDN/$DEVICE/$EDITION/$VERSION/
-}
-
-remove_local_pkg() {
-    # remove local packages if remote packages exists, eg, if upload worked
-    for p in ${PACKAGE[@]}; do
-        pkg=$(find_pkg $p)
-        pkg_file=${pkg##*/}
-        if ssh $SERVER "[ -f /opt/repo/mirror/stable/$ARCH/$REPO/$pkg_file ]"; then
-            msg "Removing local file [$p]..."
-            rm  $pkg{,.sig}
-        else
-            info "Package did not get uploaded correctly! Files not removed..."
-        fi
-    done
 }
 
 create_rootfs_pkg() {
@@ -249,118 +179,6 @@ create_rootfs_pkg() {
 }
 
 create_rootfs_img() {
-    msg "Creating install image of $EDITION for $DEVICE..."
-    # Remove old rootfs if it exists
-    if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
-    info "Removing old rootfs..."
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH
-    fi
-    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
-    if [[ "$KEEPROOTFS" = "false" ]]; then
-    rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
-    # fetch and extract rootfs
-    info "Downloading latest $ARCH rootfs..."
-    cd $ROOTFS_IMG
-    wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
-    fi
-    #also fetch it, if it does not exist
-    if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
-    cd $ROOTFS_IMG
-    wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
-    fi
-    
-    info "Extracting $ARCH rootfs..."
-    bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
-    
-    info "Setting up keyrings..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    
-    msg "Installing packages for $EDITION edition on $DEVICE..."
-    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    # Install device and editions specific packages
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release --noconfirm
-    if [[ "$DEVICE" = "on2" ]]; then
-    if [[ "$EDITION" = "kde-plasma" ]] || [[ "$EDITION" = "cubocore" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-kcm --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-kcm --noconfirm
-    elif [[ "$EDITION" = "lxqt" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm sddm-qt-manjaro-theme --noconfirm
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat sddm-qt-manjaro-theme --noconfirm
-    fi
-    fi
-    if [[ ! -z "$ADD_PACKAGE" ]]; then
-    info "Installing local package {$ADD_PACKAGE} to rootfs..."
-    cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/$ADD_PACKAGE
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
-    fi
-    
-    info "Enabling services..."
-    # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
-
-    info "Applying overlay for $EDITION edition..."
-    cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
-    
-    info "Setting up users..."
-    #setup users
-    echo "$USER" > $TMPDIR/user
-    echo "$PASSWORD" >> $TMPDIR/password
-    echo "$PASSWORD" >> $TMPDIR/password
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd root < $LIBDIR/pass-root 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -G wheel,storage,network,power,users -s /bin/bash $(cat $TMPDIR/user) 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd $(cat $TMPDIR/user) < $TMPDIR/password 1> /dev/null 2>&1
-    
-    info "Enabling user services..."
-    if [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]]; then
-        info "No user services for $EDITION edition"
-    else
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH --user $(cat $TMPDIR/user) systemctl --user enable pulseaudio.service 1> /dev/null 2>&1
-    fi
-
-    info "Setting up system settings..."
-    #system setup
-    rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
-    rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
-    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
-    echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
-    chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
-    if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
-    chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
-    fi
-    
-    info "Doing device specific setups for $DEVICE..."
-    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi4" ]]; then
-        echo "dtparam=audio=on" | tee --append $ROOTFS_IMG/rootfs_$ARCH/boot/config.txt 1> /dev/null 2>&1
-        echo "blacklist vchiq" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
-        echo "blacklist snd_bcm2835" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/modprobe.d/blacklist-vchiq.conf 1> /dev/null 2>&1
-        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "oc2" ]]; then
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable amlogic.service 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "on2" ]]; then
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable dhcpcd.service 1> /dev/null 2>&1
-        echo "LABEL=BOOT  /boot   vfat    defaults        0       0" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/fstab 1> /dev/null 2>&1
-    elif [[ "$DEVICE" = "pinebook" ]]; then
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable pinebook-post-install.service 1> /dev/null 2>&1
-    else
-        info "No device specific setups for $DEVICE..."
-    fi
-    
-    info "Cleaning rootfs for unwanted files..."
-    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    #rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
-    rm -f $TMPDIR/user $TMPDIR/password
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
-
-    msg "$DEVICE $EDITION rootfs complete"
-}
-
-create_rootfs_oem() {
     #Check if device file exists
     if [ ! -f "$PROFILES/arm-profiles/devices/$DEVICE" ]; then 
     echo 'Invalid device '$DEVICE', please choose one of the following'
@@ -412,20 +230,6 @@ create_rootfs_oem() {
     else
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install manjaro-system manjaro-release --noconfirm
     fi
-    #if [[ "$DEVICE" = "pbpro" ]]; then
-    #if [[ "$EDITION" = "kde-plasma" ]]; then
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R mesa --noconfirm
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S mesa-git --noconfirm
-    #elif [[ "$EDITION" = "lxqt" ]]; then
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R sddm matcha-dynamic-sddm --noconfirm
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S sddm-compat matcha-dynamic-sddm --noconfirm
-    #fi
-    #fi
-    #if [[ "$DEVICE" = "pbpro" ]]; then
-    #if [[ "$EDITION" = "xfce" ]]; then
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S xf86-video-fbturbo-git --noconfirm
-    #fi
-    #fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
@@ -441,9 +245,6 @@ create_rootfs_oem() {
     if [[ "$EDITION" = "mate" ]] || [[ "$EDITION" = "mate-fta" ]] || [[ "$EDITION" = "i3" ]] || [[ "$EDITION" = "xfce" ]]; then
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
-    #elif [[ "$EDITION" = "gnome" ]]; then
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable gdm.service 1> /dev/null 2>&1
-    #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= gdm 1> /dev/null 2>&1
     elif [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]] || [[ "$EDITION" = "plasma-mobile" ]]; then
     echo "No display manager to disable in $EDITION..."
     else
@@ -475,9 +276,6 @@ create_rootfs_oem() {
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
     if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
         chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
-    #elif [[ "$EDITION" = "plasma-mobile" ]]; then
-    #    sed -i s/"phablet"/"manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/etc/init/simplelogin.conf
-    #    sed -i s/"phablet"/"manjaro"/ $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/simplelogin.service
     elif [[ "$EDITION" = "cubocore" ]]; then
         cp $ROOTFS_IMG/rootfs_$ARCH/usr/share/applications/corestuff.desktop $ROOTFS_IMG/rootfs_$ARCH/etc/xdg/autostart/
     fi

@@ -9,13 +9,13 @@ EXTRACTED=false
 source $LIBDIR/functions.sh
 
 # check if root
-#if [ "$EUID" -ne 0 ]
-#  then echo "This script requires root permissions to run. Please run as root or with sudo!"
-#  exit
-#fi
+if [ "$EUID" -ne 0 ]
+  then echo "This script requires root permissions to run. Please run as root or with sudo!"
+  exit
+fi
 
 #Arguments 
-opt=":e:d:v:u:p:i:nxh"
+opt=":e:d:v:i:b:nxh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -28,12 +28,6 @@ while getopts "${opt}" arg; do
     v)
       VERSION="${OPTARG}"
       ;;
-    u)
-      USER="${OPTARG}"
-      ;;
-    p)
-      PASSWORD="${OPTARG}"
-      ;;
     n)
       KEEPROOTFS=false
       ;;
@@ -43,12 +37,15 @@ while getopts "${opt}" arg; do
     i)
       ADD_PACKAGE="${OPTARG}"
       ;;
+    b)
+      BRANCH="${OPTARG}"
+      ;;
     \?)
       echo "Invalid option: -${OPTARG}"
       exit 1
       ;;
     h|?)
-      usage_build_img
+      usage_build_oem
       exit 1
       ;;
     :)
@@ -61,34 +58,39 @@ done
 
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 
+
 ARCH='aarch64'
 
-echo "This script is currently broken, so it has been disabled."
-echo "Please use buildarmoem instead!"
-#if [ ! -d "$PROFILES/arm-profiles" ]; then
-#    getarmprofiles
-#fi
+if [ ! -d "$PROFILES/arm-profiles" ]; then
+    getarmprofiles
+fi
+
+#Make sure only a known branch is used
+if [[ "$BRANCH" != "stable" && "$BRANCH" != "testing" && "$BRANCH" != "unstable" ]]; then
+    msg "Unknown branch. Please use either, stable, testing or unstable!"
+    exit 1
+fi
 
 # start the timer
-#timer_start=$(get_timer)
+timer_start=$(get_timer)
 
 #Package lists
-#PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
-#PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{print $1}')
-#SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{print $1}')
+PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
+PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{print $1}')
+SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{print $1}')
 
 #start timer
 #timer=$(get_timer)
 
 # Creating the rootfs used for the image.
-#create_rootfs_img
-# Creating the image, from the rootfs created before.
-#create_img
-#if [[ "$EXTRACTED" = "true" ]]; then
-#info "Image not compressed, because you supplied the -x option!"
-#else
+create_rootfs_img
+create_img
+if [[ "$EXTRACTED" = "true" ]]; then
+info "Image not compressed, because you supplied the -x option!"
+else
 # Create the compressed file, from the .img file which will get deleted.
-#compress
-#fi
+compress
+fi
+
 # show timer
-#show_elapsed_time "${FUNCNAME}" "${timer_start}"
+show_elapsed_time "${FUNCNAME}" "${timer_start}"

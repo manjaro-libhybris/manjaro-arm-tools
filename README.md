@@ -7,7 +7,7 @@ This software is available in the Manjaro repository.
 
 
 ## Known issues
-* `deployarmpkg` does not add the packages to the repo database. Wait for the server to do the automatic adding.
+
 
 ## Dependencies
 These scripts rely on certain packages to be able to function. These packages are:
@@ -72,38 +72,7 @@ The built packages will be copied to `$PKGDIR` as specified in `/usr/share/manja
 Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 
 
-## deployarmpkg (depricated, use boxit instead)
-This script is only for package maintainers of Manjaro-ARM.
-
-It will gpg sign and upload the package(s) you mention to the Manjaro-ARM main server.
-
-This script assumes that you have enabled GPG signing on your machine, that you have a working key-pair and that you have a user on the Manjaro-ARM main server.
-For the `-p` option use just `$pkgname` without path or extension.
-Multiple packages can be specified by repeating `-p` option.
-
-**Syntax**
-
-```
-deployarmpkg -p package [-a architecture] -r repo -k keyid
-```
-
-To upload a package to the aarch64 extra repo use:
-
-```
-deployarmpkg -p package -a aarch64 -r extra -k email@server.org
-```
-
-To upload an any package to the community repo use:
-
-```
-deployarmpkg -p package -a any -r community -k email@server.org
-```
-
-This should be used after creating packages with `buildarmpkg`. It will sign the package(s) with your default secret GPG key, upload the package and signature files
-and remove the local files.
-
-
-## buildarmoem
+## buildarmimg
 **Supported devices:**
 * oc2
 * rpi3 (not the A/B+ models it seems)
