@@ -48,7 +48,7 @@ Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools
 This script is used to create packages for ARM architectures.
 It assumes you have filled out the PACKAGER section of your `/etc/makepkg.conf`.
 
-Options inside [] are optional. Use `-h` to see what the defaults are.
+Options inside `[` `]` are optional. Use `-h` to see what the defaults are.
 
 **Syntax**
 
@@ -103,34 +103,34 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 
 This script will compress the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
-Profiles that gets used are on the [Gitlab.com](https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles) website, so they are easier to fork and create merge requests.
+Profiles that gets used are from this [Gitlab](https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles) repository.
 
 **Syntax**
 
 ```
-sudo buildarmoem [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz] [-b branch]
+sudo buildarmimg [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz] [-b branch]
 ```
 
 To build a minimal image version 18.07 for the raspberry pi 3 on unstable branch:
 
 ```
-sudo buildarmoem -d rpi3 -e minimal -v 18.07 -b unstable
+sudo buildarmimg -d rpi3 -e minimal -v 18.07 -b unstable
 ```
 
 To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:
 
 ```
-sudo buildarmoem -d oc2 -e minimal -v 18.08-rc1 -n
+sudo buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
 ```
 
 To build an lxqt version with a local package installed for the rock64:
 
 ```
-sudo buildarmoem -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
+sudo buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
 ```
 
 ## buildemmcinstaller
-This script does almost the same as the `buildarmoem` script.
+This script does almost the same as the `buildarmimg` script.
 
 Except that it always creates a minimal image, with an already existing image inside it, only to be used for internal storage (eMMC) deployments.
 
@@ -147,7 +147,7 @@ Be aware that the device, edition and version, most already exist on the OSDN do
 
 
 ## buildrootfs
-This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmoem`. Right now only supports `aarch64`.
+This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmimg`. Right now only supports `aarch64`.
 
 **Syntax**
 ```
@@ -166,7 +166,7 @@ This script is similar to `buildrootfs`, except that it builds a rootfs ready fo
 ```
 sudo builddockerimg
 ```
-This results in a .tar.gz file in /var/cache/manjaro-arm-tools/img/ that contains the docker image.
+This uploads the docker file directly to the Manjaro ARM acccount on DockerHub.
 
 
 ## deployarmimg
@@ -189,7 +189,7 @@ deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.img.xz -d rpi3 -e minimal -v 18.0
 This script will just clone or update the current profile list in `/usr/share/manjaro-arm-tools/profiles/`.
 So nothing fancy.
 
-This would enable users to clone the profiles repository, make any changes they would like to their images and then build them localy.
+This would enable users to clone the profiles repository, make any changes they would like to their images and then build them locally.
 So if you made changes to the profiles yourself, don't run `getarmprofiles` and you will still have your edits.
 
 But if you messed up your profiles somehow, you can start with the repo ones with:
