@@ -45,7 +45,7 @@ while getopts "${opt}" arg; do
       exit 1
       ;;
     h|?)
-      usage_build_oem
+      usage_build_img
       exit 1
       ;;
     :)
