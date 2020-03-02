@@ -226,9 +226,9 @@ create_rootfs_img() {
     # Install device and editions specific packages
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     if [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
     else
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs $PKG_DEVICE $PKG_EDITION dialog manjaro-arm-oem-install manjaro-system manjaro-release --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
     fi
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
