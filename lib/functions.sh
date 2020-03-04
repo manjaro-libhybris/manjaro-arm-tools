@@ -351,7 +351,7 @@ create_emmc_install() {
 
 create_img() {
     msg "Finishing image for $DEVICE $EDITION edition..."
-    info "Copying files to image..."
+    info "Creating partitions..."
 
     ARCH='aarch64'
     
@@ -373,68 +373,10 @@ create_img() {
     losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
 
 
-    ## For Raspberry Pi devices
-    if [[ "$DEVICE" = "rpi3" ]] || [[ "$DEVICE" = "rpi3-fta" ]] || [[ "$DEVICE" = "rpi4" ]]; then
+    # Create partitions
+        #Clear first 32mb
+        dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
         #partition with boot and root
-        parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        parted -s $LDEV mkpart primary fat32 0% 100M 1> /dev/null 2>&1
-        START=`cat /sys/block/$DEV/${DEV}p1/start`
-        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-        partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.vfat "${LDEV}p1" -n BOOT 1> /dev/null 2>&1
-        mkfs.ext4 "${LDEV}p2" -L ROOT 1> /dev/null 2>&1
-
-    #copy rootfs contents over to the FS
-        mkdir -p $TMPDIR/root
-        mkdir -p $TMPDIR/boot
-        mount ${LDEV}p1 $TMPDIR/boot
-        mount ${LDEV}p2 $TMPDIR/root
-        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        mv $TMPDIR/root/boot/* $TMPDIR/boot
-
-    #clean up
-        umount $TMPDIR/root
-        umount $TMPDIR/boot
-        losetup -d $LDEV 1> /dev/null 2>&1
-        rm -r $TMPDIR/root $TMPDIR/boot
-        partprobe $LDEV 1> /dev/null 2>&1
-
-        
-    ## For Amlogic devices
-    elif [[ "$DEVICE" = "oc2" ]]; then
-        #Clear first 8mb
-        dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
-	
-    #partition with a single root partition
-        parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
-        partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 -L ROOT 1> /dev/null 2>&1
-
-    #copy rootfs contents over to the FS
-        mkdir -p $TMPDIR/root
-        chmod 777 -R $TMPDIR/root
-        mount ${LDEV}p1 $TMPDIR/root
-        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-
-    #flash bootloader
-        cd $TMPDIR/root/boot/
-        ./sd_fusing.sh $LDEV 1> /dev/null 2>&1
-        cd ~
-
-    #clean up
-        umount $TMPDIR/root
-        losetup -d $LDEV 1> /dev/null 2>&1
-        rm -r $TMPDIR/root
-        partprobe $LDEV 1> /dev/null 2>&1
-        
-    elif [[ "$DEVICE" = "on2" ]] || [[ "$DEVICE" = "vim1" ]] || [[ "$DEVICE" = "vim2" ]] || [[ "$DEVICE" = "vim3" ]]; then
-        #Clear first 8 mb
-        dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
-        
-    #partition with 2 partitions
         parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
         parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
         START=`cat /sys/block/$DEV/${DEV}p1/start`
@@ -442,10 +384,11 @@ create_img() {
         END_SECTOR=$(expr $START + $SIZE)
         parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
         partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.vfat "${LDEV}p1" -n BOOT 1>/dev/null 2>&1
-        mkfs.ext4 "${LDEV}p2" -L ROOT 1> /dev/null 2>&1
-        
+        mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
+        mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
+
     #copy rootfs contents over to the FS
+    info "Copying files to image..."
         mkdir -p $TMPDIR/root
         mkdir -p $TMPDIR/boot
         mount ${LDEV}p1 $TMPDIR/boot
@@ -453,98 +396,42 @@ create_img() {
         cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
         mv $TMPDIR/root/boot/* $TMPDIR/boot
         
-    #flash bootloader
-    if [[ "$DEVICE" = "on2" ]]; then
+    # Flash bootloader
+    info "Flashing bootloader..."
+    
+    case "$DEVICE" in
+    oc2)
+        cd $TMPDIR/root/boot/
+        ./sd_fusing.sh $LDEV 1> /dev/null 2>&1
+        ;;
+    on2)
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
-    fi
-        
-    #clean up
+        ;;
+    vim1|vim2|vim3)
+        dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
+        ;;
+    pinebook|sopine|pine64|pinephone|pinetab)
+        dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
+        ;;
+    pbpro|rockpro64|rockpi4)
+        dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        ;;
+    rock64)
+        dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+        ;;
+    esac
+    
+    # Clean up
+    info "Cleaning up image..."
         umount $TMPDIR/root
         umount $TMPDIR/boot
         losetup -d $LDEV 1> /dev/null 2>&1
         rm -r $TMPDIR/root $TMPDIR/boot
         partprobe $LDEV 1> /dev/null 2>&1
-        
-
-    ## For Allwinner devices
-    elif [[ "$DEVICE" = "pinebook" ]] || [[ "$DEVICE" = "sopine" ]] || [[ "$DEVICE" = "pine64" ]] || [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-
-    #Clear first 8mb
-        dd if=/dev/zero of=${LDEV} bs=1M count=8 1> /dev/null 2>&1
-	
-    #partition with a single root partition
-        parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        parted -s $LDEV mkpart primary ext4 0% 100% 1> /dev/null 2>&1
-        partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 -L ROOT 1> /dev/null 2>&1
-
-    #copy rootfs contents over to the FS
-        mkdir -p $TMPDIR/root
-        chmod 777 -R $TMPDIR/root
-        mount ${LDEV}p1 $TMPDIR/root
-        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        
-    #flash bootloader
-        dd if=$TMPDIR/root/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
-
-    #clean up
-        umount $TMPDIR/root
-        losetup -d $LDEV 1> /dev/null 2>&1
-        rm -r $TMPDIR/root
-        partprobe $LDEV 1> /dev/null 2>&1
-        
-    ## For rockchip devices
-    elif [[ "$DEVICE" = "rock64" ]] || [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]] || [[ "$DEVICE" = "pbpro" ]]; then
-
-    #Clear first 32mb
-        dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-	
-    #partition with a single root partition
-        parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        parted -s $LDEV mkpart primary ext4 32M 100% 1> /dev/null 2>&1
-        partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit ${LDEV}p1 -L ROOT 1> /dev/null 2>&1
-
-    #copy rootfs contents over to the FS
-        mkdir -p $TMPDIR/root
-        chmod 777 -R $TMPDIR/root
-        mount ${LDEV}p1 $TMPDIR/root
-        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        
-        # Flash bootloader
-        if [[ "$DEVICE" = "pbpro" ]] || [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
-        # Flash bootloader with ATF
-        dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        else
-        echo '' 
-        dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        dd if=$TMPDIR/root/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
-        fi
-        
-        # Below section is for testing uboot with ATF
-        #if [[ "$DEVICE" = "rock64" ]]; then
-        #flash bootloader
-        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc
-        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc
-        #elif [[ "$DEVICE" = "rockpro64" ]] || [[ "$DEVICE" = "rockpi4" ]]; then
-        #flash bootloader
-        #dd if=$TMPDIR/root/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        #dd if=$TMPDIR/root/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        #dd if=$TMPDIR/root/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        #fi
-        
-    #clean up
-        umount $TMPDIR/root
-        losetup -d $LDEV 1> /dev/null 2>&1
-        rm -r $TMPDIR/root
-        partprobe $LDEV 1> /dev/null 2>&1
-
-    else
-        #Not sure if this IF statement is nesssary anymore
-        info "The $DEVICE has not been set up yet"
-    fi
     chmod 666 $IMGDIR/$IMGNAME.img
 }
 
