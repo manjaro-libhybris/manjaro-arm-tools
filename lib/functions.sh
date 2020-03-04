@@ -1,7 +1,6 @@
 #! /bin/bash
 
 #variables
-SERVER='159.65.88.73'
 BRANCH='stable'
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
