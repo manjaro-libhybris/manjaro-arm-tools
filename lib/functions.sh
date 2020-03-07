@@ -287,6 +287,16 @@ create_rootfs_img() {
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
 
+    if [[ "$FACTORY" = "true" ]]; then
+    msg "Making settings for factory specific image..."
+        case "$EDITION" in
+        kde-plasma)
+            sed -i s/"Backend=XRender"/"Backend=OpenGL"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/kwinrc
+            sed -i s/"manjaro-arm.png"/"manjaro-pine64.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
+            ;;
+        esac
+    fi
+
     msg "$DEVICE $EDITION rootfs complete"
 }
 
@@ -398,11 +408,11 @@ create_img() {
         
     # Flash bootloader
     info "Flashing bootloader..."
-    
     case "$DEVICE" in
     oc2)
-        cd $TMPDIR/root/boot/
-        ./sd_fusing.sh $LDEV 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/u-boot.gxbb of=${LDEV} conv=fsync bs=512 seek=97 1> /dev/null 2>&1
         ;;
     on2)
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
@@ -411,7 +421,7 @@ create_img() {
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
         ;;
-    pinebook|sopine|pine64|pinephone|pinetab)
+    pinebook|pine64-lts|pine64|pinephone|pinetab)
         dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
         ;;
     pbpro|rockpro64|rockpi4)

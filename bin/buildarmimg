@@ -4,6 +4,7 @@
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 KEEPROOTFS=true
 EXTRACTED=false
+FACTORY=false
 
 #imports
 source $LIBDIR/functions.sh
@@ -39,6 +40,9 @@ while getopts "${opt}" arg; do
       ;;
     b)
       BRANCH="${OPTARG}"
+      ;;
+    f)
+      FACTORY=true
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
