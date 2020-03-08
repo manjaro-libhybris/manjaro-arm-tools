@@ -16,6 +16,8 @@ These scripts rely on certain packages to be able to function. These packages ar
 * xz (arch repo)
 * git (arch repo)
 * binfmt-user-static (AUR) or manjaro-arm-qemu-static (manjaro repo)
+* dosfstools (arch repo)
+* polkit (arch repo)
 
 ### Optional Dependencies
 * gzip (arch repo) (for `builddockerimg`)
@@ -75,15 +77,15 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 ## buildarmimg
 **Supported devices:**
 * oc2
-* rpi3 (not the A/B+ models it seems)
-* rpi4
+* on2
+* pine64-lts
 * pinebook
 * pbpro
-* sopine
+* rpi3 (not the A/B+ models it seems)
+* rpi4
 * rock64
-* rockpro64
-* on2
 * rockpi4
+* rockpro64
 * vim1
 * vim2
 * vim3
