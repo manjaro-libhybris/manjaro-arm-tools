@@ -16,7 +16,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:b:nxh"
+opt=":e:d:v:i:b:nfxh"
 
 while getopts "${opt}" arg; do
   case $arg in
