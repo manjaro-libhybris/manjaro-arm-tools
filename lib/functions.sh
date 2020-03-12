@@ -292,7 +292,7 @@ create_rootfs_img() {
         case "$EDITION" in
         kde-plasma)
             sed -i s/"Backend=XRender"/"Backend=OpenGL"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/kwinrc
-            sed -i s/"manjaro-arm.png"/"manjaro-pine64.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
+            sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
             ;;
         esac
     fi
