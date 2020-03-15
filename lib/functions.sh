@@ -345,9 +345,15 @@ create_emmc_install() {
     mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     
+    if [ -f $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz ]; then
+    info "Copying local $DEVICE $EDITION image..."
+    cp $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz $ROOTFS_IMG/rootfs_$ARCH/var/tmp/Manjaro-ARM.img.xz
+    sync
+    else
     info "Downloading $DEVICE $EDITION image..."
     cd $ROOTFS_IMG/rootfs_$ARCH/var/tmp/
     wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
+    fi
     
     info "Cleaning rootfs for unwanted files..."
     umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
