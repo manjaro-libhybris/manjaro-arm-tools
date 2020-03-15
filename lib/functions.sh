@@ -452,6 +452,10 @@ create_img() {
 }
 
 compress() {
+    if [ -f $IMGDIR/$IMGNAME.img.xz ]; then
+    info "Removing existing compressed image file {$IMGNAME.img.xz}..."
+    rm -rf $IMGDIR/$IMGNAME.img.xz
+    fi
     info "Compressing $IMGNAME.img..."
     #compress img
     cd $IMGDIR
