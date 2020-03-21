@@ -175,6 +175,7 @@ create_rootfs_pkg() {
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
     $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -g
+    $NSPAWN $BUILDDIR/$ARCH pacman -Syy
 }
 
 create_rootfs_img() {
