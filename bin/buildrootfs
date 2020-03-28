@@ -37,7 +37,7 @@ create_rootfs () {
     rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
     cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
-    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -g 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f10 1> /dev/null 2>&1
 }
 
 compress_rootfs () {

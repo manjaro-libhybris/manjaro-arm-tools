@@ -43,7 +43,7 @@ create_rootfs () {
     info "Setting up keyrings..."
     $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -g 1> /dev/null 2>&1
+    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f10 1> /dev/null 2>&1
 }
 
 compress_docker () {

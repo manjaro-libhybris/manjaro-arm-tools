@@ -174,7 +174,7 @@ create_rootfs_pkg() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
-    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -g
+    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f10
     $NSPAWN $BUILDDIR/$ARCH pacman -Syy
 }
 
@@ -220,7 +220,7 @@ create_rootfs_img() {
     
     info "Setting branch to $BRANCH..."
     sed -i s/"# Branch = stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f10
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
@@ -332,7 +332,7 @@ create_emmc_install() {
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f10
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release manjaro-arm-emmc-flasher --noconfirm
 
     info "Enabling services..."

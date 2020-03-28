@@ -35,7 +35,7 @@ Architecture = aarch64
 #Color
 #TotalDownload
 CheckSpace
-VerbosePkgLists
+#VerbosePkgLists
 
 # By default, pacman accepts packages signed by keys that its local keyring
 # trusts (see pacman-key and its man page), as well as unsigned packages.
@@ -68,15 +68,15 @@ LocalFileSigLevel = Optional
 
 [core]
 #Include = /etc/pacman.d/mirrorlist
-Server = https://manjaro-arm.moson.eu/stable/$repo/$arch
+Server = https://manjaro.moson.eu/stable/$repo/$arch
 
 [extra]
 #Include = /etc/pacman.d/mirrorlist
-Server = https://manjaro-arm.moson.eu/stable/$repo/$arch
+Server = https://manjaro.moson.eu/stable/$repo/$arch
 
 [community]
 #Include = /etc/pacman.d/mirrorlist
-Server = https://manjaro-arm.moson.eu/stable/$repo/$arch
+Server = https://manjaro.moson.eu/stable/$repo/$arch
 
 # An example of a custom package repository.  See the pacman manpage for
 # tips on creating your own repositories.
