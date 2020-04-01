@@ -1,7 +1,7 @@
 #! /bin/bash
 
 #variables
-BRANCH='stable'
+BRANCH='arm-stable'
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
@@ -44,7 +44,7 @@ usage_build_pkg() {
     echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo "    -k                 Keep the previous rootfs for this build"
-    echo "    -b <branch>        Set the branch used for the build. [Default = stable. Options = stable, testing or unstable]"
+    echo "    -b <branch>        Set the branch used for the build. [Default = arm-stable. Options = arm-stable, arm-testing or arm-unstable]"
     echo "    -i <package>       Install local package into rootfs."
     echo '    -h                 This help'
     echo ''
@@ -58,7 +58,7 @@ usage_build_img() {
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
-    echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
+    echo "    -b <branch>        Set the branch used in the image. [Default = arm-stable. Options = arm-stable, arm-testing or arm-unstable]"
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
@@ -159,7 +159,7 @@ create_rootfs_pkg() {
     mkdir -p $BUILDDIR/$ARCH
     # basescrap the rootfs filesystem
     basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
-    sed -i s/"# Branch = stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
+    sed -i s/"# Branch = arm-stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
 
@@ -219,7 +219,7 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     
     info "Setting branch to $BRANCH..."
-    sed -i s/"# Branch = stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
+    sed -i s/"# Branch = arm-stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f10
     
     msg "Installing packages for $EDITION edition on $DEVICE..."

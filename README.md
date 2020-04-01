@@ -58,10 +58,10 @@ Options inside `[` `]` are optional. Use `-h` to see what the defaults are.
 sudo buildarmpkg -p package [-a architecture] [-k] [-i package file] [-b branch]
 ```
 
-To build an aarch64 package against unstable branch use the following command:
+To build an aarch64 package against arm-unstable branch use the following command:
 
 ```
-sudo buildarmpkg -p package -a aarch64 -b unstable
+sudo buildarmpkg -p package -a aarch64 -b arm-unstable
 ```
 
 You can also build `any` packages, which will use the aarch64 architecture to build from.
@@ -113,10 +113,10 @@ Profiles that gets used are from this [Gitlab](https://gitlab.manjaro.org/manjar
 sudo buildarmimg [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz] [-b branch]
 ```
 
-To build a minimal image version 18.07 for the raspberry pi 3 on unstable branch:
+To build a minimal image version 18.07 for the raspberry pi 3 on arm-unstable branch:
 
 ```
-sudo buildarmimg -d rpi3 -e minimal -v 18.07 -b unstable
+sudo buildarmimg -d rpi3 -e minimal -v 18.07 -b arm-unstable
 ```
 
 To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:
