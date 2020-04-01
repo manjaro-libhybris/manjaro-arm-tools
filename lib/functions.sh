@@ -159,7 +159,7 @@ create_rootfs_pkg() {
     mkdir -p $BUILDDIR/$ARCH
     # basescrap the rootfs filesystem
     basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
-    sed -i s/"# Branch = arm-stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
+    sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
 
@@ -174,7 +174,7 @@ create_rootfs_pkg() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
-    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f10
+    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f5
     $NSPAWN $BUILDDIR/$ARCH pacman -Syy
 }
 
@@ -191,7 +191,7 @@ create_rootfs_img() {
     echo "$(ls $PROFILES/arm-profiles/editions/)"
     exit 1
     fi
-    msg "Creating OEM image of $EDITION for $DEVICE..."
+    msg "Creating image of $EDITION for $DEVICE..."
     # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
     info "Removing old rootfs..."
@@ -219,8 +219,8 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     
     info "Setting branch to $BRANCH..."
-    sed -i s/"# Branch = arm-stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f10
+    sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f5
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
@@ -332,7 +332,7 @@ create_emmc_install() {
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f10
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f5
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release manjaro-arm-emmc-flasher --noconfirm
 
     info "Enabling services..."
@@ -439,6 +439,10 @@ create_img() {
         dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+        ;;
+    edgev)
+        dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
         ;;
     esac
     
