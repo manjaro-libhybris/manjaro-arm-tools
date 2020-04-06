@@ -4,6 +4,7 @@
 BRANCH='arm-stable'
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
+BUILDSERVER=https://repo.manjaro.org/repo
 PACKAGER=$(cat /etc/makepkg.conf | grep PACKAGER)
 PKGDIR=/var/cache/manjaro-arm-tools/pkg
 ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
@@ -155,11 +156,12 @@ create_rootfs_pkg() {
     rm -rf $BUILDDIR/$ARCH
     fi
     msg "Creating rootfs..."
-    # cd to root_fs
+    # cd to rootfs
     mkdir -p $BUILDDIR/$ARCH
     # basescrap the rootfs filesystem
     basestrap -G -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
     sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
+    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $BUILDDIR/$ARCH/etc/pacman.d/mirrorlist
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
 
@@ -174,7 +176,6 @@ create_rootfs_pkg() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
-    $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f5
     $NSPAWN $BUILDDIR/$ARCH pacman -Syy
 }
 
@@ -220,7 +221,7 @@ create_rootfs_img() {
     
     info "Setting branch to $BRANCH..."
     sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f5
+    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
@@ -235,6 +236,7 @@ create_rootfs_img() {
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g
     
     info "Enabling services..."
     # Enable services
@@ -268,7 +270,7 @@ create_rootfs_img() {
         echo "Enabling SSH login for root user for headless setup..."
         sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
         sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
-        echo "Enabling autologin for OEM setup..."
+        echo "Enabling autologin for first setup..."
         mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
         cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     fi
@@ -331,9 +333,9 @@ create_emmc_install() {
     
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
+    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -f5
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base $PKG_DEVICE $PKG_EDITION manjaro-system manjaro-release manjaro-arm-emmc-flasher --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base manjaro-system manjaro-release manjaro-arm-emmc-flasher $PKG_EDITION $PKG_DEVICE --noconfirm
 
     info "Enabling services..."
     # Enable services
@@ -359,7 +361,6 @@ create_emmc_install() {
     info "Cleaning rootfs for unwanted files..."
     umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    #rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
@@ -483,9 +484,7 @@ build_pkg() {
     $NSPAWN $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
     mount -o bind "$PACKAGE" $BUILDDIR/$ARCH/build
     msg "Building {$PACKAGE}..."
-    #$NSPAWN $BUILDDIR/$ARCH/ chmod -R 777 build/ 1> /dev/null 2>&1
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
-    #$NSPAWN $BUILDDIR/$ARCH/ pacman -Syyu --noconfirm
     $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
     umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
 }
