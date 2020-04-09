@@ -429,7 +429,7 @@ create_img() {
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
         ;;
-    pinebook|pine64-lts|pine64|pinephone|pinetab)
+    pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
         dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
         ;;
     pbpro|rockpro64|rockpi4)
