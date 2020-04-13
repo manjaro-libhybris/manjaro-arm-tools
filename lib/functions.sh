@@ -291,10 +291,9 @@ create_rootfs_img() {
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
 
     if [[ "$FACTORY" = "true" ]]; then
-    msg "Making settings for factory specific image..."
+    info "Making settings for factory specific image..."
         case "$EDITION" in
         kde-plasma)
-            sed -i s/"Backend=XRender"/"Backend=OpenGL"/g $ROOTFS_IMG/rootfs_$ARCH/etc/xdg/kwinrc
             sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
             ;;
         esac
