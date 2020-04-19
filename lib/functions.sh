@@ -295,8 +295,11 @@ create_rootfs_img() {
         case "$EDITION" in
         kde-plasma)
             sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
+            echo "$EDITION - $(date +'%y'.'%m'.'%d')" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/factory-version 1> /dev/null 2>&1
             ;;
         esac
+    else
+        echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
     fi
 
     msg "$DEVICE $EDITION rootfs complete"
