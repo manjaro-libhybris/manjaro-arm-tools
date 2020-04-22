@@ -438,7 +438,7 @@ create_img() {
         dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         ;;
-    rock64)
+    rock64|roc-cc)
         dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1

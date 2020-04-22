@@ -80,10 +80,13 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 * on2
 * pine64-lts
 * pinebook
+* pinephone
+* pinetab
 * pbpro
 * rpi3 (not the A/B+ models it seems)
 * rpi4
 * rock64
+* roc-cc
 * rockpi4
 * rockpro64
 * vim1
