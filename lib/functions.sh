@@ -236,7 +236,8 @@ create_rootfs_img() {
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g
+    info "Generating mirrorlist..."
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g 1> /dev/null 2>&1
     
     info "Enabling services..."
     # Enable services
