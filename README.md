@@ -77,8 +77,10 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 ## buildarmimg
 **Supported devices:**
 * oc2
+* oc4
 * on2
 * pine64-lts
+* pine-h64
 * pinebook
 * pinephone
 * pinetab
