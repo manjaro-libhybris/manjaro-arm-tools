@@ -76,6 +76,7 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 
 ## buildarmimg
 **Supported devices:**
+* nanopc-t4
 * oc2
 * oc4
 * on2
