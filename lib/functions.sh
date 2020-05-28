@@ -442,7 +442,7 @@ create_img() {
     pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
         dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
         ;;
-    pbpro|rockpro64|rockpi4)
+    pbpro|rockpro64|rockpi4|nanopc-t4)
         dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
         ;;
