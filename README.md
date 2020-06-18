@@ -104,6 +104,7 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 * mate
 * xfce
 * i3
+* sway
 * gnome (experimental)
 * cubocore (not complete yet)
 * server (not complete yet, unmaintained)
