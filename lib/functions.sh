@@ -228,11 +228,14 @@ create_rootfs_img() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    if [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
-    else
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
-    fi
+	case "$EDITION" in
+		cubocore|phosh|plasma-mobile|plasma-mobile-dev)
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
+			;;
+		*)
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
+			;;
+	esac
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
@@ -247,17 +250,22 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
     
     #disabling services depending on edition
-    if [[ "$EDITION" = "mate" ]] || [[ "$EDITION" = "mate-fta" ]] || [[ "$EDITION" = "i3" ]] || [[ "$EDITION" = "xfce" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
-    elif [[ "$EDITION" = "sway" ]]; then
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable greetd.service 1> /dev/null 2>&1
-    elif [[ "$EDITION" = "minimal" ]] || [[ "$EDITION" = "server" ]] || [[ "$EDITION" = "plasma-mobile" ]] || [[ "$EDITION" = "plasma-mobile-dev" ]]; then
-    echo "No display manager to disable in $EDITION..."
-    else
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
-    fi
+    case "$EDITION" in
+		mate|i3|xfce|lxqt)
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
+			;;
+		sway)
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable greetd.service 1> /dev/null 2>&1
+			;;
+		minimal|server|plasma-mobile|plasma-mobile-dev)
+			echo "No display manager to disable in $EDITION..."
+			;;
+		*)
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
+			;;
+	esac
 
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
@@ -269,22 +277,23 @@ create_rootfs_img() {
     cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
-    if [[ "$DEVICE" = "pinephone" ]] || [[ "$DEVICE" = "pinetab" ]]; then
-        echo "No OEM setup!"
-    else
-        echo "Enabling SSH login for root user for headless setup..."
-        sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
-        sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
-        echo "Enabling autologin for first setup..."
-        mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
-        cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
-    fi
+	case "$EDITION" in
+		cubocore|phosh|plasma-mobile|plasma-mobile-dev)
+			echo "No OEM setup!"
+			;;
+		*)
+			echo "Enabling SSH login for root user for headless setup..."
+			sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
+			sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
+			echo "Enabling autologin for first setup..."
+			mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
+			cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+			;;
+	esac
     echo "Correcting permissions from overlay..."
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
     if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
         chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
-    elif [[ "$EDITION" = "cubocore" ]]; then
-        cp $ROOTFS_IMG/rootfs_$ARCH/usr/share/applications/corestuff.desktop $ROOTFS_IMG/rootfs_$ARCH/etc/xdg/autostart/
     fi
     
     info "Cleaning rootfs for unwanted files..."
@@ -429,6 +438,7 @@ create_img() {
     # Flash bootloader
     info "Flashing bootloader..."
     case "$DEVICE" in
+    # AMLogic uboots
     oc2)
         dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
@@ -441,22 +451,25 @@ create_img() {
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
         ;;
-    pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
-        dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
-        ;;
-    pbpro|rockpro64|rockpi4|nanopc-t4)
-        dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        ;;
-    rock64|roc-cc)
-        dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
-        ;;
     edgev)
         dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
         dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
         ;;
+	# Allwinner uboots
+    pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
+        dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} bs=8k seek=1 1> /dev/null 2>&1
+        ;;
+	# Rockchip uboots
+    pbpro|rockpro64|rockpi4|nanopc-t4|rock64|roc-cc)
+        dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+        dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+        ;;
+	# For PBP BSP uboot
+	#pbpro)
+    #    dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc 1> /dev/null 2>&1
+    #    dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc 1> /dev/null 2>&1
+    #    dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc 1> /dev/null 2>&1
+    #    ;;
     esac
     
     # Clean up
