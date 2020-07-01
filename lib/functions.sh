@@ -278,8 +278,12 @@ create_rootfs_img() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
 	case "$EDITION" in
-		cubocore|phosh|plasma-mobile|plasma-mobile-dev)
+		cubocore|plasma-mobile|plasma-mobile-dev)
 			echo "No OEM setup!"
+			;;
+		phosh)
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a manjaro autologin
 			;;
 		*)
 			echo "Enabling SSH login for root user for headless setup..."
