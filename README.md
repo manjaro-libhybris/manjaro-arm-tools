@@ -7,21 +7,26 @@ This software is available in the Manjaro repository.
 
 
 ## Known issues
-
+Check the [Issues](https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-arm-tools/-/issues) page.
 
 ## Dependencies
-These scripts rely on certain packages to be able to function. These packages are:
+These scripts rely on certain packages, other than what's in the `base` package group, to be able to function. These packages are:
 * parted (arch repo)
 * manjaro-tools-base (manjaro repo)
-* xz (arch repo)
+* libarchive (arch repo)
 * git (arch repo)
 * binfmt-user-static (AUR) or manjaro-arm-qemu-static (manjaro repo)
 * dosfstools (arch repo)
 * polkit (arch repo)
+* gnugpg (arch repo)
+* wget (arch repo)
+* systemd-nspawn with support for `--resolv-conf=copy-host` (arch repo)
 
 ### Optional Dependencies
 * gzip (arch repo) (for `builddockerimg`)
 * docker (arch repo) (for `builddockkerimg`)
+* mktorrent (arch repo) (for torrent support in `deployarmimg`)
+* rsync (arch repo) (for `deployarmimg`)
 
 # Installation (Manjaro based distributions only)
 ## GIT version from Manjaro Strit repo
@@ -31,7 +36,7 @@ Add my repo to your `/etc/pacman.conf`:
 SigLevel = Optional
 Server = https://www.strits.dk/files/manjaro-strit/manjaro-strit-repo/$arch
 ```
-Run `sudo pacman -Syyu manjaro-strit-keyring && sudo pacman -S manjaro-arm-tools-git`.
+Run `sudo pacman -Syyu manjaro-arm-tools-git`.
 
 ## From gitlab (tagged or GIT version)
 * Download the `.zip` or `.tar.gz` file from https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-arm-tools.
