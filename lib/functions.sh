@@ -514,7 +514,7 @@ build_pkg() {
     mount -o bind "$PACKAGE" $BUILDDIR/$ARCH/build
     msg "Building {$PACKAGE}..."
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
-    $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -sc --noconfirm
+    $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asc --noconfirm
     umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
 }
 
