@@ -193,7 +193,7 @@ If you don't, you can't use this.
 **Syntax**
 
 ```
-deployarmimg -i image [-d device] [-e edition] [-v version] -k email@server.org [-t]
+deployarmimg -i image [-d device] [-e edition] [-v version] -k email@server.org [-t] [-u osdn-username]
 ```
 
 To upload an image to the raspberry pi minimal 18.07 folder use with torrent:
