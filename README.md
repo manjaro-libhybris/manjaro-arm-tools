@@ -12,7 +12,6 @@ Check the [Issues](https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-a
 ## Dependencies
 These scripts rely on certain packages, other than what's in the `base` package group, to be able to function. These packages are:
 * parted (arch repo)
-* manjaro-tools-base (manjaro repo)
 * libarchive (arch repo)
 * git (arch repo)
 * binfmt-user-static (AUR) or manjaro-arm-qemu-static (manjaro repo)
@@ -81,7 +80,9 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 
 ## buildarmimg
 **Supported devices:**
+* edgev
 * nanopc-t4
+* nanopi-neo-plus2
 * oc2
 * oc4
 * on2
@@ -111,6 +112,8 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 * i3
 * sway
 * gnome (experimental)
+* plasma-mobile (experimental)
+* phosh (experimental)
 * cubocore (not complete yet)
 * server (not complete yet, unmaintained)
 
