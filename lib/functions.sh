@@ -14,6 +14,7 @@ IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm'
+STORAGE_USER=$(whoami)
 VERSION=$(date +'%y'.'%m')
 FLASHVERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
@@ -145,7 +146,7 @@ img_upload() {
     # Upload image + checksums to image server
     msg "Uploading image and checksums to server..."
     info "Please use your server login details..."
-    rsync -raP $IMAGE* $OSDN/$DEVICE/$EDITION/$VERSION/
+    rsync -raP $IMAGE* $STORAGE_USER@$OSDN/$DEVICE/$EDITION/$VERSION/
 }
 
 create_rootfs_pkg() {
