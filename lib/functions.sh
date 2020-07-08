@@ -34,6 +34,7 @@ usage_deploy_img() {
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
     echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
+    echo "    -u <username>      Username of your OSDN user account with access to upload [Default = currently logged in local user]"
     echo "    -t                 Create a torrent of the image"
     echo '    -h                 This help'
     echo ''

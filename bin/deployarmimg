@@ -12,7 +12,7 @@ source $LIBDIR/functions.sh
 
 
 #Arguments 
-opt=":i:d:e:v:k:th"
+opt=":i:d:e:v:k:u:th"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -30,6 +30,9 @@ while getopts "${opt}" arg; do
       ;;
     k)
       GPGMAIL="${OPTARG}"
+      ;;
+    u)
+      STORAGE_USER="${OPTARG}"
       ;;
     t)
       TORRENT="true"
