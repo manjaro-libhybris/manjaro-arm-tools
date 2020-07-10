@@ -162,7 +162,7 @@ create_rootfs_pkg() {
     mkdir -p $BUILDDIR/$ARCH
     # basescrap the rootfs filesystem
     sed -i s/"arm-stable"/"$BRANCH"/g $LIBDIR/pacman.conf.$ARCH
-    $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
+    $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH fakeroot-qemu base-devel
     sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
     echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $BUILDDIR/$ARCH/etc/pacman.d/mirrorlist
     sed -i s/"$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
