@@ -161,6 +161,7 @@ create_rootfs_pkg() {
     # cd to rootfs
     mkdir -p $BUILDDIR/$ARCH
     # basescrap the rootfs filesystem
+    info "Switching branch to $BRANCH..."
     sed -i s/"arm-stable"/"$BRANCH"/g $LIBDIR/pacman.conf.$ARCH
     $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH fakeroot-qemu base-devel
     sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
@@ -180,6 +181,7 @@ create_rootfs_pkg() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
+    sed -i s/'COMPRESSXZ=(xz -c -z -)'/'COMPRESSXZ=(xz -c -z - --threads=0)'/ $BUILDDIR/$ARCH/etc/makepkg.conf
     $NSPAWN $BUILDDIR/$ARCH pacman -Syy
 }
 
