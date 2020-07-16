@@ -89,6 +89,7 @@ case "$DEVICE" in
 		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>phone.*/,""); print $1}')
 		SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{sub(/>phone/,""); print $1}')
 		;;
+esac
 
 #start timer
 #timer=$(get_timer)
