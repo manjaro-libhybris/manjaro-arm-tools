@@ -82,12 +82,12 @@ timer_start=$(get_timer)
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
 case "$DEVICE" in
 	pinephone)
-		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>phone/,""); print $1}')
-		SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{sub(/>phone/,""); print $1}')
+		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone/,""); print $1}')
+		SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{sub(/>pinephone/,""); print $1}')
 		;;
 	*)
-		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>phone.*/,""); print $1}')
-		SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{sub(/>phone/,""); print $1}')
+		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone.*/,""); print $1}')
+		SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{sub(/>pinephone.*/,""); print $1}')
 		;;
 esac
 
