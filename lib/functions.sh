@@ -109,6 +109,20 @@ info() {
       local mesg=$1; shift
       printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
+
+error() {
+    local mesg=$1; shift
+    printf "${RED}==> ERROR:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+}
+
+cleanup() {
+    exit ${1:-0}
+}
+
+abort() {
+    error 'Aborting...'
+    cleanup 255
+}
  
 get_timer(){
     echo $(date +%s)
@@ -234,16 +248,16 @@ create_rootfs_img() {
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
 	case "$EDITION" in
 		cubocore|phosh|plasma-mobile|plasma-mobile-dev)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
 			;;
 		*)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm
+			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
 			;;
 	esac
     if [[ ! -z "$ADD_PACKAGE" ]]; then
     info "Installing local package {$ADD_PACKAGE} to rootfs..."
     cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
     fi
     info "Generating mirrorlist..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g 1> /dev/null 2>&1
