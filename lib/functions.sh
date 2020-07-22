@@ -329,6 +329,9 @@ create_rootfs_img() {
         echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
     fi
 
+    msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
+    pacman -Qr "$ROOTFS_IMG/rootfs_$ARCH/" > "$IMGDIR/$IMGNAME-pkgs.txt"
+
     msg "$DEVICE $EDITION rootfs complete"
 }
 
