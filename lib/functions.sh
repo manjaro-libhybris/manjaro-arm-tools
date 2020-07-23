@@ -98,16 +98,16 @@ msg() {
     ALL_OFF="\e[1;0m"
     BOLD="\e[1;1m"
     GREEN="${BOLD}\e[1;32m"
-      local mesg=$1; shift
-      printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+    local mesg=$1; shift
+    printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
  
 info() {
     ALL_OFF="\e[1;0m"
     BOLD="\e[1;1m"
     BLUE="${BOLD}\e[1;34m"
-      local mesg=$1; shift
-      printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+    local mesg=$1; shift
+    printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
 
 error() {
@@ -123,6 +123,12 @@ cleanup() {
 abort() {
     error 'Aborting...'
     cleanup 255
+}
+
+prune_cache(){
+    info "Prune and unmount pkg-cache..."
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH paccache -r
+    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
 }
  
 get_timer(){
@@ -153,8 +159,8 @@ checksum_img() {
     info "Creating signature for [$IMAGE]..."
     gpg --detach-sign -u $GPGMAIL "$IMAGE"
     if [ ! -f "$IMAGE.sig" ]; then
-    echo "Image not signed. Aborting..."
-    exit 1
+        echo "Image not signed. Aborting..."
+        exit 1
     fi
 }
 
@@ -169,8 +175,8 @@ create_rootfs_pkg() {
     msg "Building $PACKAGE for $ARCH..."
     # Remove old rootfs if it exists
     if [ -d $BUILDDIR/$ARCH ]; then
-    info "Removing old rootfs..."
-    rm -rf $BUILDDIR/$ARCH
+        info "Removing old rootfs..."
+        rm -rf $BUILDDIR/$ARCH
     fi
     msg "Creating rootfs..."
     # cd to rootfs
@@ -320,7 +326,7 @@ create_rootfs_img() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
-    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
+    prune_cache
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
@@ -406,7 +412,7 @@ create_emmc_install() {
     fi
     
     info "Cleaning rootfs for unwanted files..."
-    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
+    prune_cache
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
@@ -537,7 +543,7 @@ build_pkg() {
     msg "Building {$PACKAGE}..."
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
     $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asc --noconfirm
-    umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
+    prune_cache
 }
 
 export_and_clean() {
