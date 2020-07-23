@@ -116,6 +116,7 @@ error() {
 }
 
 cleanup() {
+    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     exit ${1:-0}
 }
 
