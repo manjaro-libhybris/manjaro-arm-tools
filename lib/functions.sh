@@ -203,42 +203,42 @@ create_rootfs_pkg() {
 create_rootfs_img() {
     #Check if device file exists
     if [ ! -f "$PROFILES/arm-profiles/devices/$DEVICE" ]; then 
-    echo 'Invalid device '$DEVICE', please choose one of the following'
-    echo "$(ls $PROFILES/arm-profiles/devices/)"
-    exit 1
+        echo 'Invalid device '$DEVICE', please choose one of the following'
+        echo "$(ls $PROFILES/arm-profiles/devices/)"
+        exit 1
     fi
     #check if edition file exists
     if [ ! -f "$PROFILES/arm-profiles/editions/$EDITION" ]; then 
-    echo 'Invalid edition '$EDITION', please choose one of the following'
-    echo "$(ls $PROFILES/arm-profiles/editions/)"
-    exit 1
+        echo 'Invalid edition '$EDITION', please choose one of the following'
+        echo "$(ls $PROFILES/arm-profiles/editions/)"
+        exit 1
     fi
     msg "Creating image of $EDITION for $DEVICE..."
     # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
-    info "Removing old rootfs..."
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH
+        info "Removing old rootfs..."
+        rm -rf $ROOTFS_IMG/rootfs_$ARCH
     fi
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     if [[ "$KEEPROOTFS" = "false" ]]; then
-    rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
-    # fetch and extract rootfs
-    info "Downloading latest $ARCH rootfs..."
-    cd $ROOTFS_IMG
-    wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
+        rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
+        # fetch and extract rootfs
+        info "Downloading latest $ARCH rootfs..."
+        cd $ROOTFS_IMG
+        wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
     #also fetch it, if it does not exist
     if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
-    cd $ROOTFS_IMG
-    wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
+        cd $ROOTFS_IMG
+        wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
     
     info "Extracting $ARCH rootfs..."
     bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
     
     info "Setting up keyrings..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1>/dev/null || abort
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
     
     info "Setting branch to $BRANCH..."
     sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
@@ -247,18 +247,18 @@ create_rootfs_img() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-	case "$EDITION" in
-		cubocore|phosh|plasma-mobile|plasma-mobile-dev)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
-			;;
-		*)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
-			;;
-	esac
+    case "$EDITION" in
+        cubocore|phosh|plasma-mobile|plasma-mobile-dev)
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            ;;
+        *)
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            ;;
+    esac
     if [[ ! -z "$ADD_PACKAGE" ]]; then
-    info "Installing local package {$ADD_PACKAGE} to rootfs..."
-    cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
+        info "Installing local package {$ADD_PACKAGE} to rootfs..."
+        cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
     fi
     info "Generating mirrorlist..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g 1> /dev/null 2>&1
@@ -270,21 +270,21 @@ create_rootfs_img() {
     
     #disabling services depending on edition
     case "$EDITION" in
-		mate|i3|xfce|lxqt)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
-			;;
-		sway)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable greetd.service 1> /dev/null 2>&1
-			;;
-		minimal|server|plasma-mobile|plasma-mobile-dev|phosh|cubocore)
-			echo "No display manager to disable in $EDITION..."
-			;;
-		*)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
-			;;
-	esac
+        mate|i3|xfce|lxqt)
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
+            ;;
+        sway)
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable greetd.service 1> /dev/null 2>&1
+            ;;
+        minimal|server|plasma-mobile|plasma-mobile-dev|phosh|cubocore)
+            echo "No display manager to disable in $EDITION..."
+            ;;
+        *)
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
+            ;;
+    esac
 
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
@@ -296,23 +296,23 @@ create_rootfs_img() {
     cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
-	case "$EDITION" in
-		cubocore|plasma-mobile|plasma-mobile-dev)
-			echo "No OEM setup!"
-			;;
-		phosh)
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
-			$NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a manjaro autologin
-			;;
-		*)
-			echo "Enabling SSH login for root user for headless setup..."
-			sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
-			sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
-			echo "Enabling autologin for first setup..."
-			mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
-			cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
-			;;
-	esac
+    case "$EDITION" in
+        cubocore|plasma-mobile|plasma-mobile-dev)
+            echo "No OEM setup!"
+            ;;
+        phosh)
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a manjaro autologin
+            ;;
+        *)
+            echo "Enabling SSH login for root user for headless setup..."
+            sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
+            sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
+            echo "Enabling autologin for first setup..."
+            mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
+            cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+            ;;
+    esac
     echo "Correcting permissions from overlay..."
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
     if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
@@ -328,17 +328,17 @@ create_rootfs_img() {
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
 
     if [[ "$FACTORY" = "true" ]]; then
-    info "Making settings for factory specific image..."
+        info "Making settings for factory specific image..."
         case "$EDITION" in
-        kde-plasma)
-            sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
-            echo "$EDITION - $(date +'%y'.'%m'.'%d')" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/factory-version 1> /dev/null 2>&1
-            ;;
-        xfce)
-            sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
-            sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm-gtk-greeter.conf
-            echo "$EDITION - $(date +'%y'.'%m'.'%d')" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/factory-version 1> /dev/null 2>&1
-            ;;
+            kde-plasma)
+                sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
+                echo "$EDITION - $(date +'%y'.'%m'.'%d')" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/factory-version 1> /dev/null 2>&1
+                ;;
+            xfce)
+                sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+                sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm-gtk-greeter.conf
+                echo "$EDITION - $(date +'%y'.'%m'.'%d')" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/factory-version 1> /dev/null 2>&1
+                ;;
         esac
     else
         echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
@@ -354,29 +354,29 @@ create_emmc_install() {
     msg "Creating eMMC install image of $EDITION for $DEVICE..."
     # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
-    info "Removing old rootfs..."
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH
+        info "Removing old rootfs..."
+        rm -rf $ROOTFS_IMG/rootfs_$ARCH
     fi
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
     if [[ "$KEEPROOTFS" = "false" ]]; then
-    rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
-    # fetch and extract rootfs
-    info "Downloading latest $ARCH rootfs..."
-    cd $ROOTFS_IMG
-    wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
+        rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
+        # fetch and extract rootfs
+        info "Downloading latest $ARCH rootfs..."
+        cd $ROOTFS_IMG
+        wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
     #also fetch it, if it does not exist
     if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
-    cd $ROOTFS_IMG
-    wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
+        cd $ROOTFS_IMG
+        wget -q --show-progress --progress=bar:force:noscroll https://osdn.net/projects/manjaro-arm/storage/.rootfs/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
     
     info "Extracting $ARCH rootfs..."
     bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
     
     info "Setting up keyrings..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init || abort
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm || abort
     
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
@@ -396,13 +396,13 @@ create_emmc_install() {
     cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
     
     if [ -f $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz ]; then
-    info "Copying local $DEVICE $EDITION image..."
-    cp $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz $ROOTFS_IMG/rootfs_$ARCH/var/tmp/Manjaro-ARM.img.xz
-    sync
+        info "Copying local $DEVICE $EDITION image..."
+        cp $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz $ROOTFS_IMG/rootfs_$ARCH/var/tmp/Manjaro-ARM.img.xz
+        sync
     else
-    info "Downloading $DEVICE $EDITION image..."
-    cd $ROOTFS_IMG/rootfs_$ARCH/var/tmp/
-    wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
+        info "Downloading $DEVICE $EDITION image..."
+        cd $ROOTFS_IMG/rootfs_$ARCH/var/tmp/
+        wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
     fi
     
     info "Cleaning rootfs for unwanted files..."
@@ -439,79 +439,79 @@ create_img() {
 
 
     # Create partitions
-        #Clear first 32mb
-        dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-        #partition with boot and root
-        parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-        parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-        START=`cat /sys/block/$DEV/${DEV}p1/start`
-        SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-        END_SECTOR=$(expr $START + $SIZE)
-        parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-        partprobe $LDEV 1> /dev/null 2>&1
-        mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
-        mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
+    #Clear first 32mb
+    dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
+    #partition with boot and root
+    parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+    START=`cat /sys/block/$DEV/${DEV}p1/start`
+    SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+    END_SECTOR=$(expr $START + $SIZE)
+    parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+    partprobe $LDEV 1> /dev/null 2>&1
+    mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
+    mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
 
     #copy rootfs contents over to the FS
     info "Copying files to image..."
-        mkdir -p $TMPDIR/root
-        mkdir -p $TMPDIR/boot
-        mount ${LDEV}p1 $TMPDIR/boot
-        mount ${LDEV}p2 $TMPDIR/root
-        cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-        mv $TMPDIR/root/boot/* $TMPDIR/boot
+    mkdir -p $TMPDIR/root
+    mkdir -p $TMPDIR/boot
+    mount ${LDEV}p1 $TMPDIR/boot
+    mount ${LDEV}p2 $TMPDIR/root
+    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+    mv $TMPDIR/root/boot/* $TMPDIR/boot
         
     # Flash bootloader
     info "Flashing bootloader..."
     case "$DEVICE" in
     # AMLogic uboots
-    oc2)
-        dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/u-boot.gxbb of=${LDEV} conv=fsync bs=512 seek=97 1> /dev/null 2>&1
-        ;;
-    on2|oc4)
-        dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
-        ;;
-    vim1|vim2|vim3)
-        dd if=$TMPDIR/boot/$DEVICE.u-boot.bin of=${LDEV} conv=fsync,notrunc bs=442 count=1 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/$DEVICE.u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 skip=1 seek=1 1> /dev/null 2>&1
-        ;;
-    edgev)
-        dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
-        ;;
-	# Allwinner uboots
-    pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
-        dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
-        ;;
-	# Rockchip uboots
-    pbpro|rockpro64|rockpi4|nanopc-t4|rock64|roc-cc)
-        dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-        dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
-        ;;
-	# For PBP BSP uboot
-	#pbpro)
-    #    dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-    #    dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
-    #    dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
-    #    ;;
+        oc2)
+            dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/u-boot.gxbb of=${LDEV} conv=fsync bs=512 seek=97 1> /dev/null 2>&1
+            ;;
+        on2|oc4)
+            dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
+            ;;
+        vim1|vim2|vim3)
+            dd if=$TMPDIR/boot/$DEVICE.u-boot.bin of=${LDEV} conv=fsync,notrunc bs=442 count=1 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/$DEVICE.u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 skip=1 seek=1 1> /dev/null 2>&1
+            ;;
+        edgev)
+            dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/u-boot-rk3399-khadas-edge-v.img of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
+            ;;
+        # Allwinner uboots
+        pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
+            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
+            ;;
+        # Rockchip uboots
+        pbpro|rockpro64|rockpi4|nanopc-t4|rock64|roc-cc)
+            dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
+            ;;
+        # For PBP BSP uboot
+        #pbpro)
+        #    dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
+        #    dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
+        #    dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
+        #    ;;
     esac
     
     # Clean up
     info "Cleaning up image..."
-        umount $TMPDIR/root
-        umount $TMPDIR/boot
-        losetup -d $LDEV 1> /dev/null 2>&1
-        rm -r $TMPDIR/root $TMPDIR/boot
-        partprobe $LDEV 1> /dev/null 2>&1
+    umount $TMPDIR/root
+    umount $TMPDIR/boot
+    losetup -d $LDEV 1> /dev/null 2>&1
+    rm -r $TMPDIR/root $TMPDIR/boot
+    partprobe $LDEV 1> /dev/null 2>&1
     chmod 666 $IMGDIR/$IMGNAME.img
 }
 
 compress() {
     if [ -f $IMGDIR/$IMGNAME.img.xz ]; then
-    info "Removing existing compressed image file {$IMGNAME.img.xz}..."
-    rm -rf $IMGDIR/$IMGNAME.img.xz
+        info "Removing existing compressed image file {$IMGNAME.img.xz}..."
+        rm -rf $IMGDIR/$IMGNAME.img.xz
     fi
     info "Compressing $IMGNAME.img..."
     #compress img
@@ -526,9 +526,9 @@ compress() {
 build_pkg() {
     # Install local package to rootfs before building
     if [[ ! -z "$ADD_PACKAGE" ]]; then
-    info "Installing local package {$ADD_PACKAGE} to rootfs..."
-    cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/
-    $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+        info "Installing local package {$ADD_PACKAGE} to rootfs..."
+        cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/
+        $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
     # Build the actual package
     msg "Copying build directory {$PACKAGE} to rootfs..."
@@ -554,7 +554,6 @@ export_and_clean() {
         #clean up rootfs
         info "Cleaning build files from rootfs"
         rm -rf $BUILDDIR/$ARCH/build/
-
     else
         msg "!!!!! Package failed to build !!!!!"
         umount $BUILDDIR/$ARCH/build
