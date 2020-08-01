@@ -544,7 +544,9 @@ build_pkg() {
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
     $NSPAWN $BUILDDIR/$ARCH/ pacman -Syu 1> /dev/null 2>&1
     $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asc --noconfirm
-    prune_cache
+    info "Prune and unmount pkg-cache..."
+    $NSPAWN $BUILDDIR/$ARCH/ paccache -r
+    umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
 }
 
 export_and_clean() {
