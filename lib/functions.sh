@@ -128,8 +128,8 @@ abort() {
 
 prune_cache(){
     info "Prune and unmount pkg-cache..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH paccache -r
-    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
+    $NSPAWN $CHROOTDIR paccache -r
+    umount $PKG_CACHE
 }
  
 get_timer(){
@@ -175,36 +175,36 @@ img_upload() {
 create_rootfs_pkg() {
     msg "Building $PACKAGE for $ARCH..."
     # Remove old rootfs if it exists
-    if [ -d $BUILDDIR/$ARCH ]; then
+    if [ -d $CHROOTDIR ]; then
         info "Removing old rootfs..."
-        rm -rf $BUILDDIR/$ARCH
+        rm -rf $CHROOTDIR
     fi
     msg "Creating rootfs..."
     # cd to rootfs
-    mkdir -p $BUILDDIR/$ARCH
+    mkdir -p $CHROOTDIR
     # basescrap the rootfs filesystem
     info "Switching branch to $BRANCH..."
     sed -i s/"arm-stable"/"$BRANCH"/g $LIBDIR/pacman.conf.$ARCH
-    $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH fakeroot-qemu base-devel
-    sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $BUILDDIR/$ARCH/etc/pacman-mirrors.conf
-    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $BUILDDIR/$ARCH/etc/pacman.d/mirrorlist
+    $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $CHROOTDIR fakeroot-qemu base-devel
+    sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $CHROOTDIR/etc/pacman-mirrors.conf
+    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     sed -i s/"$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
     # Enable cross architecture Chrooting
-    cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
+    cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
 
-   msg "Configuring rootfs for building..."
-    $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
-    $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
-    cp $LIBDIR/makepkg $BUILDDIR/$ARCH/usr/bin/
-    $NSPAWN $BUILDDIR/$ARCH chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
-    rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
-    rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
-    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
-    sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $BUILDDIR/$ARCH/etc/makepkg.conf
-    sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $BUILDDIR/$ARCH/etc/makepkg.conf
-    sed -i s/'COMPRESSXZ=(xz -c -z -)'/'COMPRESSXZ=(xz -c -z - --threads=0)'/ $BUILDDIR/$ARCH/etc/makepkg.conf
-    $NSPAWN $BUILDDIR/$ARCH pacman -Syy
+    msg "Configuring rootfs for building..."
+    $NSPAWN $CHROOTDIR pacman-key --init 1> /dev/null 2>&1
+    $NSPAWN $CHROOTDIR pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    cp $LIBDIR/makepkg $CHROOTDIR/usr/bin/
+    $NSPAWN $CHROOTDIR chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
+    rm -f $CHROOTDIR/etc/ssl/certs/ca-certificates.crt
+    rm -f $CHROOTDIR/etc/ca-certificates/extracted/tls-ca-bundle.pem
+    cp -a /etc/ssl/certs/ca-certificates.crt $CHROOTDIR/etc/ssl/certs/
+    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $CHROOTDIR/etc/ca-certificates/extracted/
+    sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $CHROOTDIR/etc/makepkg.conf
+    sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $CHROOTDIR/etc/makepkg.conf
+    sed -i s/'COMPRESSXZ=(xz -c -z -)'/'COMPRESSXZ=(xz -c -z - --threads=0)'/ $CHROOTDIR/etc/makepkg.conf
+    $NSPAWN $CHROOTDIR pacman -Syy
 }
 
 create_rootfs_img() {
@@ -360,11 +360,11 @@ create_rootfs_img() {
 create_emmc_install() {
     msg "Creating eMMC install image of $EDITION for $DEVICE..."
     # Remove old rootfs if it exists
-    if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
+    if [ -d $CHROOTDIR ]; then
         info "Removing old rootfs..."
-        rm -rf $ROOTFS_IMG/rootfs_$ARCH
+        rm -rf $CHROOTDIR
     fi
-    mkdir -p $ROOTFS_IMG/rootfs_$ARCH
+    mkdir -p $CHROOTDIR
     if [[ "$KEEPROOTFS" = "false" ]]; then
         rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
         # fetch and extract rootfs
@@ -379,7 +379,7 @@ create_emmc_install() {
     fi
     
     info "Extracting $ARCH rootfs..."
-    bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
+    bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $CHROOTDIR
     
     info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init || abort
@@ -387,38 +387,38 @@ create_emmc_install() {
     
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
-    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
-    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base manjaro-system manjaro-release manjaro-arm-emmc-flasher $PKG_EDITION $PKG_DEVICE --noconfirm
+    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
+    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $PKG_CACHE
+    $NSPAWN $CHROOTDIR pacman -Syyu base manjaro-system manjaro-release manjaro-arm-emmc-flasher $PKG_EDITION $PKG_DEVICE --noconfirm
 
     info "Enabling services..."
     # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service 1> /dev/null 2>&1
+    $NSPAWN $CHROOTDIR systemctl enable getty.target haveged.service 1> /dev/null 2>&1
     
     info "Setting up system settings..."
     # setting hostname
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     # enable autologin
-    mv $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service.bak
-    cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
+    mv $CHROOTDIR/usr/lib/systemd/system/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service.bak
+    cp $LIBDIR/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service
     
     if [ -f $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz ]; then
         info "Copying local $DEVICE $EDITION image..."
-        cp $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz $ROOTFS_IMG/rootfs_$ARCH/var/tmp/Manjaro-ARM.img.xz
+        cp $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz $CHROOTDIR/var/tmp/Manjaro-ARM.img.xz
         sync
     else
         info "Downloading $DEVICE $EDITION image..."
-        cd $ROOTFS_IMG/rootfs_$ARCH/var/tmp/
+        cd $CHROOTDIR/var/tmp/
         wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
     fi
     
     info "Cleaning rootfs for unwanted files..."
     prune_cache
-    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
+    rm $CHROOTDIR/usr/bin/qemu-aarch64-static
+    rm -rf $CHROOTDIR/var/log/*
+    rm -rf $CHROOTDIR/etc/*.pacnew
+    rm -rf $CHROOTDIR/usr/lib/systemd/system/systemd-firstboot.service
+    rm -rf $CHROOTDIR/etc/machine-id
 }
 
 create_img() {
@@ -427,7 +427,7 @@ create_img() {
 
     ARCH='aarch64'
     
-    SIZE=$(du -s --block-size=MB $ROOTFS_IMG/rootfs_$ARCH | awk '{print $1}' | sed -e 's/MB//g')
+    SIZE=$(du -s --block-size=MB $CHROOTDIR | awk '{print $1}' | sed -e 's/MB//g')
     EXTRA_SIZE=300
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
     
@@ -527,51 +527,48 @@ compress() {
     chmod 666 $IMGDIR/$IMGNAME.img.xz
 
     info "Removing rootfs_$ARCH"
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH
+    rm -rf $CHROOTDIR
 }
 
 build_pkg() {
     # Install local package to rootfs before building
     if [[ ! -z "$ADD_PACKAGE" ]]; then
         info "Installing local package {$ADD_PACKAGE} to rootfs..."
-        cp -ap $ADD_PACKAGE $BUILDDIR/$ARCH/var/cache/pacman/pkg/
-        $NSPAWN $BUILDDIR/$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
+        cp -ap $ADD_PACKAGE $PKG_CACHE
+        $NSPAWN $CHROOTDIR pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
     # Build the actual package
     msg "Copying build directory {$PACKAGE} to rootfs..."
-    $NSPAWN $BUILDDIR/$ARCH mkdir build 1> /dev/null 2>&1
-    mount -o bind "$PACKAGE" $BUILDDIR/$ARCH/build
+    $NSPAWN $CHROOTDIR mkdir build 1> /dev/null 2>&1
+    mount -o bind "$PACKAGE" $CHROOTDIR/build
     msg "Building {$PACKAGE}..."
-    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
-    $NSPAWN $BUILDDIR/$ARCH/ pacman -Syu 1> /dev/null 2>&1
+    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $PKG_CACHE
+    $NSPAWN $CHROOTDIR pacman -Syu 1> /dev/null 2>&1
     if [[ $INSTALL_NEW=true ]]; then
-        $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asci --noconfirm
+        $NSPAWN $CHROOTDIR --chdir=/build/ makepkg -Asci --noconfirm
     else
-        $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asc --noconfirm
+        $NSPAWN $CHROOTDIR --chdir=/build/ makepkg -Asc --noconfirm
     fi
-    info "Prune and unmount pkg-cache..."
-    $NSPAWN $BUILDDIR/$ARCH/ paccache -r
-    umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
 }
 
 export_and_clean() {
-    if ls $BUILDDIR/$ARCH/build/*.pkg.tar.* 1> /dev/null 2>&1; then
+    if ls $CHROOTDIR/build/*.pkg.tar.* 1> /dev/null 2>&1; then
         #pull package out of rootfs
         msg "Package Succeeded..."
         info "Extracting finished package out of rootfs..."
         mkdir -p $PKGDIR/$ARCH
-        cp $BUILDDIR/$ARCH/build/*.pkg.tar.* $PKGDIR/$ARCH/
+        cp $CHROOTDIR/build/*.pkg.tar.* $PKGDIR/$ARCH/
         chown -R $SUDO_USER $PKGDIR
         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
-        umount $BUILDDIR/$ARCH/build
+        umount $CHROOTDIR/build
 
         #clean up rootfs
         info "Cleaning build files from rootfs"
-        rm -rf $BUILDDIR/$ARCH/build/
+        rm -rf $CHROOTDIR/build/
     else
         msg "!!!!! Package failed to build !!!!!"
-        umount $BUILDDIR/$ARCH/build
-        rm -rf $BUILDDIR/$ARCH/build/
+        umount $CHROOTDIR/build
+        rm -rf $CHROOTDIR/build/
         exit 1
     fi
 }

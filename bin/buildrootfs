@@ -45,7 +45,6 @@ compress_rootfs () {
     cd $BUILDDIR/$ARCH
     tar -czf $IMGDIR/Manjaro-ARM-$ARCH-latest.tar.gz .
     rm -rf $BUILDDIR/$ARCH
-    
 }
 
 #Arguments 

@@ -7,6 +7,8 @@ EXTRACTED=false
 
 #imports
 source $LIBDIR/functions.sh
+CHROOTDIR=$ROOTFS_IMG/rootfs_$ARCH
+PKG_CACHE=$CHROOTDIR/var/cache/pacman/pkg
 
 # check if root
 if [ "$EUID" -ne 0 ]
@@ -90,6 +92,7 @@ else
 # Create the compressed file, from the .img file which will get deleted.
 compress
 fi
+prune_cache
 
 # show timer
 show_elapsed_time "${FUNCNAME}" "${timer_start}"

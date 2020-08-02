@@ -7,6 +7,8 @@ INSTALL_NEW=false
 
 #imports
 source $LIBDIR/functions.sh
+CHROOTDIR=$BUILDDIR/$ARCH
+PKG_CACHE=$CHROOTDIR/var/cache/pacman/pkg
 
 # check if root
 if [ "$EUID" -ne 0 ]
@@ -15,7 +17,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":p:a:i:b:kh"
+opt=":p:a:i:nb:kh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -60,7 +62,7 @@ fi
 
 #Build the 'any' packages on aarch64
 if [ $ARCH == "any" ]; then
-	ARCH="aarch64"
+    ARCH="aarch64"
 fi
 
 #Make sure only a known branch is used
@@ -70,14 +72,14 @@ if [[ "$BRANCH" != "arm-stable" && "$BRANCH" != "arm-testing" && "$BRANCH" != "a
 fi
 # start the timer
 timer_start=$(get_timer)
-
-if [[ "$BUILDCLEAN" = "false" && ! -d $BUILDDIR/$ARCH ]]; then
+   
+if [[ "$BUILDCLEAN" = "false" && ! -d $CHROOTDIR ]]; then
     msg "Rootfs does not exist. Please run this command again without the -k option to generate a rootfs to use..."
     exit 1
     
 elif [[ "$BUILDCLEAN" = "true" ]]; then
-#create the rootfs to build in
-create_rootfs_pkg
+    #create the rootfs to build in
+    create_rootfs_pkg
 fi
 
 #build the package
@@ -85,6 +87,7 @@ build_pkg
 
 #export the package and clean up
 export_and_clean
+prune_cache
 
 # show timer
 show_elapsed_time "${FUNCNAME}" "${timer_start}"
