@@ -3,6 +3,7 @@
 # Set globals
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDCLEAN=true
+INSTALL_NEW=false
 
 #imports
 source $LIBDIR/functions.sh
@@ -32,6 +33,9 @@ while getopts "${opt}" arg; do
       ;;
     i)
       ADD_PACKAGE="${OPTARG}"
+      ;;
+    n)
+      INSTALL_NEW=true
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"

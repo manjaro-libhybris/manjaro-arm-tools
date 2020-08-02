@@ -48,6 +48,7 @@ usage_build_pkg() {
     echo "    -p <pkg>           Package to build"
     echo "    -k                 Keep the previous rootfs for this build"
     echo "    -b <branch>        Set the branch used for the build. [Default = arm-stable. Options = arm-stable, arm-testing or arm-unstable]"
+    echo "    -n                 Install built package into rootfs"
     echo "    -i <package>       Install local package into rootfs."
     echo '    -h                 This help'
     echo ''
@@ -543,7 +544,11 @@ build_pkg() {
     msg "Building {$PACKAGE}..."
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $BUILDDIR/$ARCH/var/cache/pacman/pkg
     $NSPAWN $BUILDDIR/$ARCH/ pacman -Syu 1> /dev/null 2>&1
-    $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asc --noconfirm
+    if [[ $INSTALL_NEW=true ]]; then
+        $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asci --noconfirm
+    else
+        $NSPAWN $BUILDDIR/$ARCH/ --chdir=/build/ makepkg -Asc --noconfirm
+    fi
     info "Prune and unmount pkg-cache..."
     $NSPAWN $BUILDDIR/$ARCH/ paccache -r
     umount $BUILDDIR/$ARCH/var/cache/pacman/pkg
