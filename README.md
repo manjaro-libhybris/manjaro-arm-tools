@@ -96,7 +96,7 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 * rpi4
 * rock64
 * roc-cc
-* rockpi4
+* rockpi4 (only B model)
 * rockpro64
 * vim1
 * vim2
