@@ -352,7 +352,7 @@ create_rootfs_img() {
     fi
 
     msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
-    pacman -Qr "$ROOTFS_IMG/rootfs_$ARCH/" > "$IMGDIR/$IMGNAME-pkgs.txt"
+    pacman -Qr "$ROOTFS_IMG/rootfs_$ARCH/" > "$IMGDIR/$IMGNAME-pkgs.txt" 2>/dev/null
 
     msg "$DEVICE $EDITION rootfs complete"
 }
