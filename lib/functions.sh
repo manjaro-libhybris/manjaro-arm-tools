@@ -544,7 +544,7 @@ build_pkg() {
     msg "Building {$PACKAGE}..."
     mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $PKG_CACHE
     $NSPAWN $CHROOTDIR pacman -Syu 1> /dev/null 2>&1
-    if [[ $INSTALL_NEW=true ]]; then
+    if [[ $INSTALL_NEW = true ]]; then
         $NSPAWN $CHROOTDIR --chdir=/build/ makepkg -Asci --noconfirm
     else
         $NSPAWN $CHROOTDIR --chdir=/build/ makepkg -Asc --noconfirm
