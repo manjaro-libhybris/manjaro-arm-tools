@@ -86,6 +86,7 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 * oc2
 * oc4
 * on2
+* on2-plus (new)
 * pine64-lts
 * pine-h64
 * pinebook
