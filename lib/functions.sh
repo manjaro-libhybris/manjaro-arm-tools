@@ -253,7 +253,7 @@ create_rootfs_img() {
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
-    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
+    mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
     case "$EDITION" in
         cubocore|phosh|plasma-mobile|plasma-mobile-dev)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
@@ -264,7 +264,7 @@ create_rootfs_img() {
     esac
     if [[ ! -z "$ADD_PACKAGE" ]]; then
         info "Installing local package {$ADD_PACKAGE} to rootfs..."
-        cp -ap $ADD_PACKAGE $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg/
+        cp -ap $ADD_PACKAGE $PKG_CACHE/
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
     fi
     info "Generating mirrorlist..."
@@ -388,7 +388,7 @@ create_emmc_install() {
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
     echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
-    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $PKG_CACHE
+    mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
     $NSPAWN $CHROOTDIR pacman -Syyu base manjaro-system manjaro-release manjaro-arm-emmc-flasher $PKG_EDITION $PKG_DEVICE --noconfirm
 
     info "Enabling services..."
@@ -542,7 +542,7 @@ build_pkg() {
     $NSPAWN $CHROOTDIR mkdir build 1> /dev/null 2>&1
     mount -o bind "$PACKAGE" $CHROOTDIR/build
     msg "Building {$PACKAGE}..."
-    mount -o bind /var/cache/manjaro-arm-tools/pkg/pkg-cache $PKG_CACHE
+    mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
     $NSPAWN $CHROOTDIR pacman -Syu 1> /dev/null 2>&1
     if [[ $INSTALL_NEW = true ]]; then
         $NSPAWN $CHROOTDIR --chdir=/build/ makepkg -Asci --noconfirm
