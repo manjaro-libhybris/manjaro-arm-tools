@@ -255,7 +255,7 @@ create_rootfs_img() {
     # Install device and editions specific packages
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
     case "$EDITION" in
-        cubocore|phosh|plasma-mobile|plasma-mobile-dev)
+        phosh|plasma-mobile|plasma-mobile-dev)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
         *)
@@ -284,7 +284,7 @@ create_rootfs_img() {
         sway)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable greetd.service 1> /dev/null 2>&1
             ;;
-        minimal|server|plasma-mobile|plasma-mobile-dev|phosh|cubocore)
+        minimal|server|plasma-mobile|plasma-mobile-dev|phosh)
             echo "No display manager to disable in $EDITION..."
             ;;
         *)
@@ -304,7 +304,7 @@ create_rootfs_img() {
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
     echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     case "$EDITION" in
-        cubocore|plasma-mobile|plasma-mobile-dev)
+        plasma-mobile|plasma-mobile-dev)
             echo "No OEM setup!"
             ;;
         phosh)
@@ -568,6 +568,7 @@ export_and_clean() {
     else
         msg "!!!!! Package failed to build !!!!!"
         umount $CHROOTDIR/build
+        prune_cache
         rm -rf $CHROOTDIR/build/
         exit 1
     fi
