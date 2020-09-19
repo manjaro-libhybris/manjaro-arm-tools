@@ -1,7 +1,7 @@
 #! /bin/bash
 
 #variables
-BRANCH='arm-stable'
+BRANCH='stable'
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 BUILDSERVER=https://repo.manjaro.org/repo
@@ -47,7 +47,7 @@ usage_build_pkg() {
     echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
     echo "    -p <pkg>           Package to build"
     echo "    -k                 Keep the previous rootfs for this build"
-    echo "    -b <branch>        Set the branch used for the build. [Default = arm-stable. Options = arm-stable, arm-testing or arm-unstable]"
+    echo "    -b <branch>        Set the branch used for the build. [Default = stable. Options = stable, testing or unstable]"
     echo "    -n                 Install built package into rootfs"
     echo "    -i <package>       Install local package into rootfs."
     echo '    -h                 This help'
@@ -62,7 +62,7 @@ usage_build_img() {
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
-    echo "    -b <branch>        Set the branch used in the image. [Default = arm-stable. Options = arm-stable, arm-testing or arm-unstable]"
+    echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
@@ -184,11 +184,11 @@ create_rootfs_pkg() {
     mkdir -p $CHROOTDIR
     # basescrap the rootfs filesystem
     info "Switching branch to $BRANCH..."
-    sed -i s/"arm-stable"/"$BRANCH"/g $LIBDIR/pacman.conf.$ARCH
+    sed -i s/"arm-stable"/"arm-$BRANCH"/g $LIBDIR/pacman.conf.$ARCH
     $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $CHROOTDIR fakeroot-qemu base-devel
-    sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $CHROOTDIR/etc/pacman-mirrors.conf
-    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
-    sed -i s/"$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
+    sed -i s/"Branch = arm-stable"/"Branch = arm-$BRANCH"/g $CHROOTDIR/etc/pacman-mirrors.conf
+    echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
+    sed -i s/"arm-$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
 
@@ -248,8 +248,8 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
     
     info "Setting branch to $BRANCH..."
-    sed -i s/"Branch = arm-stable"/"Branch = $BRANCH"/g $ROOTFS_IMG/rootfs_$ARCH/etc/pacman-mirrors.conf
-    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
+    $NSPAWN $ROOTFS_IMG/$rootfs_$ARCH pacman-mirrors -aS $BRANCH -n 1> /dev/null 2>&1
+    echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
@@ -268,7 +268,7 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
     fi
     info "Generating mirrorlist..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -g 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -aS $BRANCH -f10 1> /dev/null 2>&1
     
     info "Enabling services..."
     # Enable services
@@ -387,7 +387,7 @@ create_emmc_install() {
     
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
-    echo "Server = $BUILDSERVER/$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
+    echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
     $NSPAWN $CHROOTDIR pacman -Syyu base manjaro-system manjaro-release manjaro-arm-emmc-flasher $PKG_EDITION $PKG_DEVICE --noconfirm
 

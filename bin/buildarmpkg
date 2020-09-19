@@ -66,8 +66,8 @@ if [ $ARCH == "any" ]; then
 fi
 
 #Make sure only a known branch is used
-if [[ "$BRANCH" != "arm-stable" && "$BRANCH" != "arm-testing" && "$BRANCH" != "arm-unstable" ]]; then
-    msg "Unknown branch. Please use either, arm-stable, arm-testing or arm-unstable!"
+if [[ "$BRANCH" != "stable" && "$BRANCH" != "testing" && "$BRANCH" != "unstable" ]]; then
+    msg "Unknown branch. Please use either, stable, testing or unstable!"
     exit 1
 fi
 # start the timer
