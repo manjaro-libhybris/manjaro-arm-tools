@@ -248,7 +248,6 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
     
     info "Setting branch to $BRANCH..."
-    $NSPAWN $ROOTFS_IMG/$rootfs_$ARCH pacman-mirrors -aS $BRANCH -n 1> /dev/null 2>&1
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
     
     msg "Installing packages for $EDITION edition on $DEVICE..."
@@ -268,7 +267,7 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
     fi
     info "Generating mirrorlist..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors -aS $BRANCH -f10 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --method random --api --set-branch $BRANCH 1> /dev/null 2>&1
     
     info "Enabling services..."
     # Enable services
