@@ -186,7 +186,6 @@ create_rootfs_pkg() {
     info "Switching branch to $BRANCH..."
     sed -i s/"arm-stable"/"arm-$BRANCH"/g $LIBDIR/pacman.conf.$ARCH
     $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $CHROOTDIR fakeroot-qemu base-devel
-    sed -i s/"Branch = arm-stable"/"Branch = arm-$BRANCH"/g $CHROOTDIR/etc/pacman-mirrors.conf
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     sed -i s/"arm-$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
     # Enable cross architecture Chrooting
