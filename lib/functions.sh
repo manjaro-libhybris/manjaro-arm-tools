@@ -169,7 +169,8 @@ img_upload() {
     # Upload image + checksums to image server
     msg "Uploading image and checksums to server..."
     info "Please use your server login details..."
-    rsync -raP $IMAGE* $STORAGE_USER@$OSDN/$DEVICE/$EDITION/$VERSION/
+    img_name=${IMAGE%%.*}
+    rsync -raP $img_name* $STORAGE_USER@$OSDN/$DEVICE/$EDITION/$VERSION/
 }
 
 create_rootfs_pkg() {
