@@ -64,6 +64,7 @@ usage_build_img() {
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
+    echo "    -m                 Create bmap. ('bmap-tools' need to be installed.)"
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
     echo '    -h                 This help'
@@ -276,10 +277,10 @@ create_rootfs_img() {
 
     while read service; do
         if [ -e $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/$service ]; then
-            info "Enabling service $service..."
+            info "Enabling $service ..."
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
         else
-            echo "Service $service not found in rootfs. Skipping."
+            echo "$service not found in rootfs. Skipping."
         fi
     done < $srv_list
     
@@ -543,6 +544,17 @@ create_img() {
     rm -r $TMPDIR/root $TMPDIR/boot
     partprobe $LDEV 1> /dev/null 2>&1
     chmod 666 $IMGDIR/$IMGNAME.img
+}
+
+create_bmap() {
+    if [ ! -e /usr/bin/bmaptool ]; then
+        echo "'bmap-tools' are not installed. Skipping."
+    else
+        info "Creating bmap."
+        cd ${IMGDIR}
+        rm ${IMGNAME}.img.bmap 2>/dev/null
+        bmaptool create -o ${IMGNAME}.img.bmap ${IMGNAME}.img
+    fi
 }
 
 compress() {

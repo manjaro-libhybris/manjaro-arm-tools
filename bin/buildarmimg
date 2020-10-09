@@ -5,6 +5,7 @@ LIBDIR=/usr/share/manjaro-arm-tools/lib
 KEEPROOTFS=true
 EXTRACTED=false
 FACTORY=false
+BMAP=false
 
 #imports
 source $LIBDIR/functions.sh
@@ -18,7 +19,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:b:nfxh"
+opt=":e:d:v:i:b:nfxhm"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -46,6 +47,8 @@ while getopts "${opt}" arg; do
     f)
       FACTORY=true
       ;;
+    m)
+      BMAP=true
     \?)
       echo "Invalid option: -${OPTARG}"
       exit 1
@@ -81,27 +84,27 @@ timer_start=$(get_timer)
 #Package lists
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
 case "$DEVICE" in
-	pinephone)
-		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone/,""); print $1}')
-		cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>pinephone //g' >$srv_list
-		;;
-	*)
-		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone.*/,""); print $1}')
-		cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>pinephone/d' >$srv_list
-		;;
+    pinephone)
+        PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone/,""); print $1}')
+        cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>pinephone //g' >$srv_list
+        ;;
+    *)
+        PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone.*/,""); print $1}')
+        cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>pinephone/d' >$srv_list
+        ;;
 esac
-
-#start timer
-#timer=$(get_timer)
 
 # Creating the rootfs used for the image.
 create_rootfs_img
 create_img
+if [ ${BMAP} = true ]; then
+    create_bmap
+fi
 if [[ "$EXTRACTED" = "true" ]]; then
-info "Image not compressed, because you supplied the -x option!"
+    info "Image not compressed, because you supplied the -x option!"
 else
-# Create the compressed file, from the .img file which will get deleted.
-compress
+    # Create the compressed file, from the .img file which will get deleted.
+    compress
 fi
 
 # show timer
