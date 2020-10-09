@@ -79,6 +79,7 @@ timer_start=$(get_timer)
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
 PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/minimal | awk '{print $1}')
 SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/minimal | awk '{print $1}')
+cat $PROFILES/arm-profiles/services/minimal | sed -e '/^#/d' >$srv_list
 
 #start timer
 #timer=$(get_timer)
