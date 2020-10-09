@@ -22,6 +22,7 @@ DEVICE='rpi4'
 EDITION='minimal'
 USER='manjaro'
 PASSWORD='manjaro'
+srv_list=/tmp/services_list
 
 #import conf file
 source /etc/manjaro-arm-tools/manjaro-arm-tools.conf 
@@ -271,8 +272,16 @@ create_rootfs_img() {
     
     info "Enabling services..."
     # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $SRV_EDITION 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service 1>/dev/null
+
+    while read service; do
+        if [ -e $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/$service ]; then
+            info "Enabling service $service..."
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
+        else
+            echo "Service $service not found in rootfs. Skipping."
+        fi
+    done < $srv_list
     
     #disabling services depending on edition
     case "$EDITION" in

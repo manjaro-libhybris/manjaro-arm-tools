@@ -83,11 +83,11 @@ PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print 
 case "$DEVICE" in
 	pinephone)
 		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone/,""); print $1}')
-		SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{sub(/>pinephone/,""); print $1}')
+		cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>pinephone //g' >$srv_list
 		;;
 	*)
 		PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone.*/,""); print $1}')
-		SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/$EDITION | awk '{sub(/>pinephone.*/,""); print $1}')
+		cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>pinephone/d' >$srv_list
 		;;
 esac
 
