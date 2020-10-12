@@ -49,6 +49,7 @@ while getopts "${opt}" arg; do
       ;;
     m)
       BMAP=true
+     ;;
     \?)
       echo "Invalid option: -${OPTARG}"
       exit 1
