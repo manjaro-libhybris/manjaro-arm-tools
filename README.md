@@ -26,6 +26,7 @@ These scripts rely on certain packages, other than what's in the `base` package 
 * docker (arch repo) (for `builddockkerimg`)
 * mktorrent (arch repo) (for torrent support in `deployarmimg`)
 * rsync (arch repo) (for `deployarmimg`)
+* bmap-tools (AUR or manjaro repo) (for BMAP support in `buildarmimg`)
 
 # Installation (Manjaro based distributions only)
 ## GIT version from Manjaro Strit repo
@@ -127,13 +128,13 @@ Profiles that gets used are from this [Gitlab](https://gitlab.manjaro.org/manjar
 **Syntax**
 
 ```
-sudo buildarmimg [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz] [-b branch]
+sudo buildarmimg [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz] [-b branch] [-m]
 ```
 
-To build a minimal image version 18.07 for the raspberry pi 3 on arm-unstable branch:
+To build a minimal image version 18.07 for the raspberry pi 3 on arm-unstable branch with bmap support:
 
 ```
-sudo buildarmimg -d rpi3 -e minimal -v 18.07 -b unstable
+sudo buildarmimg -d rpi3 -e minimal -v 18.07 -b unstable -m
 ```
 
 To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:
