@@ -1,0 +1,16 @@
+#! /bin/bash
+
+# Set globals
+LIBDIR=/usr/share/manjaro-arm-tools/lib
+
+#imports
+source $LIBDIR/functions.sh
+CHROOTDIR=$ROOTFS_IMG/rootfs_$ARCH
+PKG_CACHE=$CHROOTDIR/var/cache/pacman/pkg
+
+GPGKEY=$(get_config GPGKEY)
+for f in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
+    msg2 "Signing ${f##*/} with key ${GPGKEY}"
+    [[ -e "$f".sig ]] && rm "$f".sig
+    gpg --detach-sign --use-agent -u "${GPGKEY}" "$f"
+done

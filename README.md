@@ -78,6 +78,13 @@ sudo buildarmpkg -p package -a any
 The built packages will be copied to `$PKGDIR` as specified in `/usr/share/manjaro-arm-tools/lib/manjaro-arm-tools.conf` and placed in a subdirectory for the respective architecture.
 Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 
+## signarmpkgs
+This script uses the GPG identity you have setup in your /etc/makepkg.conf to sign the packages in the current folder.
+
+```
+cd <folder with built packages>
+signarmpkgs
+```
 
 ## buildarmimg
 **Supported devices:**

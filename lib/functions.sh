@@ -133,7 +133,20 @@ prune_cache(){
     $NSPAWN $CHROOTDIR paccache -r
     umount $PKG_CACHE
 }
- 
+
+query_conf() {
+    echo "$(grep "^$1" "$2" | tail -1 | cut -d= -f2)"
+}
+
+get_mp_conf() {
+    [[ -z ${CONF} ]] && CONF=$(query_conf $1 ${/etc/makepkg.conf})
+    echo ${CONF//\"/}
+}
+
+get_config() {
+    echo $(get_mp_conf $1)
+}
+
 get_timer(){
     echo $(date +%s)
 }
