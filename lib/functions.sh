@@ -134,17 +134,16 @@ prune_cache(){
     umount $PKG_CACHE
 }
 
-query_conf() {
-    echo "$(grep "^$1" "$2" | tail -1 | cut -d= -f2)"
-}
+load_vars() {
+    local var
 
-get_mp_conf() {
-    [[ -z ${CONF} ]] && CONF=$(query_conf $1 ${/etc/makepkg.conf})
-    echo ${CONF//\"/}
-}
+    [[ -f $1 ]] || return 1
 
-get_config() {
-    echo $(get_mp_conf $1)
+    for var in {SRC,SRCPKG,PKG,LOG}DEST MAKEFLAGS PACKAGER CARCH GPGKEY; do
+        [[ -z ${!var} ]] && eval $(grep -a "^${var}=" "$1")
+    done
+
+    return 0
 }
 
 get_timer(){

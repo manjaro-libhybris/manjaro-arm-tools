@@ -5,12 +5,19 @@ LIBDIR=/usr/share/manjaro-arm-tools/lib
 
 #imports
 source $LIBDIR/functions.sh
-CHROOTDIR=$ROOTFS_IMG/rootfs_$ARCH
-PKG_CACHE=$CHROOTDIR/var/cache/pacman/pkg
 
-GPGKEY=$(get_config GPGKEY)
-for f in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
-    msg2 "Signing ${f##*/} with key ${GPGKEY}"
-    [[ -e "$f".sig ]] && rm "$f".sig
-    gpg --detach-sign --use-agent -u "${GPGKEY}" "$f"
-done
+signfile() {
+load_vars "$HOME/.makepkg.conf"
+load_vars /etc/makepkg.conf
+
+if [ ! -e "$1" ]; then
+    info "%s does not exist!" "$1"
+    exit 1
+fi
+
+msg "Signing [%s] with key %s" "${1##*/}" "${GPGKEY}..."
+[[ -e "$1".sig ]] && rm "$1".sig
+gpg --detach-sign --use-agent -u "${GPGKEY}" "$1"
+}
+
+find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)' -exec signfile {} \;
