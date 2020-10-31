@@ -22,6 +22,7 @@ DEVICE='rpi4'
 EDITION='minimal'
 USER='manjaro'
 PASSWORD='manjaro'
+CARCH=$(uname -m)
 srv_list=/tmp/services_list
 
 #import conf file
@@ -203,8 +204,10 @@ create_rootfs_pkg() {
     $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $CHROOTDIR fakeroot-qemu base-devel
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     sed -i s/"arm-$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
+    if [[ $CARCH != "aarch64" ]]; then
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
+    fi
 
     msg "Configuring rootfs for building..."
     $NSPAWN $CHROOTDIR pacman-key --init 1> /dev/null 2>&1
