@@ -91,7 +91,7 @@ case "$DEVICE" in
         ;;
     *)
         PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | awk '{sub(/>pinephone.*/,""); print $1}')
-        cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>pinephone/d' >$srv_list
+        cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e '/>pinephone/d' >$srv_list
         ;;
 esac
 
