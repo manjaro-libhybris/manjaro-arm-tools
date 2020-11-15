@@ -89,6 +89,8 @@ signarmpkgs
 ## buildarmimg
 **Supported devices:**
 * edgev
+* gsking-x
+* gtking-pro
 * nanopc-t4
 * nanopi-neo-plus2
 * oc2
@@ -108,9 +110,11 @@ signarmpkgs
 * rockpi4b
 * rockpi4c (new)
 * rockpro64
+* stationp1
 * vim1
 * vim2
 * vim3
+
 
 **Supported editions:**
 
