@@ -526,7 +526,7 @@ create_img() {
         on2|on2-plus|oc4)
             dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
             ;;
-        vim1|vim2|vim3)
+        vim1|vim2|vim3|gtking-pro|gsking-x)
             dd if=$TMPDIR/boot/$DEVICE.u-boot.bin of=${LDEV} conv=fsync,notrunc bs=442 count=1 1> /dev/null 2>&1
             dd if=$TMPDIR/boot/$DEVICE.u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 skip=1 seek=1 1> /dev/null 2>&1
             ;;
@@ -539,7 +539,7 @@ create_img() {
             dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
             ;;
         # Rockchip uboots
-        pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc)
+        pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1)
             dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
             dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
             ;;
