@@ -264,6 +264,11 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1>/dev/null || abort
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
     
+    if [[ $MOBILE = true ]]; then
+        info "Adding repo [mobile] to rootfs"
+        sed -i 's/^\[core\]/\[mobile\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/' $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
+    fi
+
     info "Setting branch to $BRANCH..."
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
     

@@ -6,6 +6,7 @@ KEEPROOTFS=true
 EXTRACTED=false
 FACTORY=false
 BMAP=false
+MOBILE=false
 
 #imports
 source $LIBDIR/functions.sh
@@ -19,7 +20,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:b:nfxhm"
+opt=":e:d:v:i:b:nfxhmo"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -49,6 +50,9 @@ while getopts "${opt}" arg; do
       ;;
     m)
       BMAP=true
+     ;;
+    o)
+      MOBILE=true
      ;;
     \?)
       echo "Invalid option: -${OPTARG}"
