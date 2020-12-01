@@ -21,6 +21,7 @@ ARCH='aarch64'
 DEVICE='rpi4'
 EDITION='minimal'
 USER='manjaro'
+HOSTNAME='manjaro-arm'
 PASSWORD='manjaro'
 CARCH=$(uname -m)
 srv_list=/tmp/services_list
@@ -332,14 +333,14 @@ create_rootfs_img() {
     rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
     cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
-    echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
+    echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     case "$EDITION" in
         cubocore|plasma-mobile|plasma-mobile-dev|lomiri)
             echo "No OEM setup!"
             ;;
         phosh)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a manjaro autologin
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "$USER" autologin
             ;;
         *)
             echo "Enabling SSH login for root user for headless setup..."
@@ -384,7 +385,7 @@ create_rootfs_img() {
     if [[ "$EDITION" = "lomiri" ]]; then
     # Enable Autologin
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a manjaro autologin
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "$USER" autologin
     # fix indicators
    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir /usr/lib/systemd/user/ayatana-indicators.target.wants
    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -sfv /usr/lib/systemd/user/ayatana-indicator-datetime.service /usr/lib/systemd/user/ayatana-indicators.target.wants/ayatana-indicator-datetime.service
@@ -449,7 +450,7 @@ create_emmc_install() {
     
     info "Setting up system settings..."
     # setting hostname
-    echo "manjaro-arm" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
+    echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     # enable autologin
     mv $CHROOTDIR/usr/lib/systemd/system/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service
