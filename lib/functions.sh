@@ -639,14 +639,23 @@ export_and_clean() {
     fi
 }
 
+clone_profiles() {
+    cd $PROFILES
+    git clone --branch $1 https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
+}
+
 get_profiles() {
     local branch=master
     [[ "$FACTORY" = "true" ]] && branch=pp-factory
     if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
-        cd $PROFILES/arm-profiles
-        git pull
+        if [[ $(grep branch $PROFILES/arm-profiles/.git/config | cut -d\" -f2) = "$branch" ]]; then
+            cd $PROFILES/arm-profiles
+            git pull
+        else
+            rm -rf $PROFILES/arm-profiles/
+            clone_profiles $branch
+        fi
     else
-        cd $PROFILES
-        git clone --branch $branch https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
+        clone_profiles $branch
     fi
 }

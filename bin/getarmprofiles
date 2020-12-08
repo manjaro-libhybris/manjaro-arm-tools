@@ -20,7 +20,6 @@ while getopts "${opt}" arg; do
       ;;
     p)
       echo "Using branch 'pp-factory'..."
-      rm -rf $PROFILES/arm-profiles/
       FACTORY=true
       ;;
     \?)
