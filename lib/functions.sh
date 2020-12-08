@@ -94,6 +94,7 @@ usage_build_emmcflasher() {
 usage_getarmprofiles() {
     echo "Usage: ${0##*/} [options]"
     echo '    -f                 Force download of current profiles from the git repository'
+    echo '    -p                 Use profiles from pp-factory branch'
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -639,11 +640,13 @@ export_and_clean() {
 }
 
 get_profiles() {
+    local branch=master
+    if [[ "$FACTORY" = "true" ]] && branch=pp-factory
     if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
         cd $PROFILES/arm-profiles
         git pull
     else
         cd $PROFILES
-        git clone https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
+        git clone --branch $branch https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
     fi
 }

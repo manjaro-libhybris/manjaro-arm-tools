@@ -10,13 +10,17 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt="fh"
+opt="fhp"
 
 while getopts "${opt}" arg; do
   case $arg in
     f)
       echo "Forcing git update..."
       rm -rf $PROFILES/arm-profiles/
+      ;;
+    p)
+      echo "Using branch 'pp-factory'..."
+      FACTORY=true
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
