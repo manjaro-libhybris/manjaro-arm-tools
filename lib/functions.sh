@@ -641,7 +641,7 @@ export_and_clean() {
 
 get_profiles() {
     local branch=master
-    if [[ "$FACTORY" = "true" ]] && branch=pp-factory
+    [[ "$FACTORY" = "true" ]] && branch=pp-factory
     if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
         cd $PROFILES/arm-profiles
         git pull
