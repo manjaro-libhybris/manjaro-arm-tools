@@ -9,7 +9,7 @@ TORRENT=false
 
 #imports
 source $LIBDIR/functions.sh
-
+enable_colors
 
 #Arguments 
 opt=":i:d:e:v:k:u:th"

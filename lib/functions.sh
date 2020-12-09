@@ -24,6 +24,7 @@ USER='manjaro'
 HOSTNAME='manjaro-arm'
 PASSWORD='manjaro'
 CARCH=$(uname -m)
+COLORS=true
 srv_list=/tmp/services_list
 
 #import conf file
@@ -101,18 +102,19 @@ usage_getarmprofiles() {
     exit $1
 }
 
-msg() {
+enable_colors() {
     ALL_OFF="\e[1;0m"
     BOLD="\e[1;1m"
     GREEN="${BOLD}\e[1;32m"
+    BLUE="${BOLD}\e[1;34m"
+}
+
+msg() {
     local mesg=$1; shift
     printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
  
 info() {
-    ALL_OFF="\e[1;0m"
-    BOLD="\e[1;1m"
-    BLUE="${BOLD}\e[1;34m"
     local mesg=$1; shift
     printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }

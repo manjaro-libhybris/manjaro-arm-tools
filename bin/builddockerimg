@@ -6,7 +6,8 @@ ARCH="aarch64"
 DOCKER_IMAGE_NAME="manjaro-$ARCH-base"
 
 #imports
-source $LIBDIR/functions.sh 
+source $LIBDIR/functions.sh
+enable_colors
 
 # check if root
 if [ "$EUID" -ne 0 ]

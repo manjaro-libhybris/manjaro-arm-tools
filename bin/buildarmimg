@@ -20,10 +20,13 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:b:nfxhmo"
+opt=":e:d:v:i:b:nfxhmoc"
 
 while getopts "${opt}" arg; do
   case $arg in
+    c)
+      COLORS=false
+      ;;
     e)
       EDITION="${OPTARG}"
       ;;
@@ -69,8 +72,9 @@ while getopts "${opt}" arg; do
   esac
 done
 
-IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
+[[ "COLORS" = "true" ]] && enable_colors
 
+IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 ARCH='aarch64'
 
 if [ ! -d "$PROFILES/arm-profiles" ]; then

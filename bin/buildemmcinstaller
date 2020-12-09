@@ -58,6 +58,8 @@ while getopts "${opt}" arg; do
   esac
 done
 
+enable_colors
+
 if [ "x" == "x$VERSION" ]; then
   echo "-v [option] is required"
   exit

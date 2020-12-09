@@ -6,6 +6,7 @@ ARCH="aarch64"
 
 #imports
 source $LIBDIR/functions.sh 
+enable_colors
 
 # check if root
 if [ "$EUID" -ne 0 ]

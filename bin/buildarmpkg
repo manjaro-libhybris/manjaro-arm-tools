@@ -54,6 +54,8 @@ while getopts "${opt}" arg; do
   esac
 done
 
+enable_colors
+
 #Need both package and architecture
 if [ "x" == "x$PACKAGE" ]; then
   echo "-p [option] is required"
