@@ -72,7 +72,7 @@ while getopts "${opt}" arg; do
   esac
 done
 
-[[ "COLORS" = "true" ]] && enable_colors
+[[ "$COLORS" = "true" ]] && enable_colors
 
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 ARCH='aarch64'
