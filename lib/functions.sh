@@ -71,6 +71,7 @@ usage_build_img() {
     echo "    -m                 Create bmap. ('bmap-tools' need to be installed.)"
     echo "    -n                 Force download of new rootfs."
     echo "    -x                 Don't compress the image."
+    echo "    -c                 Disable colors."
     echo '    -h                 This help'
     echo ''
     echo ''
