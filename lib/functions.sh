@@ -303,7 +303,7 @@ create_rootfs_img() {
 
     while read service; do
         if [ -e $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/$service ]; then
-            info "Enabling $service ..."
+            echo "Enabling $service ..."
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
         else
             echo "$service not found in rootfs. Skipping."
