@@ -169,7 +169,7 @@ show_elapsed_time(){
 create_torrent() {
     info "Creating torrent of $IMAGE..."
     cd $IMGDIR/
-    mktorrent -v -a udp://tracker.opentrackr.org:1337 -w https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/$IMAGE -o $IMAGE.torrent $IMAGE
+    mktorrent -v -a udp://tracker.opentrackr.org:1337 -w https://osdn.net/dl/manjaro-arm/$IMAGE -o $IMAGE.torrent $IMAGE
 }
 
 checksum_img() {
