@@ -311,22 +311,24 @@ create_rootfs_img() {
     done < $srv_list
     
     #disabling services depending on edition
-    case "$EDITION" in
-        mate|i3|xfce|lxqt)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
-            ;;
-        sway)
+    if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/lightdm.service ]; then
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
+        echo "Disabled lightdm for OEM setup..."
+        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/greetd.service ]; then
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable greetd.service 1> /dev/null 2>&1
-            ;;
-        minimal|server|plasma-mobile|plasma-mobile-dev|phosh|cubocore)
-            echo "No display manager to disable in $EDITION..."
-            ;;
-        *)
+            echo "Disabled greetd for OEM setup..."
+        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/sddm.service ]; then
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
-            ;;
-    esac
+            echo "Disabled sddm for OEM setup..."
+        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/gdm.service ]; then
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable gdm.service 1> /dev/null 2>&1
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= gdm 1> /dev/null 2>&1
+            echo "Disabled gdm for OEM setup..."
+    else
+        echo "No display manager to disable in $EDITION..."
+    fi
 
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
