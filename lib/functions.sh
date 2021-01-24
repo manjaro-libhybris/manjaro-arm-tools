@@ -70,6 +70,7 @@ usage_build_img() {
     echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
     echo "    -m                 Create bmap. ('bmap-tools' need to be installed.)"
     echo "    -n                 Force download of new rootfs."
+    echo "    -s <hostname>      Use custom hostname"
     echo "    -x                 Don't compress the image."
     echo "    -c                 Disable colors."
     echo '    -h                 This help'
