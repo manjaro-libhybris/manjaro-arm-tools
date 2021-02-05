@@ -65,7 +65,7 @@ usage_build_img() {
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
-    echo "    -o                 Add overlay repo [mobile]."
+    echo "    -k <repo>          Add overlay repo [Options = kde-unstable, mobile]."
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
     echo "    -m                 Create bmap. ('bmap-tools' need to be installed.)"
@@ -271,9 +271,9 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1>/dev/null || abort
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
     
-    if [[ $MOBILE = true ]]; then
-        info "Adding repo [mobile] to rootfs"
-        sed -i 's/^\[core\]/\[mobile\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/' $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
+    if [[ ! -z ${CUSTOM_REPO} ]]; then
+        info "Adding repo [$CUSTOM_REPO] to rootfs"
+        sed -i "s/^\[core\]/\[$CUSTOM_REPO\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/" $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
     fi
 
     info "Setting branch to $BRANCH..."

@@ -6,7 +6,7 @@ KEEPROOTFS=true
 EXTRACTED=false
 FACTORY=false
 BMAP=false
-MOBILE=false
+CUSTOM_REPO=
 
 #imports
 source $LIBDIR/functions.sh
@@ -54,8 +54,8 @@ while getopts "${opt}" arg; do
     m)
       BMAP=true
      ;;
-    o)
-      MOBILE=true
+    k)
+      CUSTOM_REPO="${OPTARG}"
      ;;
     s)
       HOSTNAME="${OPTARG}"
