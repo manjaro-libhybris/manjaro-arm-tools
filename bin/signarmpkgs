@@ -20,9 +20,9 @@ msg "Signing [%s] with key %s" "${1##*/}" "${GPGKEY}..."
 gpg --detach-sign --use-agent -u "${GPGKEY}" "$1"
 }
 
-PKGS=$(find "${PWD}" -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)')
-for f in "$PKGS"
+PKGS=$(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)')
+for f in $PKGS
 do
-signfile "$f"
+signfile $f
 done
 
