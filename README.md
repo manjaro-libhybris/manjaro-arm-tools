@@ -16,6 +16,7 @@ These scripts rely on certain packages, other than what's in the `base` package 
 * git (arch repo)
 * binfmt-user-static (AUR) or manjaro-arm-qemu-static (manjaro repo)
 * dosfstools (arch repo)
+* pacman (arch repo)
 * polkit (arch repo)
 * gnugpg (arch repo)
 * wget (arch repo)
