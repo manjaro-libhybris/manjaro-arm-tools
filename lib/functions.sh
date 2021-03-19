@@ -25,6 +25,7 @@ HOSTNAME='manjaro-arm'
 PASSWORD='manjaro'
 CARCH=$(uname -m)
 COLORS=true
+FILESYSTEM='ext4'
 srv_list=/tmp/services_list
 
 #import conf file
@@ -65,14 +66,15 @@ usage_build_img() {
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
-    echo "    -k <repo>          Add overlay repo [Options = kde-unstable, mobile]."
+    echo "    -o                 Add overlay repo [mobile]."
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
     echo "    -m                 Create bmap. ('bmap-tools' need to be installed.)"
     echo "    -n                 Force download of new rootfs."
-    echo "    -s <hostname>      Use custom hostname"
     echo "    -x                 Don't compress the image."
     echo "    -c                 Disable colors."
+    echo "    -f                 Create an image with factory settings."
+    echo "    -s                 Filessytem to be used for the root partition. [Default = ext4. Options = ext4 or btrfs]"
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -300,7 +302,7 @@ create_rootfs_img() {
     
     info "Enabling services..."
     # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service 1>/dev/null
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service systemd-timedated.service 1>/dev/null
 
     while read service; do
         if [ -e $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/$service ]; then
@@ -391,6 +393,14 @@ create_rootfs_img() {
     chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
     if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
         chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
+    fi
+    
+    if [[ "$FILESYSTEM" = "btrfs" ]]; then
+        info "Adding btrfs support to system..."
+        echo "LABEL=ROOT_MNJRO / btrfs  subvol=@,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+        echo "LABEL=ROOT_MNJRO /home btrfs  subvol=@home,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+        sed -i '/^MODULES/{s/)/ btrfs)/}' $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P
     fi
     
     info "Cleaning rootfs for unwanted files..."
@@ -511,29 +521,79 @@ create_img() {
     #mount image to loop device
     losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
 
+    case "$FILESYSTEM" in
+        btrfs)
+            # Create partitions
+            #Clear first 32mb
+            dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
+            #partition with boot and root
+            parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+            parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+            START=`cat /sys/block/$DEV/${DEV}p1/start`
+            SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+            END_SECTOR=$(expr $START + $SIZE)
+            parted -s $LDEV mkpart primary btrfs "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+            partprobe $LDEV 1> /dev/null 2>&1
+            mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
+            mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p2" 1> /dev/null 2>&1
+    
+            #copy rootfs contents over to the FS
+            info "Creating subvolumes..."
+            mkdir -p $TMPDIR/root
+            mkdir -p $TMPDIR/boot
+            mount ${LDEV}p1 $TMPDIR/boot
+            # Do subvolumes
+            mount -o compress=zstd "${LDEV}p2" $TMPDIR/root
+            btrfs su cr $TMPDIR/root/@ 1> /dev/null 2>&1
+            btrfs su cr $TMPDIR/root/@home 1> /dev/null 2>&1
+            umount $TMPDIR/root
+            mount -o compress=zstd,subvol=@ "${LDEV}p2" $TMPDIR/root
+            mkdir -p $TMPDIR/root/home
+            mount -o compress=zstd,subvol=@home "${LDEV}p2" $TMPDIR/root/home
+            #info "Adding btrfs support to system..."
+            #echo "LABEL=ROOT_MNJRO / btrfs  subvol=@,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+            #echo "LABEL=ROOT_MNJRO /home btrfs  subvol=@home,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
+            #sed -i '/^MODULES/{s/)/ btrfs)/}' $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
+            #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P
+            if [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf ]; then
+                sed -i 's/APPEND/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf
+            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini ]; then
+                sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini
+            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini ]; then
+                sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini
+            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt ]; then
+                sed -i 's/root=LABEL=ROOT_MNJRO/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt
+            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt ]; then
+                sed -i 's/setenv bootargs/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt
+            fi
+            info "Copying files to image..."
+            cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+            mv $TMPDIR/root/boot/* $TMPDIR/boot
+            ;;
+        *)
+            # Create partitions
+            #Clear first 32mb
+            dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
+            #partition with boot and root
+            parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+            parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+            START=`cat /sys/block/$DEV/${DEV}p1/start`
+            SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+            END_SECTOR=$(expr $START + $SIZE)
+            parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+            partprobe $LDEV 1> /dev/null 2>&1
+            mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
+            mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
 
-    # Create partitions
-    #Clear first 32mb
-    dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-    #partition with boot and root
-    parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-    START=`cat /sys/block/$DEV/${DEV}p1/start`
-    SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-    END_SECTOR=$(expr $START + $SIZE)
-    parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-    partprobe $LDEV 1> /dev/null 2>&1
-    mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
-    mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
-
-    #copy rootfs contents over to the FS
-    info "Copying files to image..."
-    mkdir -p $TMPDIR/root
-    mkdir -p $TMPDIR/boot
-    mount ${LDEV}p1 $TMPDIR/boot
-    mount ${LDEV}p2 $TMPDIR/root
-    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-    mv $TMPDIR/root/boot/* $TMPDIR/boot
+            #copy rootfs contents over to the FS
+            info "Copying files to image..."
+            mkdir -p $TMPDIR/root
+            mkdir -p $TMPDIR/boot
+            mount ${LDEV}p1 $TMPDIR/boot
+            mount ${LDEV}p2 $TMPDIR/root
+            cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+            mv $TMPDIR/root/boot/* $TMPDIR/boot
+    esac
         
     # Flash bootloader
     info "Flashing bootloader..."
@@ -574,6 +634,12 @@ create_img() {
     
     # Clean up
     info "Cleaning up image..."
+    if [[ "$FILESYSTEM" = "btrfs" ]]; then
+        umount $TMPDIR/root/home
+        #umount $TMPDIR/root/var/log
+        #umount $TMPDIR/root/var/cache/pacman/pkg
+        #umount $TMPDIR/root/var/tmp
+    fi
     umount $TMPDIR/root
     umount $TMPDIR/boot
     losetup -d $LDEV 1> /dev/null 2>&1
