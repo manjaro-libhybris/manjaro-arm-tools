@@ -20,7 +20,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:b:nfxhk:mos:c"
+opt=":e:d:v:i:b:nfxhk:mos:p:c"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -59,6 +59,9 @@ while getopts "${opt}" arg; do
      ;;
     s)
       HOSTNAME="${OPTARG}"
+     ;;
+    p)
+     FILESYSTEM="${OPTARG}"
      ;;
     \?)
       echo "Invalid option: -${OPTARG}"
