@@ -6,7 +6,7 @@ KEEPROOTFS=true
 EXTRACTED=false
 FACTORY=false
 BMAP=false
-MOBILE=false
+CUSTOM_REPO=
 
 #imports
 source $LIBDIR/functions.sh
@@ -20,7 +20,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":e:d:v:i:b:s:nfxhk:moc"
+opt=":e:d:v:i:b:nfxhk:mos:c"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -57,11 +57,8 @@ while getopts "${opt}" arg; do
     k)
       CUSTOM_REPO="${OPTARG}"
      ;;
-    o)
-      MOBILE=true
-     ;;
     s)
-     FILESYSTEM="${OPTARG}"
+      HOSTNAME="${OPTARG}"
      ;;
     \?)
       echo "Invalid option: -${OPTARG}"
