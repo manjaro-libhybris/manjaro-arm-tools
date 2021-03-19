@@ -28,6 +28,7 @@ These scripts rely on certain packages, other than what's in the `base` package 
 * mktorrent (arch repo) (for torrent support in `deployarmimg`)
 * rsync (arch repo) (for `deployarmimg`)
 * bmap-tools (AUR or manjaro repo) (for BMAP support in `buildarmimg`)
+* btrfs-progs (arch repo) (for btrfs support in `buildarmimg`)
 
 # Installation (Manjaro based distributions only)
 ## GIT version from Manjaro Strit repo
