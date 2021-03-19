@@ -156,6 +156,12 @@ To build an lxqt version with a local package installed for the rock64:
 sudo buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
 ```
 
+To build a kde-plasma edition for the Pinebook Pro with btrfs filesystem:
+
+```
+sudo buildarmimg -d pbpro -e kde-plasma -s btrfs
+```
+
 ## buildemmcinstaller
 This script does almost the same as the `buildarmimg` script.
 
