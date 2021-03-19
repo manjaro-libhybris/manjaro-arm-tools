@@ -31,14 +31,8 @@ These scripts rely on certain packages, other than what's in the `base` package 
 * btrfs-progs (arch repo) (for btrfs support in `buildarmimg`)
 
 # Installation (Manjaro based distributions only)
-## GIT version from Manjaro Strit repo
-Add my repo to your `/etc/pacman.conf`:
-```
-[manjaro-strit]
-SigLevel = Optional
-Server = https://www.strits.dk/files/manjaro-strit/manjaro-strit-repo/$arch
-```
-Run `sudo pacman -Syyu manjaro-arm-tools-git`.
+## From Manjaro repositories (both x64 and aarch64)
+Simply run `sudo pacman -S manjaro-arm-tools`.
 
 ## From gitlab (tagged or GIT version)
 * Download the `.zip` or `.tar.gz` file from https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-arm-tools.
