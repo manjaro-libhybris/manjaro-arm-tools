@@ -159,7 +159,7 @@ sudo buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
 To build a kde-plasma edition for the Pinebook Pro with btrfs filesystem:
 
 ```
-sudo buildarmimg -d pbpro -e kde-plasma -s btrfs
+sudo buildarmimg -d pbpro -e kde-plasma -p btrfs
 ```
 
 ## buildemmcinstaller
