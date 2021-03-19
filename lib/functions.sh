@@ -66,15 +66,16 @@ usage_build_img() {
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
-    echo "    -o                 Add overlay repo [mobile]."
+    echo "    -k <repo>          Add overlay repo [Options = kde-unstable, mobile]."
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
     echo "    -m                 Create bmap. ('bmap-tools' need to be installed.)"
     echo "    -n                 Force download of new rootfs."
+    echo "    -s <hostname>      Use custom hostname"
     echo "    -x                 Don't compress the image."
     echo "    -c                 Disable colors."
     echo "    -f                 Create an image with factory settings."
-    echo "    -s                 Filessytem to be used for the root partition. [Default = ext4. Options = ext4 or btrfs]"
+    echo "    -p <filesystem>    Filesystem to be used for the root partition. [Default = ext4. Options = ext4 or btrfs]"
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -302,7 +303,7 @@ create_rootfs_img() {
     
     info "Enabling services..."
     # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service systemd-timedated.service 1>/dev/null
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service 1>/dev/null
 
     while read service; do
         if [ -e $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/$service ]; then
@@ -550,11 +551,6 @@ create_img() {
             mount -o compress=zstd,subvol=@ "${LDEV}p2" $TMPDIR/root
             mkdir -p $TMPDIR/root/home
             mount -o compress=zstd,subvol=@home "${LDEV}p2" $TMPDIR/root/home
-            #info "Adding btrfs support to system..."
-            #echo "LABEL=ROOT_MNJRO / btrfs  subvol=@,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
-            #echo "LABEL=ROOT_MNJRO /home btrfs  subvol=@home,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
-            #sed -i '/^MODULES/{s/)/ btrfs)/}' $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
-            #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P
             if [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf ]; then
                 sed -i 's/APPEND/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf
             elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini ]; then
@@ -636,9 +632,6 @@ create_img() {
     info "Cleaning up image..."
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
         umount $TMPDIR/root/home
-        #umount $TMPDIR/root/var/log
-        #umount $TMPDIR/root/var/cache/pacman/pkg
-        #umount $TMPDIR/root/var/tmp
     fi
     umount $TMPDIR/root
     umount $TMPDIR/boot
