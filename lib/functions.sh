@@ -589,6 +589,7 @@ create_img() {
             mount ${LDEV}p2 $TMPDIR/root
             cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
             mv $TMPDIR/root/boot/* $TMPDIR/boot
+            ;;
     esac
         
     # Flash bootloader
