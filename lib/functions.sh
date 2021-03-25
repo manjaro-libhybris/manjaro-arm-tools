@@ -398,6 +398,18 @@ create_rootfs_img() {
     
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
         info "Adding btrfs support to system..."
+        if [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf ]; then
+            sed -i 's/APPEND/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf
+        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini ]; then
+            sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini
+        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini ]; then
+            sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini
+        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt ]; then
+            sed -i 's/root=LABEL=ROOT_MNJRO/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt
+        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt ]; then
+            sed -i 's/setenv bootargs/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkimage -A arm -O linux -T script -C none -n "U-Boot boot script" -d /boot/boot.txt /boot/boot.scr
+        fi
         echo "LABEL=ROOT_MNJRO / btrfs  subvol=@,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
         echo "LABEL=ROOT_MNJRO /home btrfs  subvol=@home,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
         sed -i '/^MODULES/{s/)/ btrfs)/}' $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
@@ -551,17 +563,6 @@ create_img() {
             mount -o compress=zstd,subvol=@ "${LDEV}p2" $TMPDIR/root
             mkdir -p $TMPDIR/root/home
             mount -o compress=zstd,subvol=@home "${LDEV}p2" $TMPDIR/root/home
-            if [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf ]; then
-                sed -i 's/APPEND/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf
-            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini ]; then
-                sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini
-            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini ]; then
-                sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini
-            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt ]; then
-                sed -i 's/root=LABEL=ROOT_MNJRO/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt
-            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt ]; then
-                sed -i 's/setenv bootargs/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt
-            fi
             info "Copying files to image..."
             cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
             mv $TMPDIR/root/boot/* $TMPDIR/boot
