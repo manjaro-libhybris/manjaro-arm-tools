@@ -413,7 +413,7 @@ create_rootfs_img() {
         echo "LABEL=ROOT_MNJRO / btrfs  subvol=@,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
         echo "LABEL=ROOT_MNJRO /home btrfs  subvol=@home,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
         sed -i '/^MODULES/{s/)/ btrfs)/}' $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     fi
     
     info "Cleaning rootfs for unwanted files..."
