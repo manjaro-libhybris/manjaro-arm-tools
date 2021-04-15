@@ -315,7 +315,7 @@ create_rootfs_img() {
     done < $srv_list
     
     #disabling services depending on edition
-    if [ "$EDITION" != lomiri ] && [ "$EDITION" != plasma-mobile ] && [ "$EDITION" != plasma-mobile-dev ] && [ "$EDITION" != phosh ]; then
+    if [ "$EDITION" != lomiri ] && [ "$EDITION" != plasma-mobile ] && [ "$EDITION" != plasma-mobile-dev ] && [ "$EDITION" != phosh ] && [ "$EDITION" != "cubocore" ]; then
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/lightdm.service ]; then
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
