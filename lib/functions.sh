@@ -499,7 +499,7 @@ create_emmc_install() {
     else
         info "Downloading $DEVICE $EDITION image..."
         cd $CHROOTDIR/var/tmp/
-        wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://osdn.net/projects/manjaro-arm/storage/$DEVICE/$EDITION/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
+        wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://github.com/manjaro-arm/$DEVICE-images/releases/download/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
     fi
     
     info "Cleaning rootfs for unwanted files..."
