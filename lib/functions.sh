@@ -644,11 +644,11 @@ create_img() {
 			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/uEnv.ini
         elif [ -f $TMPDIR/boot/cmdline.txt ]; then
 			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
-		elif [ -f $TMPDIR/boot/boot.txt ]; then
-			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
-			cd $TMPDIR/boot
-			./mkscr
-			cd $HOME
+		#elif [ -f $TMPDIR/boot/boot.txt ]; then
+		#	sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
+		#	cd $TMPDIR/boot
+		#	./mkscr
+		#	cd $HOME
     fi
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
     sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
