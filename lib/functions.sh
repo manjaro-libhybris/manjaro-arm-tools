@@ -630,6 +630,31 @@ create_img() {
         #    ;;
     esac
     
+    info "Writing PARTUUIDs..."
+    BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p1" | awk '{print $2}')
+    ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
+    echo "Boot PARTUUID is $BOOT_PART..."
+    sed -i "s/LABEL=BOOT_MNJRO/PARTUUID=$BOOT_PART/g" $TMPDIR/root/etc/fstab
+    echo "Root PARTUUID is $ROOT_PART..."
+	if [ -f $TMPDIR/boot/extlinux/extlinux.conf ]; then
+		sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/extlinux/extlinux.conf
+        elif [ -f $TMPDIR/boot/boot.ini ]; then
+			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.ini
+        elif [ -f $TMPDIR/boot/uEnv.ini ]; then
+			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/uEnv.ini
+        elif [ -f $TMPDIR/boot/cmdline.txt ]; then
+			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
+		elif [ -f $TMPDIR/boot/boot.txt ]; then
+			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
+			cd $TMPDIR/boot
+			./mkscr
+			cd $HOME
+    fi
+    if [[ "$FILESYSTEM" = "btrfs" ]]; then
+    sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
+    fi
+    
+    
     # Clean up
     info "Cleaning up image..."
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
