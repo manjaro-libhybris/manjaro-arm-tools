@@ -639,10 +639,7 @@ create_img() {
 			fi
             ;;
     esac
-    if [[ "$FACTORY" = "true" ]]; then
-    case
-    
-    
+ 
     info "Writing PARTUUIDs..."
     BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p1" | awk '{print $2}')
     ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
