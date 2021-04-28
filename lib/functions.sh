@@ -293,6 +293,7 @@ create_rootfs_img() {
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
     esac
+
     if [[ ! -z "$ADD_PACKAGE" ]]; then
         info "Installing local package {$ADD_PACKAGE} to rootfs..."
         cp -ap $ADD_PACKAGE $PKG_CACHE/
@@ -416,22 +417,8 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     fi
     
-    info "Cleaning rootfs for unwanted files..."
-    prune_cache
-    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
-
-    if [[ "$FACTORY" = "true" ]]; then
-        info "Making settings for factory specific image..."
-		case "$DEVICE" in
-			pbpro)
-				$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -R uboot-pinebookpro --noconfirm 1> /dev/null 2>&1
-				$NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S uboot-pinebookpro-bsp --noconfirm 1> /dev/null 2>&1
-				;;
-		esac
+	if [[ "$FACTORY" = "true" ]]; then
+	info "Making settings for factory specific image..."
         case "$EDITION" in
             kde-plasma)
                 sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
@@ -446,6 +433,14 @@ create_rootfs_img() {
     else
         echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
     fi
+    
+    info "Cleaning rootfs for unwanted files..."
+    prune_cache
+    rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/*
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
     
     msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
     pacman -Qr "$ROOTFS_IMG/rootfs_$ARCH/" > "$IMGDIR/$IMGNAME-pkgs.txt" 2>/dev/null
@@ -624,22 +619,17 @@ create_img() {
             dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
             ;;
         # Rockchip uboots
-        rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1)
+        pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1)
             dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
             dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
             ;;
-        pbpro)
-			if [[ "$FACTORY" = "true" ]]; then
-				dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-				dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
-				dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
-            else
-				dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-				dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
-			fi
+        pbpro-bsp)
+			dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
+			dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
+			dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
             ;;
     esac
- 
+    
     info "Writing PARTUUIDs..."
     BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p1" | awk '{print $2}')
     ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
