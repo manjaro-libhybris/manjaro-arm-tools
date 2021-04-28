@@ -99,6 +99,7 @@ signarmpkgs
 * pinephone
 * pinetab
 * pbpro
+* pbpro-bsp
 * rpi3 (not the A/B+ models it seems)
 * rpi4
 * rock64
@@ -122,9 +123,11 @@ signarmpkgs
 * i3
 * sway
 * gnome (experimental)
+* budgie (experimental)
 * plasma-mobile (experimental)
 * phosh (experimental)
 * cubocore (not complete yet)
+* jade (not comlete yet)
 * server (not complete yet, unmaintained)
 
 
@@ -162,7 +165,12 @@ To build a kde-plasma edition for the Pinebook Pro with btrfs filesystem:
 sudo buildarmimg -d pbpro -e kde-plasma -p btrfs
 ```
 
-## buildemmcinstaller
+To build a factory image for the Pinebook Pro, with BSP uboot:
+```
+sudo buildarmimg -d pbpro-bsp -e kde-plasma -f
+```
+
+## buildemmcinstaller (depricated)
 This script does almost the same as the `buildarmimg` script.
 
 Except that it always creates a minimal image, with an already existing image inside it, only to be used for internal storage (eMMC) deployments.
@@ -202,7 +210,7 @@ sudo builddockerimg
 This uploads the docker file directly to the Manjaro ARM acccount on DockerHub.
 
 
-## deployarmimg
+## deployarmimg (depricated)
 This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.
 If you don't, you can't use this.
 
