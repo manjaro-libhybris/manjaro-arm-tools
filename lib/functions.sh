@@ -300,7 +300,7 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
     fi
     info "Generating mirrorlist..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --method random --api --set-branch $BRANCH 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --protocols https --method random --api --set-branch $BRANCH 1> /dev/null 2>&1
     
     info "Enabling services..."
     # Enable services
