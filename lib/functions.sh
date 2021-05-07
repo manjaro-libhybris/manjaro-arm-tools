@@ -441,6 +441,7 @@ create_rootfs_img() {
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/gnupg
     
     msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
     pacman -Qr "$ROOTFS_IMG/rootfs_$ARCH/" > "$IMGDIR/$IMGNAME-pkgs.txt" 2>/dev/null
