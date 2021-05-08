@@ -66,7 +66,7 @@ usage_build_img() {
     echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
     echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
-    echo "    -k <repo>          Add overlay repo [Options = kde-unstable, mobile]."
+    echo "    -k <repo>          Add overlay repo [Options = kde-unstable, mobile] or url https://server/path/custom_repo.db"
     echo "    -i <package>       Install local package into image rootfs."
     echo "    -b <branch>        Set the branch used in the image. [Default = stable. Options = stable, testing or unstable]"
     echo "    -m                 Create bmap. ('bmap-tools' need to be installed.)"
@@ -276,7 +276,15 @@ create_rootfs_img() {
     
     if [[ ! -z ${CUSTOM_REPO} ]]; then
         info "Adding repo [$CUSTOM_REPO] to rootfs"
-        sed -i "s/^\[core\]/\[$CUSTOM_REPO\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/" $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
+
+        if [[ "$CUSTOM_REPO" =~ ^https?://.*db ]]; then
+            CUSTOM_REPO_NAME="${CUSTOM_REPO##*/}" # remove everyting before last slash
+            CUSTOM_REPO_NAME="${CUSTOM_REPO_NAME%.*}" # remove everything after last dot
+            CUSTOM_REPO_URL="${CUSTOM_REPO%/*}" # remove everything after last slash
+            echo -e "[$CUSTOM_REPO_NAME]\nSigLevel = Optional TrustAll\nServer = $CUSTOM_REPO_URL" >> $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
+        else
+            sed -i "s/^\[core\]/\[$CUSTOM_REPO\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/" $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
+        fi
     fi
 
     info "Setting branch to $BRANCH..."
