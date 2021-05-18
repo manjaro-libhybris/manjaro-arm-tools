@@ -639,7 +639,7 @@ create_img() {
             ;;
         # Allwinner uboots
         pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
-            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=128k seek=1 1> /dev/null 2>&1
             ;;
         # Rockchip uboots
         pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1)
