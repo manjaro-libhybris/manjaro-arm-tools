@@ -629,13 +629,9 @@ create_img() {
         on2|on2-plus|oc4|ohc4)
             dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
             ;;
-        vim1|vim2|vim3|gtking-pro|gsking-x)
+        vim1|vim2|vim3|gtking-pro|gsking-x|edgev)
             dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=442 count=1 1> /dev/null 2>&1
             dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 skip=1 seek=1 1> /dev/null 2>&1
-            ;;
-        edgev)
-            dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
             ;;
         # Allwinner uboots
         pinebook|pine64-lts|pine64|pinephone|pinetab|pine-h64)
