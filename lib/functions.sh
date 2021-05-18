@@ -425,8 +425,8 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     fi
     
-	if [[ "$FACTORY" = "true" ]]; then
-	info "Making settings for factory specific image..."
+    if [[ "$FACTORY" = "true" ]]; then
+    info "Making settings for factory specific image..."
         case "$EDITION" in
             kde-plasma)
                 sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
@@ -551,12 +551,12 @@ create_img() {
             dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
             #partition with boot and root
             case "$DEVICE" in
-				oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
-				parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-				;;
-				*)
-				parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-				;;
+                oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
+                parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+                ;;
+                *)
+                parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+                ;;
             esac
             parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
             START=`cat /sys/block/$DEV/${DEV}p1/start`
@@ -590,12 +590,12 @@ create_img() {
             dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
             #partition with boot and root
             case "$DEVICE" in
-				oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
-				parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-				;;
-				*)
-				parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-				;;
+                oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
+                parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+                ;;
+                *)
+                parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+                ;;
             esac
             parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
             START=`cat /sys/block/$DEV/${DEV}p1/start`
@@ -637,18 +637,18 @@ create_img() {
         pinebook|pine64-lts|pine64|pinetab|pine-h64)
             dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=128k seek=1 1> /dev/null 2>&1
             ;;
-		pinephone)
-			dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
-			;;
+        pinephone)
+            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
+            ;;
         # Rockchip uboots
         pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1)
             dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
             dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
             ;;
         pbpro-bsp)
-			dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-			dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
-			dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
             ;;
     esac
     
@@ -658,19 +658,19 @@ create_img() {
     echo "Boot PARTUUID is $BOOT_PART..."
     sed -i "s/LABEL=BOOT_MNJRO/PARTUUID=$BOOT_PART/g" $TMPDIR/root/etc/fstab
     echo "Root PARTUUID is $ROOT_PART..."
-	if [ -f $TMPDIR/boot/extlinux/extlinux.conf ]; then
-		sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/extlinux/extlinux.conf
+    if [ -f $TMPDIR/boot/extlinux/extlinux.conf ]; then
+        sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/extlinux/extlinux.conf
         elif [ -f $TMPDIR/boot/boot.ini ]; then
-			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.ini
+            sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.ini
         elif [ -f $TMPDIR/boot/uEnv.ini ]; then
-			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/uEnv.ini
+            sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/uEnv.ini
         elif [ -f $TMPDIR/boot/cmdline.txt ]; then
-			sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
-		#elif [ -f $TMPDIR/boot/boot.txt ]; then
-		#	sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
-		#	cd $TMPDIR/boot
-		#	./mkscr
-		#	cd $HOME
+            sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
+        #elif [ -f $TMPDIR/boot/boot.txt ]; then
+        #	sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
+        #	cd $TMPDIR/boot
+        #	./mkscr
+        #	cd $HOME
     fi
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
     sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
