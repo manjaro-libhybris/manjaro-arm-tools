@@ -550,7 +550,14 @@ create_img() {
             #Clear first 32mb
             dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
             #partition with boot and root
-            parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+            case "$DEVICE" in
+				oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
+				parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+				;;
+				*)
+				parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+				;;
+            esac
             parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
             START=`cat /sys/block/$DEV/${DEV}p1/start`
             SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
@@ -582,7 +589,14 @@ create_img() {
             #Clear first 32mb
             dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
             #partition with boot and root
-            parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+            case "$DEVICE" in
+				oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
+				parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+				;;
+				*)
+				parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+				;;
+            esac
             parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
             START=`cat /sys/block/$DEV/${DEV}p1/start`
             SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
