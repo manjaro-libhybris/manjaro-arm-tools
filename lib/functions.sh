@@ -324,7 +324,7 @@ create_rootfs_img() {
     done < $srv_list
     
     #disabling services depending on edition
-    if [ "$EDITION" != lomiri ] && [ "$EDITION" != plasma-mobile ] && [ "$EDITION" != plasma-mobile-dev ] && [ "$EDITION" != phosh ] && [ "$EDITION" != "cubocore" ]; then
+    if [ "$EDITION" != nemomobile ] && [ "$EDITION" != lomiri ] && [ "$EDITION" != plasma-mobile ] && [ "$EDITION" != plasma-mobile-dev ] && [ "$EDITION" != phosh ] && [ "$EDITION" != "cubocore" ]; then
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/lightdm.service ]; then
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
@@ -359,7 +359,7 @@ create_rootfs_img() {
         cubocore|plasma-mobile|plasma-mobile-dev)
             echo "No OEM setup!"
             ;;
-        phosh|lomiri)
+        phosh|lomiri|nemomobile)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "$USER" autologin
             ;;
