@@ -80,11 +80,14 @@ done
 
 [[ "$COLORS" = "true" ]] && enable_colors
 
+# Log file
+LOG=/var/log/buildarmimg-$(date +%Y-%m-%d-%H.%M).log
+
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 ARCH='aarch64'
 
 if [ ! -d "$PROFILES/arm-profiles" ]; then
-    getarmprofiles
+    getarmprofiles | tee --append "$LOG"
 fi
 
 #Make sure only a known branch is used
@@ -110,17 +113,17 @@ case "$DEVICE" in
 esac
 
 # Creating the rootfs used for the image.
-create_rootfs_img
-create_img
+create_rootfs_img | tee --append "$LOG"
+create_img | tee --append "$LOG"
 if [ ${BMAP} = true ]; then
-    create_bmap
+    create_bmap | tee --append "$LOG"
 fi
 if [[ "$EXTRACTED" = "true" ]]; then
     info "Image not compressed, because you supplied the -x option!"
 else
     # Create the compressed file, from the .img file which will get deleted.
-    compress
+    compress | tee --append "$LOG"
 fi
 
 # show timer
-show_elapsed_time "${FUNCNAME}" "${timer_start}"
+show_elapsed_time "${FUNCNAME}" "${timer_start}" | tee --append "$LOG"

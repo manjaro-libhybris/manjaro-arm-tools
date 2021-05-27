@@ -83,6 +83,9 @@ while getopts "${opt}" arg; do
   esac
 done
 
+# Log file
+LOG=/var/log/builddockerimg-$(date +%Y-%m-%d-%H.%M).log
+
 # Commands
-create_rootfs
-compress_docker
+create_rootfs | tee --append "$LOG"
+compress_docker | tee --append "$LOG"
