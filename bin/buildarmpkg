@@ -56,9 +56,6 @@ done
 
 enable_colors
 
-# Log file
-LOG=/var/log/buildarmpkg-$(date +%Y-%m-%d-%H.%M).log
-
 #Need both package and architecture
 if [ "x" == "x$PACKAGE" ]; then
   echo "-p [option] is required"
@@ -84,15 +81,15 @@ if [[ "$BUILDCLEAN" = "false" && ! -d $CHROOTDIR ]]; then
     
 elif [[ "$BUILDCLEAN" = "true" ]]; then
     #create the rootfs to build in
-    create_rootfs_pkg | tee --append "$LOG"
+    create_rootfs_pkg
 fi
 
 #build the package
-build_pkg | tee --append "$LOG"
+build_pkg
 
 #export the package and clean up
-export_and_clean | tee --append "$LOG"
-prune_cache | tee --append "$LOG"
+export_and_clean
+prune_cache
 
 # show timer
-show_elapsed_time "${FUNCNAME}" "${timer_start}" | tee --append "$LOG"
+show_elapsed_time "${FUNCNAME}" "${timer_start}"
