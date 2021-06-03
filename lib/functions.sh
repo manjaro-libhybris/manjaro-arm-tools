@@ -362,7 +362,7 @@ create_rootfs_img() {
     if [ -d /usr/share/calamares ]; then
         echo "Creating OEM user..."
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -u 275 -G wheel,sys,audio,input,video,storage,lp,network,users,power,autologin -p $(openssl passwd -1 oem) -s /bin/bash oem
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -u 984 -G wheel,sys,audio,input,video,storage,lp,network,users,power,autologin -p $(openssl passwd -1 oem) -s /bin/bash oem
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "oem ALL=(ALL) NOPASSWD: ALL" > $ROOTFS_IMG/rootfs_$ARCH/etc/sudoers.d/g_oem
         SESSION=$(ls $ROOTFS_IMG/rootfs_$ARCH/usr/share/xsessions/ | awk '{print $1}')
         # For sddm based systems
