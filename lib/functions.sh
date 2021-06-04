@@ -390,8 +390,8 @@ command = "sway --config /etc/greetd/sway"
 user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         fi
         # For Gnome edition
-        if [ -f /usr/bin/gdm ]; then
-            sed -i s/"[daemon]"/"[daemon]\nAutomaticLogin=oem\nAutomaticLoginEnable=True"/g $ROOTFS_IMG/rootfs_$ARCH/etc/gdm/custom.conf
+        if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/gdm ]; then
+            sed -i s/"\[daemon\]"/"\[daemon\]\nAutomaticLogin=oem\nAutomaticLoginEnable=True"/g $ROOTFS_IMG/rootfs_$ARCH/etc/gdm/custom.conf
         fi
     fi
     
