@@ -359,7 +359,7 @@ create_rootfs_img() {
     esac
     
     # Create OEM user
-    if [ -d /usr/share/calamares ]; then
+    if [ -d $ROOTFS_IMG/rootfs_$ARCH/usr/share/calamares ]; then
         echo "Creating OEM user..."
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -u 984 -G wheel,sys,audio,input,video,storage,lp,network,users,power,autologin -p $(openssl passwd -1 oem) -s /bin/bash oem
