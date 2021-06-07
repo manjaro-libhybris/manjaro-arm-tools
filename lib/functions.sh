@@ -376,17 +376,15 @@ Session=$SESSION" > $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf.d/90-autologin.conf
         fi
         # For lightdm based systems
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/lightdm ]; then
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /etc/lightdm/lightdm.conf.d
-            echo "# Created by Manjaro ARM OEM Setup
-
-[Seat:*]
-autologin-user=oem
-autologin-session=$SESSION" > $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf.d/90-autologin.conf
+            SESSION=$(echo ${SESSION%.*})
+            sed -i s/"#autologin-user="/"autologin-user=oem"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            sed -i s/"#autologin-user-timeout=0"/"autologin-user-timeout=0"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            sed -i s/"#autologin-session="/"autologin-session=$SESSION"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
         fi
         # For greetd based Sway edition
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/sway ]; then
             echo '[initial_session]
-command = "sway --config /etc/greetd/sway"
+command = "sway --config /etc/greetd/oem-setup
 user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         fi
         # For Gnome edition
