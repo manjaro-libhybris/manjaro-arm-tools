@@ -364,7 +364,7 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -u 984 -G wheel,sys,audio,input,video,storage,lp,network,users,power,autologin -p $(openssl passwd -1 oem) -s /bin/bash oem
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "oem ALL=(ALL) NOPASSWD: ALL" > $ROOTFS_IMG/rootfs_$ARCH/etc/sudoers.d/g_oem
-        SESSION=$(ls $ROOTFS_IMG/rootfs_$ARCH/usr/share/xsessions/ | awk '{print $1}')
+        SESSION=$(ls $ROOTFS_IMG/rootfs_$ARCH/usr/share/xsessions/ | head -1)
         # For sddm based systems
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/sddm ]; then
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /etc/sddm.conf.d
@@ -379,7 +379,11 @@ Session=$SESSION" > $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf.d/90-autologin.conf
             SESSION=$(echo ${SESSION%.*})
             sed -i s/"#autologin-user="/"autologin-user=oem"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
             sed -i s/"#autologin-user-timeout=0"/"autologin-user-timeout=0"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
-            sed -i s/"#autologin-session="/"autologin-session=$SESSION"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            if [[ "$EDITION" = "lxqt" ]]; then
+                sed -i s/"#autologin-session="/"autologin-session=lxqt"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            else
+                sed -i s/"#autologin-session="/"autologin-session=$SESSION"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            fi
         fi
         # For greetd based Sway edition
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/sway ]; then
