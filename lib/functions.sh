@@ -403,7 +403,7 @@ create_rootfs_img() {
     ### Lomiri Temporary service ends here 
 
     echo "Correcting permissions from overlay..."
-    chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/{etc,usr}
+    chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
     if [[ "$EDITION" != "minimal" && "$EDITION" != "server" ]]; then
         chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     fi
