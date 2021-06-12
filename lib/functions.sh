@@ -281,7 +281,7 @@ create_rootfs_img() {
             CUSTOM_REPO_NAME="${CUSTOM_REPO##*/}" # remove everyting before last slash
             CUSTOM_REPO_NAME="${CUSTOM_REPO_NAME%.*}" # remove everything after last dot
             CUSTOM_REPO_URL="${CUSTOM_REPO%/*}" # remove everything after last slash
-            echo -e "[$CUSTOM_REPO_NAME]\nSigLevel = Optional TrustAll\nServer = $CUSTOM_REPO_URL" >> $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
+            sed -i "s/^\[core\]/\[$CUSTOM_REPO_NAME\]\nSigLevel = Optional TrustAll\nServer = ${CUSTOM_REPO_URL//\//\\/}\n\n\[core\]/" $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
         else
             sed -i "s/^\[core\]/\[$CUSTOM_REPO\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/" $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
         fi
