@@ -215,8 +215,8 @@ create_rootfs_pkg() {
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     sed -i s/"arm-$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
     if [[ $CARCH != "aarch64" ]]; then
-    # Enable cross architecture Chrooting
-    cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
+        # Enable cross architecture Chrooting
+        cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
     fi
 
     msg "Configuring rootfs for building..."
@@ -777,11 +777,7 @@ create_img() {
         umount $TMPDIR/root/home
     fi
     umount $TMPDIR/root
-    #if [[ "$DEVICE" = "quartz64-bsp" ]]; then
-    #    umount $TMPDIR/boot/efi
-    #else
-        umount $TMPDIR/boot
-    #fi
+    umount $TMPDIR/boot
     losetup -d $LDEV 1> /dev/null 2>&1
     rm -r $TMPDIR/root $TMPDIR/boot
     partprobe $LDEV 1> /dev/null 2>&1
