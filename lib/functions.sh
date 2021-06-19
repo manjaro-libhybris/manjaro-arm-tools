@@ -586,6 +586,7 @@ create_img() {
                 quartz64-bsp)
                     parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
                     parted -s $LDEV mkpart uboot fat32 8MiB 16MiB 1> /dev/null 2>&1
+                    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
                     START=`cat /sys/block/$DEV/${DEV}p2/start`
                     SIZE=`cat /sys/block/$DEV/${DEV}p2/size`
                     END_SECTOR=$(expr $START + $SIZE)
