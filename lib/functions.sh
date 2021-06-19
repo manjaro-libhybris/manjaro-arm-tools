@@ -215,8 +215,8 @@ create_rootfs_pkg() {
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     sed -i s/"arm-$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
     if [[ $CARCH != "aarch64" ]]; then
-    # Enable cross architecture Chrooting
-    cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
+        # Enable cross architecture Chrooting
+        cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
     fi
 
     msg "Configuring rootfs for building..."
@@ -581,37 +581,69 @@ create_img() {
             #partition with boot and root
             case "$DEVICE" in
                 oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
-                parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-                ;;
+                    parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+                    ;;
+                quartz64-bsp)
+                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+                    parted -s $LDEV mkpart uboot fat32 8MiB 16MiB 1> /dev/null 2>&1
+                    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+                    START=`cat /sys/block/$DEV/${DEV}p2/start`
+                    SIZE=`cat /sys/block/$DEV/${DEV}p2/size`
+                    END_SECTOR=$(expr $START + $SIZE)
+                    parted -s $LDEV mkpart primary btrfs "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+                    parted -s $LDEV set 2 esp on
+                    partprobe $LDEV 1> /dev/null 2>&1
+                    mkfs.vfat "${LDEV}p2" -n BOOT_MNJRO 1> /dev/null 2>&1
+                    mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p3" 1> /dev/null 2>&1
+                
+                    #copy rootfs contents over to the FS
+                    info "Creating subvolumes..."
+                    mkdir -p $TMPDIR/root
+                    mkdir -p $TMPDIR/boot
+                    mount ${LDEV}p2 $TMPDIR/boot
+                    # Do subvolumes
+                    mount -o compress=zstd "${LDEV}p3" $TMPDIR/root
+                    btrfs su cr $TMPDIR/root/@ 1> /dev/null 2>&1
+                    btrfs su cr $TMPDIR/root/@home 1> /dev/null 2>&1
+                    umount $TMPDIR/root
+                    mount -o compress=zstd,subvol=@ "${LDEV}p3" $TMPDIR/root
+                    mkdir -p $TMPDIR/root/home
+                    mount -o compress=zstd,subvol=@home "${LDEV}p3" $TMPDIR/root/home
+                    info "Copying files to image..."
+                    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+                    mv $TMPDIR/root/boot/* $TMPDIR/boot/
+                    ;;
                 *)
-                parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-                ;;
+                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+                    ;;
             esac
-            parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-            START=`cat /sys/block/$DEV/${DEV}p1/start`
-            SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-            END_SECTOR=$(expr $START + $SIZE)
-            parted -s $LDEV mkpart primary btrfs "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-            partprobe $LDEV 1> /dev/null 2>&1
-            mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
-            mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p2" 1> /dev/null 2>&1
+            if [[ "$DEVICE" != "quartz64-bsp" ]]; then
+                parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+                START=`cat /sys/block/$DEV/${DEV}p1/start`
+                SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+                END_SECTOR=$(expr $START + $SIZE)
+                parted -s $LDEV mkpart primary btrfs "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+                partprobe $LDEV 1> /dev/null 2>&1
+                mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
+                mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p2" 1> /dev/null 2>&1
     
-            #copy rootfs contents over to the FS
-            info "Creating subvolumes..."
-            mkdir -p $TMPDIR/root
-            mkdir -p $TMPDIR/boot
-            mount ${LDEV}p1 $TMPDIR/boot
-            # Do subvolumes
-            mount -o compress=zstd "${LDEV}p2" $TMPDIR/root
-            btrfs su cr $TMPDIR/root/@ 1> /dev/null 2>&1
-            btrfs su cr $TMPDIR/root/@home 1> /dev/null 2>&1
-            umount $TMPDIR/root
-            mount -o compress=zstd,subvol=@ "${LDEV}p2" $TMPDIR/root
-            mkdir -p $TMPDIR/root/home
-            mount -o compress=zstd,subvol=@home "${LDEV}p2" $TMPDIR/root/home
-            info "Copying files to image..."
-            cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-            mv $TMPDIR/root/boot/* $TMPDIR/boot
+                #copy rootfs contents over to the FS
+                info "Creating subvolumes..."
+                mkdir -p $TMPDIR/root
+                mkdir -p $TMPDIR/boot
+                mount ${LDEV}p1 $TMPDIR/boot
+                # Do subvolumes
+                mount -o compress=zstd "${LDEV}p2" $TMPDIR/root
+                btrfs su cr $TMPDIR/root/@ 1> /dev/null 2>&1
+                btrfs su cr $TMPDIR/root/@home 1> /dev/null 2>&1
+                umount $TMPDIR/root
+                mount -o compress=zstd,subvol=@ "${LDEV}p2" $TMPDIR/root
+                mkdir -p $TMPDIR/root/home
+                mount -o compress=zstd,subvol=@home "${LDEV}p2" $TMPDIR/root/home
+                info "Copying files to image..."
+                cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+                mv $TMPDIR/root/boot/* $TMPDIR/boot
+            fi
             ;;
         *)
             # Create partitions
@@ -620,29 +652,51 @@ create_img() {
             #partition with boot and root
             case "$DEVICE" in
                 oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|gtking-pro|gsking-x|edgev|pinephone)
-                parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-                ;;
+                    parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
+                    ;;
+                quartz64-bsp)
+                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+                    parted -s $LDEV mkpart uboot fat32 8M 16M 1> /dev/null 2>&1
+                    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+                    START=`cat /sys/block/$DEV/${DEV}p2/start`
+                    SIZE=`cat /sys/block/$DEV/${DEV}p2/size`
+                    END_SECTOR=$(expr $START + $SIZE)
+                    parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+                    parted -s $LDEV set 2 esp on
+                    partprobe $LDEV 1> /dev/null 2>&1
+                    mkfs.vfat "${LDEV}p2" -n BOOT_MNJRO 1> /dev/null 2>&1
+                    mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p3" -L ROOT_MNJRO 1> /dev/null 2>&1
+                    info "Copying files to image..."
+                    mkdir -p $TMPDIR/root
+                    mkdir -p $TMPDIR/boot
+                    mount ${LDEV}p2 $TMPDIR/boot
+                    mount ${LDEV}p3 $TMPDIR/root
+                    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+                    mv $TMPDIR/root/boot/* $TMPDIR/boot/
+                    ;;
                 *)
-                parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-                ;;
+                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
+                    ;;
             esac
-            parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-            START=`cat /sys/block/$DEV/${DEV}p1/start`
-            SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-            END_SECTOR=$(expr $START + $SIZE)
-            parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-            partprobe $LDEV 1> /dev/null 2>&1
-            mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
-            mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
+                if [[ "$DEVICE" != "quartz64-bsp" ]]; then
+                    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
+                    START=`cat /sys/block/$DEV/${DEV}p1/start`
+                    SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
+                    END_SECTOR=$(expr $START + $SIZE)
+                    parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+                    partprobe $LDEV 1> /dev/null 2>&1
+                    mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
+                    mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
 
-            #copy rootfs contents over to the FS
-            info "Copying files to image..."
-            mkdir -p $TMPDIR/root
-            mkdir -p $TMPDIR/boot
-            mount ${LDEV}p1 $TMPDIR/boot
-            mount ${LDEV}p2 $TMPDIR/root
-            cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-            mv $TMPDIR/root/boot/* $TMPDIR/boot
+                    #copy rootfs contents over to the FS
+                    info "Copying files to image..."
+                    mkdir -p $TMPDIR/root
+                    mkdir -p $TMPDIR/boot
+                    mount ${LDEV}p1 $TMPDIR/boot
+                    mount ${LDEV}p2 $TMPDIR/root
+                    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+                    mv $TMPDIR/root/boot/* $TMPDIR/boot
+                fi
             ;;
     esac
         
@@ -669,7 +723,7 @@ create_img() {
         pinephone)
             dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
             ;;
-        # Rockchip uboots
+        # Rockchip RK33XX uboots
         pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1)
             dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
             dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
@@ -679,16 +733,28 @@ create_img() {
             dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
             dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
             ;;
+        # Rockchip RK35XX uboots
+        quartz64-bsp)
+            dd if=$TMPDIR/boot/idblock.bin of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/uboot.img of=${LDEV}p1 conv=notrunc,fsync 1> /dev/null 2>&1
+            ;;
     esac
     
     info "Writing PARTUUIDs..."
-    BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p1" | awk '{print $2}')
-    ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
+    if [[ "$DEVICE" = "quartz64-bsp" ]]; then
+        BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
+        ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p3" | awk '{print $2}')
+    else
+        BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p1" | awk '{print $2}')
+        ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
+    fi
     echo "Boot PARTUUID is $BOOT_PART..."
     sed -i "s/LABEL=BOOT_MNJRO/PARTUUID=$BOOT_PART/g" $TMPDIR/root/etc/fstab
     echo "Root PARTUUID is $ROOT_PART..."
     if [ -f $TMPDIR/boot/extlinux/extlinux.conf ]; then
         sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/extlinux/extlinux.conf
+        elif [ -f $TMPDIR/boot/efi/extlinux/extlinux.conf ]; then
+            sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/efi/extlinux/extlinux.conf
         elif [ -f $TMPDIR/boot/boot.ini ]; then
             sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.ini
         elif [ -f $TMPDIR/boot/uEnv.ini ]; then
@@ -702,7 +768,7 @@ create_img() {
         #   cd $HOME
     fi
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
-    sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
+        sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
     fi
     
     
