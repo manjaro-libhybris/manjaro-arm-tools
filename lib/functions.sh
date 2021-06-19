@@ -297,8 +297,11 @@ create_rootfs_img() {
         cubocore|phosh|plasma-mobile|plasma-mobile-dev)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
-        *)
+        minimal|server)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            ;;
+        *)
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs calamares-arm-oem manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
     esac
 
@@ -317,6 +320,7 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sshd.service 1>/dev/null
     fi
 
+
     while read service; do
         if [ -e $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/$service ]; then
             echo "Enabling $service ..."
@@ -325,28 +329,6 @@ create_rootfs_img() {
             echo "$service not found in rootfs. Skipping."
         fi
     done < $srv_list
-    
-    #disabling services depending on edition
-    if [ "$EDITION" != nemomobile ] && [ "$EDITION" != lomiri ] && [ "$EDITION" != plasma-mobile ] && [ "$EDITION" != plasma-mobile-dev ] && [ "$EDITION" != phosh ] && [ "$EDITION" != "cubocore" ]; then
-        if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/lightdm.service ]; then
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable lightdm.service 1> /dev/null 2>&1
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= lightdm 1> /dev/null 2>&1
-            echo "Disabled lightdm for OEM setup..."
-            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/greetd.service ]; then
-                $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable greetd.service 1> /dev/null 2>&1
-                echo "Disabled greetd for OEM setup..."
-            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/sddm.service ]; then
-                $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable sddm.service 1> /dev/null 2>&1
-                $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= sddm 1> /dev/null 2>&1
-                echo "Disabled sddm for OEM setup..."
-            elif [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/gdm.service ]; then
-                $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl disable gdm.service 1> /dev/null 2>&1
-                $NSPAWN $ROOTFS_IMG/rootfs_$ARCH usermod --expiredate= gdm 1> /dev/null 2>&1
-                echo "Disabled gdm for OEM setup..."
-        else
-            echo "No display manager to disable in $EDITION..."
-        fi
-    fi
 
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
@@ -366,7 +348,7 @@ create_rootfs_img() {
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "$USER" autologin
             ;;
-        *)
+        minimal|server)
             echo "Enabling SSH login for root user for headless setup..."
             sed -i s/"#PermitRootLogin prohibit-password"/"PermitRootLogin yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
             sed -i s/"#PermitEmptyPasswords no"/"PermitEmptyPasswords yes"/g $ROOTFS_IMG/rootfs_$ARCH/etc/ssh/sshd_config
@@ -375,6 +357,50 @@ create_rootfs_img() {
             cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
             ;;
     esac
+    
+    # Create OEM user
+    if [ -d $ROOTFS_IMG/rootfs_$ARCH/usr/share/calamares ]; then
+        echo "Creating OEM user..."
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -u 984 -G wheel,sys,audio,input,video,storage,lp,network,users,power,autologin -p $(openssl passwd -6 oem) -s /bin/bash oem
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "oem ALL=(ALL) NOPASSWD: ALL" > $ROOTFS_IMG/rootfs_$ARCH/etc/sudoers.d/g_oem
+        SESSION=$(ls $ROOTFS_IMG/rootfs_$ARCH/usr/share/xsessions/ | head -1)
+        # For sddm based systems
+        if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/sddm ]; then
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /etc/sddm.conf.d
+            echo "# Created by Manjaro ARM OEM Setup
+
+[Autologin]
+User=oem
+Session=$SESSION" > $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf.d/90-autologin.conf
+        fi
+        # For lightdm based systems
+        if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/lightdm ]; then
+            SESSION=$(echo ${SESSION%.*})
+            sed -i s/"#autologin-user="/"autologin-user=oem"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            sed -i s/"#autologin-user-timeout=0"/"autologin-user-timeout=0"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            if [[ "$EDITION" = "lxqt" ]]; then
+                sed -i s/"#autologin-session="/"autologin-session=lxqt"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            elif [[ "$EDITION" = "i3" ]]; then
+                echo "autologin-user=oem
+autologin-user-timeout=0
+autologin-session=i3" >> $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+                sed -i s/"# Autostart applications"/"# Autostart applications\nexec --no-startup-id sudo -E calamares"/g $ROOTFS_IMG/rootfs_$ARCH/home/oem/.i3/config
+            else
+                sed -i s/"#autologin-session="/"autologin-session=$SESSION"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
+            fi
+        fi
+        # For greetd based Sway edition
+        if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/sway ]; then
+            echo '[initial_session]
+command = "sway --config /etc/greetd/oem-setup
+user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
+        fi
+        # For Gnome edition
+        if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/gdm ]; then
+            sed -i s/"\[daemon\]"/"\[daemon\]\nAutomaticLogin=oem\nAutomaticLoginEnable=True"/g $ROOTFS_IMG/rootfs_$ARCH/etc/gdm/custom.conf
+        fi
+    fi
     
     # Lomiri services Temporary in function until it is moved to an individual package.
     if [[ "$EDITION" = "lomiri" ]]; then
@@ -428,8 +454,8 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     fi
     
-    if [[ "$FACTORY" = "true" ]]; then
-    info "Making settings for factory specific image..."
+	if [[ "$FACTORY" = "true" ]]; then
+	info "Making settings for factory specific image..."
         case "$EDITION" in
             kde-plasma)
                 sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
@@ -531,7 +557,7 @@ create_img() {
     ARCH='aarch64'
     
     SIZE=$(du -s --block-size=MB $CHROOTDIR | awk '{print $1}' | sed -e 's/MB//g')
-    EXTRA_SIZE=300
+    EXTRA_SIZE=600
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
     
     #making blank .img to be used
@@ -670,10 +696,10 @@ create_img() {
         elif [ -f $TMPDIR/boot/cmdline.txt ]; then
             sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
         #elif [ -f $TMPDIR/boot/boot.txt ]; then
-        #	sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
-        #	cd $TMPDIR/boot
-        #	./mkscr
-        #	cd $HOME
+        #   sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
+        #   cd $TMPDIR/boot
+        #   ./mkscr
+        #   cd $HOME
     fi
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
     sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
