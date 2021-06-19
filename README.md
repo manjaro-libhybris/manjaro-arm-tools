@@ -92,7 +92,7 @@ signarmpkgs
 * oc2
 * oc4
 * on2
-* on2-plus (new)
+* on2-plus
 * pine64-lts
 * pine-h64
 * pinebook
@@ -100,12 +100,13 @@ signarmpkgs
 * pinetab
 * pbpro
 * pbpro-bsp
+* quartz64-bsp (new)
 * rpi3 (not the A/B+ models it seems)
 * rpi4
 * rock64
 * roc-cc
 * rockpi4b
-* rockpi4c (new)
+* rockpi4c
 * rockpro64
 * stationp1
 * vim1
