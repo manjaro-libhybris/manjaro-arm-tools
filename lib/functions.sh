@@ -775,6 +775,8 @@ create_img() {
     fi
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
         sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
+    else
+        echo "PARTUUID=$ROOT_PART   /   $FILESYSTEM     defaults    0   1" >> $TMPDIR/root/etc/fstab
     fi
     
     
