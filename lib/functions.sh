@@ -623,6 +623,9 @@ create_img() {
                 SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
                 END_SECTOR=$(expr $START + $SIZE)
                 parted -s $LDEV mkpart primary btrfs "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+                if [[ "$DEVICE" = "jetson-nano" ]]; then
+                    parted -s $LDEV set 1 esp on
+                fi
                 partprobe $LDEV 1> /dev/null 2>&1
                 mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
                 mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p2" 1> /dev/null 2>&1
@@ -684,6 +687,9 @@ create_img() {
                     SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
                     END_SECTOR=$(expr $START + $SIZE)
                     parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
+                    if [[ "$DEVICE" = "jetson-nano" ]]; then
+                        parted -s $LDEV set 1 esp on
+                    fi
                     partprobe $LDEV 1> /dev/null 2>&1
                     mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
                     mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
