@@ -429,13 +429,13 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     ### Lomiri Temporary service ends here 
 
     echo "Correcting permissions from overlay..."
-    chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/etc
-    chown -R root:root $ROOTFS_IMG/rootfs_$ARCH/usr/{local,share}
+    chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/etc
+    chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/usr/{local,share}
     if [[ -d $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d ]]; then
-        chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
+        chown 0:102 $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     fi
     if [[ -d $ROOTFS_IMG/rootfs_$ARCH/usr/share/polkit-1/rules.d ]]; then
-        chown root:polkitd $ROOTFS_IMG/rootfs_$ARCH/usr/share/polkit-1/rules.d
+        chown 0:102 $ROOTFS_IMG/rootfs_$ARCH/usr/share/polkit-1/rules.d
     fi
     
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
