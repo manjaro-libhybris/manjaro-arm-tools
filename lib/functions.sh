@@ -272,7 +272,7 @@ create_rootfs_img() {
     
     info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1>/dev/null || abort
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinux archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
     
     if [[ ! -z ${CUSTOM_REPO} ]]; then
         info "Adding repo [$CUSTOM_REPO] to rootfs"
