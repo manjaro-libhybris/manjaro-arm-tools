@@ -224,10 +224,7 @@ create_rootfs_pkg() {
     $NSPAWN $CHROOTDIR pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
     cp $LIBDIR/makepkg $CHROOTDIR/usr/bin/
     $NSPAWN $CHROOTDIR chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
-    rm -f $CHROOTDIR/etc/ssl/certs/ca-certificates.crt
-    rm -f $CHROOTDIR/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    cp -a /etc/ssl/certs/ca-certificates.crt $CHROOTDIR/etc/ssl/certs/
-    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $CHROOTDIR/etc/ca-certificates/extracted/
+    $NSPAWN $CHROOTDIR update-ca-trust
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $CHROOTDIR/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $CHROOTDIR/etc/makepkg.conf
     sed -i s/'COMPRESSXZ=(xz -c -z -)'/'COMPRESSXZ=(xz -c -z - --threads=0)'/ $CHROOTDIR/etc/makepkg.conf
