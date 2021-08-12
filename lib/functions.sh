@@ -332,10 +332,7 @@ create_rootfs_img() {
 
     info "Setting up system settings..."
     #system setup
-    rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/ca-certificates.crt
-    rm -f $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    cp -a /etc/ssl/certs/ca-certificates.crt $ROOTFS_IMG/rootfs_$ARCH/etc/ssl/certs/
-    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $ROOTFS_IMG/rootfs_$ARCH/etc/ca-certificates/extracted/
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust
     echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     case "$EDITION" in
         cubocore|plasma-mobile|plasma-mobile-dev)
