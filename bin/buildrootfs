@@ -34,10 +34,8 @@ create_rootfs () {
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
     
     # fix SSL in the rootfs
-    rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
-    rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
-    cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
-    cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
+    $NSPAWN $BUILDDIR/$ARCH update-ca-trust
+    
     rm -f $BUILDDIR/$ARCH/var/cache/pacman/pkg/*
     $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f5 1> /dev/null 2>&1
 }
