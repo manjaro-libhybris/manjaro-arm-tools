@@ -469,6 +469,12 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
     fi
     
+    msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Qr / > $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt 2>/dev/null
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH sed -i '1s/^[^l]*l//' /var/tmp/pkglist.txt
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH sed -i '$d' /var/tmp/pkglist.txt
+    mv $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt "$IMGDIR/$IMGNAME-pkgs.txt"
+    
     info "Cleaning rootfs for unwanted files..."
     prune_cache
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
@@ -477,9 +483,6 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/gnupg
-    
-    msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
-    pacman -Qr "$ROOTFS_IMG/rootfs_$ARCH/" > "$IMGDIR/$IMGNAME-pkgs.txt" 2>/dev/null
 
     msg "$DEVICE $EDITION rootfs complete"
 }
