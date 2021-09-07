@@ -82,7 +82,7 @@ done
 
 # Log file
 if [ ! -d /var/log/manjaro-arm-tools ]; then
-    mkdir -P /var/log/manjaro-arm-tools
+    mkdir -p /var/log/manjaro-arm-tools
 fi
 LOG=/var/log/manjaro-arm-tools/buildarmimg-$(date +%Y-%m-%d-%H.%M).log
 
