@@ -71,7 +71,10 @@ while getopts "${opt}" arg; do
 done
 
 # Log file
-LOG=/var/log/buildrootfs-$(date +%Y-%m-%d-%H.%M).log
+if [ ! -d /var/log/manjaro-arm-tools ]; then
+    mkdir -P /var/log/manjaro-arm-tools
+fi
+LOG=/var/log/manjaro-arm-tools/buildrootfs-$(date +%Y-%m-%d-%H.%M).log
 
 # Commands
 create_rootfs | tee --append "$LOG"

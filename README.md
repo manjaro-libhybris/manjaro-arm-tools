@@ -170,7 +170,7 @@ To build a factory image for the Pinebook Pro, with BSP uboot:
 ```
 sudo buildarmimg -d pbpro-bsp -e kde-plasma -f
 ```
-A log is located at /var/log/buildarmimg-$(date +%Y-%m-%d-%H.%M).log
+A log is located at /var/log/manjaro-arm-tools/buildarmimg-$(date +%Y-%m-%d-%H.%M).log
 
 ## buildemmcinstaller (depricated)
 This script does almost the same as the `buildarmimg` script.
@@ -202,7 +202,7 @@ To build an aarch64 rootfs:
 sudo buildrootfs
 ```
 
-A log is located at /var/log/buildrootfs-$(date +%Y-%m-%d-%H.%M).log
+A log is located at /var/log/manjaro-arm-tools/buildrootfs-$(date +%Y-%m-%d-%H.%M).log
 
 ## builddockerimg
 This script is similar to `buildrootfs`, except that it builds a rootfs ready for package building and turns it into a docker image, that can be uploaded to DockerHub.
@@ -213,7 +213,7 @@ sudo builddockerimg
 ```
 This uploads the docker file directly to the Manjaro ARM acccount on DockerHub.
 
-A log is located at /var/log/builddockerimg-$(date +%Y-%m-%d-%H.%M).log
+A log is located at /var/log/manjaro-arm-tools/builddockerimg-$(date +%Y-%m-%d-%H.%M).log
 
 ## deployarmimg (depricated)
 This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.
