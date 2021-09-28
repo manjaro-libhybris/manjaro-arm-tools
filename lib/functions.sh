@@ -728,7 +728,7 @@ create_img() {
             dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=128k seek=1 1> /dev/null 2>&1
             ;;
         pinephone)
-            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
+            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE-552.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
             ;;
         # Rockchip RK33XX uboots
         pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1)
