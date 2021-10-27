@@ -440,8 +440,8 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
             sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini
         elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini ]; then
             sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini
-        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt ]; then
-            sed -i 's/^/rootflags=subvol=@ rootfstype=btrfs /' $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt
+        #elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt ]; then
+        #    sed -i 's/^/rootflags=subvol=@ rootfstype=btrfs /' $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt
         elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt ]; then
             sed -i 's/setenv bootargs/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkimage -A arm -O linux -T script -C none -n "U-Boot boot script" -d /boot/boot.txt /boot/boot.scr
@@ -767,14 +767,42 @@ create_img() {
             sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.ini
         elif [ -f $TMPDIR/boot/uEnv.ini ]; then
             sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/uEnv.ini
-        elif [ -f $TMPDIR/boot/cmdline.txt ]; then
-            sed -i "s/PARTUUID=/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
+        #elif [ -f $TMPDIR/boot/cmdline.txt ]; then
+        #    sed -i "s/PARTUUID=/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
         #elif [ -f $TMPDIR/boot/boot.txt ]; then
         #   sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
         #   cd $TMPDIR/boot
         #   ./mkscr
         #   cd $HOME
     fi
+    
+    if [[ "$DEVICE" = "rpi4" ]] && [[ "$FILESYSTEM" = "btrfs" ]]; then
+        echo "===> Installing default btrfs RPi cmdline.txt /boot..."
+        echo "rootflags=subvol=@ root=PARTUUID=$ROOT_PART rw rootwait console=serial0,115200 console=tty3 selinux=0 quiet splash plymouth.ignore-serial-consoles smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 kgdboc=serial0,115200 usbhid.mousepoll=8 audit=0" >  $TMPDIR/boot/cmdline.txt
+    elif [[ "$DEVICE" = "rpi4" ]]; then
+        echo "===> Installing default ext4 RPi cmdline.txt /boot..."
+        echo "root=PARTUUID=$ROOT_PART rw rootwait console=serial0,115200 console=tty3 selinux=0 quiet splash plymouth.ignore-serial-consoles smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 kgdboc=serial0,115200 usbhid.mousepoll=8 audit=0" >  $TMPDIR/boot/cmdline.txt
+    fi
+    if [[ "$DEVICE" = "rpi4" ]]; then
+        echo "===> Installing default config.txt file to /boot/..."
+        echo "# See /boot/overlays/README for all available options" > $TMPDIR/boot/config.txt
+        echo "" >> $TMPDIR/boot/config.txt
+        echo "#gpu_mem=64" >> $TMPDIR/boot/config.txt
+        echo "initramfs initramfs-linux.img followkernel" >> $TMPDIR/boot/config.txt
+        echo "kernel=kernel8.img" >> $TMPDIR/boot/config.txt
+        echo "arm_64bit=1" >> $TMPDIR/boot/config.txt
+        echo "disable_overscan=1" >> $TMPDIR/boot/config.txt
+        echo "" >> $TMPDIR/boot/config.txt
+        echo "#enable sound" >> $TMPDIR/boot/config.txt
+        echo "dtparam=audio=on" >> $TMPDIR/boot/config.txt
+        echo "#hdmi_drive=2" >> $TMPDIR/boot/config.txt
+        echo "" >> $TMPDIR/boot/config.txt
+        echo "#enable vc4" >> $TMPDIR/boot/config.txt
+        echo "dtoverlay=vc4-fkms-v3d" >> $TMPDIR/boot/config.txt
+        echo "max_framebuffers=2"  >> $TMPDIR/boot/config.txt
+        echo "disable_splash=1" >> $TMPDIR/boot/config.txt
+    fi
+    
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
         sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
     else
