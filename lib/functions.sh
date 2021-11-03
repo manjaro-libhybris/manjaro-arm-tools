@@ -55,6 +55,7 @@ usage_build_pkg() {
     echo "    -b <branch>        Set the branch used for the build. [Default = stable. Options = stable, testing or unstable]"
     echo "    -n                 Install built package into rootfs"
     echo "    -i <package>       Install local package into rootfs."
+    echo "    -r <repository>    Use a custom repository in the rootfs."
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -225,6 +226,18 @@ create_rootfs_pkg() {
     cp $LIBDIR/makepkg $CHROOTDIR/usr/bin/
     $NSPAWN $CHROOTDIR chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     $NSPAWN $CHROOTDIR update-ca-trust
+    if [[ ! -z ${CUSTOM_REPO} ]]; then
+        info "Adding repo [$CUSTOM_REPO] to rootfs"
+
+        if [[ "$CUSTOM_REPO" =~ ^https?://.*db ]]; then
+            CUSTOM_REPO_NAME="${CUSTOM_REPO##*/}" # remove everyting before last slash
+            CUSTOM_REPO_NAME="${CUSTOM_REPO_NAME%.*}" # remove everything after last dot
+            CUSTOM_REPO_URL="${CUSTOM_REPO%/*}" # remove everything after last slash
+            sed -i "s/^\[core\]/\[$CUSTOM_REPO_NAME\]\nSigLevel = Optional TrustAll\nServer = ${CUSTOM_REPO_URL//\//\\/}\n\n\[core\]/" $CHROOTDIR/etc/pacman.conf
+        else
+            sed -i "s/^\[core\]/\[$CUSTOM_REPO\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/" $CHROOTDIR/etc/pacman.conf
+        fi
+    fi
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $CHROOTDIR/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $CHROOTDIR/etc/makepkg.conf
     sed -i s/'COMPRESSXZ=(xz -c -z -)'/'COMPRESSXZ=(xz -c -z - --threads=0)'/ $CHROOTDIR/etc/makepkg.conf

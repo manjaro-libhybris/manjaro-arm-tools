@@ -17,7 +17,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 #Arguments 
-opt=":p:a:i:nb:kh"
+opt=":p:a:i:r:nb:kh"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -39,6 +39,9 @@ while getopts "${opt}" arg; do
     n)
       INSTALL_NEW=true
       ;;
+    r)
+      CUSTOM_REPO="${OPTARG}"
+     ;;
     \?)
       echo "Invalid option: -${OPTARG}"
       exit 1
