@@ -565,6 +565,29 @@ create_emmc_install() {
     rm -rf $CHROOTDIR/etc/machine-id
 }
 
+create_img_halium() {
+	msg "Finishing image for $DEVICE $EDITION edition..."
+    info "Creating image..."
+
+    ARCH='aarch64'
+
+    SIZE=$(du -s --block-size=MB $CHROOTDIR | awk '{print $1}' | sed -e 's/MB//g')
+    EXTRA_SIZE=300
+    REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
+
+    #making blank .img to be used
+    dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE 1> /dev/null 2>&1
+
+    #format it
+    mkfs.ext4 $IMGDIR/$IMGNAME.img -L ROOT_MNJRO 1> /dev/null 2>&1
+	info "Copying files to image..."
+    mkdir -p $TMPDIR/root
+    mount $IMGDIR/$IMGNAME.img $TMPDIR/root
+    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+
+    chmod 666 $IMGDIR/$IMGNAME.img
+}
+
 create_img() {
     msg "Finishing image for $DEVICE $EDITION edition..."
     info "Creating partitions..."
