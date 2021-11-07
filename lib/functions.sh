@@ -585,6 +585,9 @@ create_img_halium() {
     mount $IMGDIR/$IMGNAME.img $TMPDIR/root
     cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
 
+    umount $TMPDIR/root/
+    rm -r $TMPDIR/root/
+    
     chmod 666 $IMGDIR/$IMGNAME.img
 }
 
