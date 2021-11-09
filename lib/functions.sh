@@ -350,10 +350,14 @@ create_rootfs_img() {
     case "$EDITION" in
         cubocore|plasma-mobile|plasma-mobile-dev)
             echo "No OEM setup!"
+            # Lock root user
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd --lock root
             ;;
         phosh|lomiri|nemomobile)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "$USER" autologin
+            # Lock root user
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd --lock root
             ;;
         minimal|server)
             echo "Enabling SSH login for root user for headless setup..."
