@@ -103,9 +103,10 @@ fi
 timer_start=$(get_timer)
 
 #Package lists
+# remove ">pinephone " prefix for pinephones and remove lines starting with ">" for other devices, remove everything after #
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
-PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | sed -e 's/>'${DEVICE//pro/}' //' -e '/^>/d' -e 's/#.*//' ) # remove ">pinephone " prefix for pinephones and remove lines starting with ">" for other devices, remove everything after #
-cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>'$DEVICE' //' -e '/^>/d' -e 's/#.*//' >$srv_list
+PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | sed -e 's/>'${DEVICE//pro/}' //' -e '/^>/d' -e 's/#.*//' )
+cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>'${DEVICE//pro/}' //' -e '/^>/d' -e 's/#.*//' >$srv_list
 
 # Creating the rootfs used for the image.
 create_rootfs_img | tee --append "$LOG"
