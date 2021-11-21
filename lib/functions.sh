@@ -2,6 +2,9 @@
 
 #variables
 BRANCH='stable'
+DEVICE='rpi4'
+EDITION='minimal'
+VERSION=$(date +'%y'.'%m')
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
 BUILDSERVER=https://repo.manjaro.org/repo
@@ -15,11 +18,8 @@ PROFILES=/usr/share/manjaro-arm-tools/profiles
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm'
 STORAGE_USER=$(whoami)
-VERSION=$(date +'%y'.'%m')
 FLASHVERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
-DEVICE='rpi4'
-EDITION='minimal'
 USER='manjaro'
 HOSTNAME='manjaro-arm'
 PASSWORD='manjaro'
@@ -31,6 +31,9 @@ srv_list=/tmp/services_list
 #import conf file
 source /etc/manjaro-arm-tools/manjaro-arm-tools.conf 
 
+# PKGDIR & IMGDIR may not exist if they were changed by configuration, make sure they do.
+mkdir -p ${PKGDIR}/pkg-cache
+mkdir -p ${IMGDIR}
 
 usage_deploy_img() {
     echo "Usage: ${0##*/} [options]"
@@ -889,6 +892,7 @@ compress() {
     chmod 666 $IMGDIR/$IMGNAME.img.xz
 
     info "Removing rootfs_$ARCH"
+    umount $ROOTFS_IMG/rootfs_$ARCH/var/cache/pacman/pkg
     rm -rf $CHROOTDIR
 }
 
