@@ -15,6 +15,7 @@ TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
+TEMPLATES=/usr/share/manjaro-arm-tools/profiles
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm'
 STORAGE_USER=$(whoami)
@@ -335,12 +336,7 @@ create_rootfs_img() {
 
 
     while read service; do
-        if [ -e $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/$service ]; then
-            echo "Enabling $service ..."
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
-        else
-            echo "$service not found in rootfs. Skipping."
-        fi
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
     done < $srv_list
 
     info "Applying overlay for $EDITION edition..."
@@ -598,6 +594,7 @@ create_img_halium() {
     mkdir -p $TMPDIR/root
     mount $IMGDIR/$IMGNAME.img $TMPDIR/root
     cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
+    cp -ra $ROOTFS_IMG/rootfs_$ARCH/.* $TMPDIR/root/
 
     umount $TMPDIR/root/
     rm -r $TMPDIR/root/
@@ -952,6 +949,11 @@ clone_profiles() {
     git clone --branch $1 https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
 }
 
+clone_templates() {
+    cd $TEMPLATES
+    git clone --branch $1 https://www.github.com/manjaro-libhybris/android-recovery-flashing-template.git
+}
+
 get_profiles() {
     local branch=master
     [[ "$FACTORY" = "true" ]] && branch=pp-factory
@@ -965,5 +967,20 @@ get_profiles() {
         fi
     else
         clone_profiles $branch
+    fi
+}
+
+get_templates() {
+    local branch=master
+    if ls $TEMPLATES/android-recovery-flashing-template/* 1> /dev/null 2>&1; then
+        if [[ $(grep branch $TEMPLATES/android-recovery-flashing-template/.git/config | cut -d\" -f2) = "$branch" ]]; then
+            cd $TEMPLATES/android-recovery-flashing-template
+            git pull
+        else
+            rm -rf $TEMPLATES/android-recovery-flashing-template/
+            clone_templates $branch
+        fi
+    else
+        clone_templates $branch
     fi
 }
