@@ -121,6 +121,8 @@ cp -r $IMGDIR/$IMGNAME.img $TMPDIR/zip/data/rootfs.img
 
 rm -f $IMGDIR/$IMGNAME.zip
 cd $TMPDIR/zip/
+split -b 1G data/rootfs.img data/rootfs.part.
+rm -f data/rootfs.img
 zip -r9 $IMGDIR/$IMGNAME.zip *
 
 rm -rf $TMPDIR/zip/*
