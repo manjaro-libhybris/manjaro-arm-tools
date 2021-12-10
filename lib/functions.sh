@@ -15,7 +15,7 @@ TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
-TEMPLATES=/usr/share/manjaro-arm-tools/profiles
+TEMPLATES=/usr/share/manjaro-arm-tools/templates
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
 OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm'
 STORAGE_USER=$(whoami)
