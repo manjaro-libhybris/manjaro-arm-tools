@@ -94,11 +94,6 @@ if [[ "$BRANCH" != "stable" && "$BRANCH" != "testing" && "$BRANCH" != "unstable"
     exit 1
 fi
 
-if [[ "$DEVICE" != "halium-9" ]]; then
-    msg "Unknown device. Please use halium-9!"
-    exit 1
-fi
-
 # start the timer
 timer_start=$(get_timer)
 
