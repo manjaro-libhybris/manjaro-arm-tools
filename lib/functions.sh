@@ -308,7 +308,7 @@ create_rootfs_img() {
     # Install device and editions specific packages
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
     case "$EDITION" in
-        cubocore|phosh|plasma-mobile|plasma-mobile-dev|kde-bigscreen|nemomobile)
+        cubocore|phosh|plasma-mobile|plasma-mobile-dev|kde-bigscreen|nemomobile|cutie)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
         minimal|server)
@@ -352,7 +352,7 @@ create_rootfs_img() {
             # Lock root user
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd --lock root
             ;;
-        phosh|lomiri|nemomobile)
+        phosh|lomiri|nemomobile|cutie)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "$USER" autologin
             # Lock root user
@@ -595,6 +595,10 @@ create_img_halium() {
     mount $IMGDIR/$IMGNAME.img $TMPDIR/root
     cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
     cp -ra $ROOTFS_IMG/rootfs_$ARCH/.* $TMPDIR/root/
+    mkdir -p $TMPDIR/root/mnt/vendor/persist $TMPDIR/root/mnt/vendor/efs
+    ln -s /android/product $TMPDIR/root/product
+    ln -s /android/metadata $TMPDIR/root/metadata
+    ln -s /android/efs $TMPDIR/root/efs
 
     umount $TMPDIR/root/
     rm -r $TMPDIR/root/
