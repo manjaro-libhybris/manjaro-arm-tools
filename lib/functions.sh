@@ -343,6 +343,13 @@ create_rootfs_img() {
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
 
+    echo "Creating all the users"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd --gid 32011 manjaro
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -G autologin,wheel,sys,audio,input,video,storage,lp,network,users,power,rfkill,system,radio,android_input,android_graphics,android_audio
+       --uid 32011 --gid 32011 -m -g users -p $(openssl passwd -6 "123456") -s /bin/bash manjaro 1> /dev/null 2>&1
+
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -6 'root')\"} 1" /etc/shadow 1> /dev/null 2>&1
+
     info "Setting up system settings..."
     #system setup
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust
@@ -355,7 +362,7 @@ create_rootfs_img() {
             ;;
         phosh|lomiri|nemomobile|cutie)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "$USER" autologin
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "manjaro" autologin
             # Lock root user
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd --lock root
             ;;
@@ -503,20 +510,6 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         echo "Update appstream DB"
         NSPAWN $ROOTFS_IMG/rootfs_$ARCH appstreamcli refresh-cache --force
     fi
-
-    echo "Setting the correct chassis"
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH hostnamectl set-chassis handset
-
-    echo "Creating all the users"
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "manjaro" > /tmp/user
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "123456" > /tmp/password
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "root" > /tmp/rootpassword
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd --gid 32011 $(cat /tmp/user)
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd --uid 32011 --gid 32011 -m -g users -G autologin,wheel,sys,audio,input,video,storage,lp,network,users,power,rfkill,system,radio,android_input,android_graphics,android_audio -p $(openssl passwd -6 $(cat /tmp/password)) \
-        -s /bin/bash $(cat /tmp/user) 1> /dev/null 2>&1
-
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -6 $(cat /tmp/rootpassword))\"} 1" /etc/shadow 1> /dev/null 2>&1
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH rm /tmp/user /tmp/password /tmp/rootpassword
 
     msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Qr / > $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt 2>/dev/null
