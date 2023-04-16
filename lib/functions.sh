@@ -334,10 +334,11 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sshd.service 1>/dev/null
     fi
 
-
     while read service; do
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
     done < $srv_list
+
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable --global audiosystem-passthrough || true 1>/dev/null
 
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
@@ -491,7 +492,32 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     else
         echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
     fi
-    
+
+    echo "Setting the correct theme for plymouth"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH plymouth-set-default-theme manjaro
+
+    echo "Setting the correct locale"
+    localectl set-locale "en_US.UTF-8"
+
+    if [[ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/appstreamctl ]]; then
+        echo "Update appstream DB"
+        NSPAWN $ROOTFS_IMG/rootfs_$ARCH appstreamcli refresh-cache --force
+    fi
+
+    echo "Setting the correct chassis"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH hostnamectl set-chassis handset
+
+    echo "Creating all the users"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "manjaro" > /tmp/user
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "123456" > /tmp/password
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "root" > /tmp/rootpassword
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd --gid 32011 $(cat /tmp/user)
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd --uid 32011 --gid 32011 -m -g users -G autologin,wheel,sys,audio,input,video,storage,lp,network,users,power,rfkill,system,radio,android_input,android_graphics,android_audio -p $(openssl passwd -6 $(cat /tmp/password)) \
+        -s /bin/bash $(cat /tmp/user) 1> /dev/null 2>&1
+
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -6 $(cat /tmp/rootpassword))\"} 1" /etc/shadow 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH rm /tmp/user /tmp/password /tmp/rootpassword
+
     msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Qr / > $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt 2>/dev/null
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH sed -i '1s/^[^l]*l//' /var/tmp/pkglist.txt
@@ -507,6 +533,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/gnupg
+    rm -rf $ROOTFS_IMG/rootfs_$ARCJ/Manjaro-ARM-aarch64-latest.tar.gz
 
     msg "$DEVICE $EDITION rootfs complete"
 }
@@ -598,6 +625,7 @@ create_img_halium() {
     mkdir -p $TMPDIR/root/mnt/vendor/persist $TMPDIR/root/mnt/vendor/efs
     ln -s /android/product $TMPDIR/root/product
     ln -s /android/metadata $TMPDIR/root/metadata
+    ln -s /android/system $TMPDIR/root/system
     ln -s /android/efs $TMPDIR/root/efs
 
     umount $TMPDIR/root/

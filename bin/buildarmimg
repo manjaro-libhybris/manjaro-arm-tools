@@ -112,13 +112,14 @@ cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>'${DEVICE//
 create_rootfs_img | tee --append "$LOG"
 
 case "$DEVICE" in
-    halium-9)
+    xiaomi-onclite|xiaomi-lavender|xiaomi-miatoll|xiaomi-dandelion|google-sargo|halium-9|halium-10|halium-11)
         create_img_halium | tee --append "$LOG"
         ;;
     *)
         create_img | tee --append "$LOG"
         ;;
 esac
+
 if [ ${BMAP} = true ]; then
     create_bmap | tee --append "$LOG"
 fi
