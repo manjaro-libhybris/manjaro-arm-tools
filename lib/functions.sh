@@ -525,7 +525,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/gnupg
-    rm -rf $ROOTFS_IMG/rootfs_$ARCJ/Manjaro-ARM-aarch64-latest.tar.gz
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/Manjaro-ARM-aarch64-latest.tar.gz
 
     msg "$DEVICE $EDITION rootfs complete"
 }
