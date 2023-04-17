@@ -338,15 +338,14 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
     done < $srv_list
 
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable --global audiosystem-passthrough || true 1>/dev/null
-
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
 
     echo "Creating all the users"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd autologin
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd --gid 32011 manjaro
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -G autologin,wheel,sys,audio,input,video,storage,lp,network,users,power,rfkill,system,radio,android_input,android_graphics,android_audio
-       --uid 32011 --gid 32011 -m -g users -p $(openssl passwd -6 "123456") -s /bin/bash manjaro 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -G autologin,wheel,sys,audio,input,video,storage,lp,network,users,power,rfkill,system,radio,android_input,android_graphics,android_audio \
+	--uid 32011 --gid 32011 -m -g users -p $(openssl passwd -6 "123456") -s /bin/bash manjaro 1> /dev/null 2>&1
 
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -6 'root')\"} 1" /etc/shadow 1> /dev/null 2>&1
 
