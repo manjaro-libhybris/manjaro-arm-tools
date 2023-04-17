@@ -5,10 +5,6 @@ This software is available in the Manjaro repository.
 
 *These tools only work on Manjaro based distributions!*
 
-
-## Known issues
-Check the [Issues](https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-arm-tools/-/issues) page.
-
 ## Dependencies
 These scripts rely on certain packages, other than what's in the `base` package group, to be able to function. These packages are:
 * parted (arch repo)
@@ -84,38 +80,16 @@ signarmpkgs
 
 ## buildarmimg
 **Supported devices:**
-* edgev
-* gsking-x
-* gtking-pro
-* nanopc-t4
-* nanopi-neo-plus2
-* oc2
-* oc4
-* on2
-* on2-plus
-* pine64-lts
-* pine-h64
-* pinebook
-* pinephone
-* pinetab
-* pbpro
-* pbpro-bsp
-* quartz64-bsp (new)
-* rpi3 (not the A/B+ models it seems)
-* rpi4
-* rock64
-* roc-cc
-* rockpi4b
-* rockpi4c
-* rockpro64
-* stationp1
-* vim1
-* vim2
-* vim3
-
+* halium-9
+* halium-10
+* halium-11
+* xiaomi-onclite
+* xiaomi-lavender
+* xiaomi-miatoll
+* xiaomi-dandelion
+* google-sargo
 
 **Supported editions:**
-
 * minimal
 * lxqt
 * kde-plasma
@@ -131,63 +105,15 @@ signarmpkgs
 * jade (not comlete yet)
 * server (not complete yet, unmaintained)
 
-
 This script will compress the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
-Profiles that gets used are from this [Gitlab](https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles) repository.
+Profiles that gets used are from this [github](https://github.com/manjaro-libhybris/arm-profiles) repository.
 
 **Syntax**
 
 ```
 sudo buildarmimg [-d device] [-e edition] [-v version] [-n] [-x] [-i package-file.pkg.tar.xz] [-b branch] [-m]
 ```
-
-To build a minimal image version 18.07 for the raspberry pi 3 on arm-unstable branch with bmap support:
-
-```
-sudo buildarmimg -d rpi3 -e minimal -v 18.07 -b unstable -m
-```
-
-To build a minimal version 18.08 RC1 for the odroid-c2 with a new rootfs downloaded:
-
-```
-sudo buildarmimg -d oc2 -e minimal -v 18.08-rc1 -n
-```
-
-To build an lxqt version with a local package installed for the rock64:
-
-```
-sudo buildarmimg -d rock64 -e lxqt -i package-name-1.0-1-aarch64.pkg.tar.xz
-```
-
-To build a kde-plasma edition for the Pinebook Pro with btrfs filesystem:
-
-```
-sudo buildarmimg -d pbpro -e kde-plasma -p btrfs
-```
-
-To build a factory image for the Pinebook Pro, with BSP uboot:
-```
-sudo buildarmimg -d pbpro-bsp -e kde-plasma -f
-```
-A log is located at /var/log/manjaro-arm-tools/buildarmimg-$(date +%Y-%m-%d-%H.%M).log
-
-## buildemmcinstaller (depricated)
-This script does almost the same as the `buildarmimg` script.
-
-Except that it always creates a minimal image, with an already existing image inside it, only to be used for internal storage (eMMC) deployments.
-
-**Syntax**
-```
-sudo buildemmcinstaller [-d device] [-e edition] -v version [-f flashversion] [-n] [-x] [-i package-file.pkg.tar.xz]
-```
-
-So to build an eMMC installer image for KDE Plasma 19.04 on Pinebook:
-```
-sudo buildemmcinstaller -d pinebook -e kde-plasma -v 19.04 -f first-emmc-flasher
-```
-Be aware that the device, edition and version, most already exist on the OSDN download page, else it won't work.
-
 
 ## buildrootfs
 This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmimg`. Right now only supports `aarch64`.

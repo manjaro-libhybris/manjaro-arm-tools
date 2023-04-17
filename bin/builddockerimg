@@ -5,7 +5,7 @@ LIBDIR=/usr/share/manjaro-arm-tools/lib
 ARCH="aarch64"
 DOCKER_IMAGE_NAME="manjaro-$ARCH-base"
 
-#imports
+# imports
 source $LIBDIR/functions.sh
 enable_colors
 
@@ -19,7 +19,7 @@ fi
 
 create_rootfs () {
     msg "Creating rootfs..."
-    
+
     # Remove old rootfs if it exists
     if [ -d $BUILDDIR/$ARCH ]; then
     echo "Removing old rootfs..."
@@ -29,18 +29,18 @@ create_rootfs () {
     # cd to root_fs
     mkdir -p $BUILDDIR/$ARCH
 
-    #basescrap the rootfs filesystem
+    # basescrap the rootfs filesystem
     $LIBDIR/pacstrap -G -c -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH base-devel
 
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
-    
+
     # fix SSL in the rootfs
     rm -f $BUILDDIR/$ARCH/etc/ssl/certs/ca-certificates.crt
     rm -f $BUILDDIR/$ARCH/etc/ca-certificates/extracted/tls-ca-bundle.pem
     cp -a /etc/ssl/certs/ca-certificates.crt $BUILDDIR/$ARCH/etc/ssl/certs/
     cp -a /etc/ca-certificates/extracted/tls-ca-bundle.pem $BUILDDIR/$ARCH/etc/ca-certificates/extracted/
-    
+
     info "Setting up keyrings..."
     $NSPAWN $BUILDDIR/$ARCH pacman-key --init 1> /dev/null 2>&1
     $NSPAWN $BUILDDIR/$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
@@ -60,7 +60,7 @@ compress_docker () {
     docker image rm $DOCKER_IMAGE_NAME
 }
 
-#Arguments 
+# Arguments
 opt=":a:h"
 
 while getopts "${opt}" arg; do
@@ -87,6 +87,7 @@ done
 if [ ! -d /var/log/manjaro-arm-tools ]; then
     mkdir -p /var/log/manjaro-arm-tools
 fi
+
 LOG=/var/log/manjaro-arm-tools/builddockerimg-$(date +%Y-%m-%d-%H.%M).log
 
 # Commands

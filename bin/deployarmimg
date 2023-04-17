@@ -7,11 +7,11 @@
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 TORRENT=false
 
-#imports
+# imports
 source $LIBDIR/functions.sh
 enable_colors
 
-#Arguments 
+# Arguments
 opt=":i:d:e:v:k:u:th"
 
 while getopts "${opt}" arg; do
@@ -52,7 +52,7 @@ while getopts "${opt}" arg; do
   esac
 done
 
-#required options
+# required options
 if [ "x" == "x$IMAGE" ]; then
   echo "-i [option] is required"
   exit
@@ -66,17 +66,10 @@ fi
 # Create checksums for the image
 checksum_img
 
-#create torrent for image
-if [[ $TORRENT = "true" ]]
-then
-create_torrent
+# create torrent for image
+if [[ $TORRENT = "true" ]]; then
+   create_torrent
 fi
 
 # Upload image + checksums to image server
 img_upload
-
-
-# remove pkg + sig from cache folder
-#msg "Removing local files..."
-#rm $image*
- 

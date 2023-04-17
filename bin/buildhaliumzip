@@ -8,7 +8,7 @@ FACTORY=false
 BMAP=false
 CUSTOM_REPO=
 
-#imports
+# imports
 source $LIBDIR/functions.sh
 CHROOTDIR=$ROOTFS_IMG/rootfs_$ARCH
 PKG_CACHE=$CHROOTDIR/var/cache/pacman/pkg
@@ -19,7 +19,7 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-#Arguments 
+# Arguments
 opt=":e:d:v:i:b:nhk:os:p:c"
 
 while getopts "${opt}" arg; do
@@ -75,6 +75,7 @@ done
 if [ ! -d /var/log/manjaro-arm-tools ]; then
     mkdir -p /var/log/manjaro-arm-tools
 fi
+
 LOG=/var/log/manjaro-arm-tools/buildarmimg-$(date +%Y-%m-%d-%H.%M).log
 
 IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
@@ -88,7 +89,7 @@ if [ ! -d "$TEMPLATES/android-recovery-flashing-template" ]; then
     get_templates | tee --append "$LOG"
 fi
 
-#Make sure only a known branch is used
+# Make sure only a known branch is used
 if [[ "$BRANCH" != "stable" && "$BRANCH" != "testing" && "$BRANCH" != "unstable" ]]; then
     msg "Unknown branch. Please use either, stable, testing or unstable!"
     exit 1
@@ -97,7 +98,7 @@ fi
 # start the timer
 timer_start=$(get_timer)
 
-#Package lists
+# Package lists
 # remove ">pinephone " prefix for pinephones and remove lines starting with ">" for other devices, remove everything after #
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
 PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | sed -e 's/>'${DEVICE//pro/}' //' -e '/^>/d' -e 's/#.*//' )

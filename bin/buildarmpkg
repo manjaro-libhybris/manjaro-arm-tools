@@ -5,7 +5,7 @@ LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDCLEAN=true
 INSTALL_NEW=false
 
-#imports
+# imports
 source $LIBDIR/functions.sh
 CHROOTDIR=$BUILDDIR/$ARCH
 PKG_CACHE=$CHROOTDIR/var/cache/pacman/pkg
@@ -16,7 +16,7 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-#Arguments 
+# Arguments
 opt=":p:a:i:r:nb:kh"
 
 while getopts "${opt}" arg; do
@@ -59,38 +59,38 @@ done
 
 enable_colors
 
-#Need both package and architecture
+# Need both package and architecture
 if [ "x" == "x$PACKAGE" ]; then
   echo "-p [option] is required"
   exit
 fi
 
-#Build the 'any' packages on aarch64
+# Build the 'any' packages on aarch64
 if [ $ARCH == "any" ]; then
     ARCH="aarch64"
 fi
 
-#Make sure only a known branch is used
+# Make sure only a known branch is used
 if [[ "$BRANCH" != "stable" && "$BRANCH" != "testing" && "$BRANCH" != "unstable" ]]; then
     msg "Unknown branch. Please use either, stable, testing or unstable!"
     exit 1
 fi
+
 # start the timer
 timer_start=$(get_timer)
-   
+
 if [[ "$BUILDCLEAN" = "false" && ! -d $CHROOTDIR ]]; then
     msg "Rootfs does not exist. Please run this command again without the -k option to generate a rootfs to use..."
     exit 1
-    
 elif [[ "$BUILDCLEAN" = "true" ]]; then
-    #create the rootfs to build in
+    # create the rootfs to build in
     create_rootfs_pkg
 fi
 
-#build the package
+# build the package
 build_pkg
 
-#export the package and clean up
+# export the package and clean up
 export_and_clean
 prune_cache
 

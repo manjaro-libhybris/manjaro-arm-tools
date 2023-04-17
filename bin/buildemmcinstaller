@@ -5,7 +5,7 @@ LIBDIR=/usr/share/manjaro-arm-tools/lib
 KEEPROOTFS=true
 EXTRACTED=false
 
-#imports
+# imports
 source $LIBDIR/functions.sh
 CHROOTDIR=$ROOTFS_IMG/rootfs_$ARCH
 PKG_CACHE=$CHROOTDIR/var/cache/pacman/pkg
@@ -16,7 +16,7 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-#Arguments 
+# Arguments
 opt=":e:d:v:i:f:nxh"
 
 while getopts "${opt}" arg; do
@@ -77,24 +77,26 @@ fi
 # start the timer
 timer_start=$(get_timer)
 
-#Package lists
+# Package lists
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
 PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/minimal | awk '{print $1}')
 SRV_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/services/minimal | awk '{print $1}')
 cat $PROFILES/arm-profiles/services/minimal | sed -e '/^#/d' >$srv_list
 
-#start timer
-#timer=$(get_timer)
+# start timer
+# timer=$(get_timer)
 
 # Creating the rootfs used for the image.
 create_emmc_install
 create_img
+
 if [[ "$EXTRACTED" = "true" ]]; then
-info "Image not compressed, because you supplied the -x option!"
+   info "Image not compressed, because you supplied the -x option!"
 else
-# Create the compressed file, from the .img file which will get deleted.
-compress
+   # Create the compressed file, from the .img file which will get deleted.
+   compress
 fi
+
 prune_cache
 
 # show timer

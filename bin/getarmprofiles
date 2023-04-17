@@ -9,7 +9,7 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-#Arguments 
+# Arguments
 opt="fhp"
 
 while getopts "${opt}" arg; do

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-#variables
+# variables
 BRANCH='stable'
 DEVICE='rpi4'
 EDITION='minimal'
@@ -29,8 +29,8 @@ COLORS=true
 FILESYSTEM='ext4'
 srv_list=/tmp/services_list
 
-#import conf file
-source /etc/manjaro-arm-tools/manjaro-arm-tools.conf 
+# import conf file
+source /etc/manjaro-arm-tools/manjaro-arm-tools.conf
 
 # PKGDIR & IMGDIR may not exist if they were changed by configuration, make sure they do.
 mkdir -p ${PKGDIR}/pkg-cache
@@ -123,7 +123,7 @@ msg() {
     local mesg=$1; shift
     printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
  }
- 
+
 info() {
     local mesg=$1; shift
     printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
@@ -250,13 +250,13 @@ create_rootfs_pkg() {
 
 create_rootfs_img() {
     #Check if device file exists
-    if [ ! -f "$PROFILES/arm-profiles/devices/$DEVICE" ]; then 
+    if [ ! -f "$PROFILES/arm-profiles/devices/$DEVICE" ]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
         echo "$(ls $PROFILES/arm-profiles/devices/)"
         exit 1
     fi
     #check if edition file exists
-    if [ ! -f "$PROFILES/arm-profiles/editions/$EDITION" ]; then 
+    if [ ! -f "$PROFILES/arm-profiles/editions/$EDITION" ]; then
         echo 'Invalid edition '$EDITION', please choose one of the following'
         echo "$(ls $PROFILES/arm-profiles/editions/)"
         exit 1
@@ -280,14 +280,14 @@ create_rootfs_img() {
         cd $ROOTFS_IMG
         wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
-    
+
     info "Extracting $ARCH rootfs..."
     bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
-    
+
     info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1>/dev/null || abort
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
-    
+
     if [[ ! -z ${CUSTOM_REPO} ]]; then
         info "Adding repo [$CUSTOM_REPO] to rootfs"
 
@@ -303,7 +303,7 @@ create_rootfs_img() {
 
     info "Setting branch to $BRANCH..."
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
-    
+
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
@@ -326,7 +326,7 @@ create_rootfs_img() {
     fi
     info "Generating mirrorlist..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --protocols https --method random --api --set-branch $BRANCH 1> /dev/null 2>&1
-    
+
     info "Enabling services..."
     # Enable services
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service pacman-init.service 1>/dev/null
@@ -374,7 +374,7 @@ create_rootfs_img() {
             cp $LIBDIR/getty\@.service $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/getty\@.service
             ;;
     esac
-    
+
     # Create OEM user
     if [ -d $ROOTFS_IMG/rootfs_$ARCH/usr/share/calamares ]; then
         echo "Creating OEM user..."
@@ -425,7 +425,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
             sed -i s/"\[daemon\]"/"\[daemon\]\nAutomaticLogin=oem\nAutomaticLoginEnable=True"/g $ROOTFS_IMG/rootfs_$ARCH/etc/gdm/custom.conf
         fi
     fi
-    
+
     # Lomiri services Temporary in function until it is moved to an individual package.
     if [[ "$EDITION" = "lomiri" ]]; then
         echo "Fix indicators"
@@ -440,17 +440,17 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -sfv /usr/lib/systemd/user/indicator-transfer.service /usr/lib/systemd/user/ayatana-indicators.target.wants/indicator-transfer.service
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -sfv /usr/lib/systemd/user/indicator-bluetooth.service /usr/lib/systemd/user/ayatana-indicators.target.wants/indicator-bluetooth.service
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -sfv /usr/lib/systemd/user/indicator-location.service /usr/lib/systemd/user/ayatana-indicators.target.wants/indicator-location.service
-        
+
         echo "Fix background"
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -pv /usr/share/backgrounds
         #$NSPAWN $ROOTFS_IMG/rootfs_$ARCH convert -verbose /usr/share/wallpapers/manjaro.jpg /usr/share/wallpapers/manjaro.png
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -sfv /usr/share/wallpapers/manjaro.png /usr/share/backgrounds/warty-final-ubuntu.png
-        
+
         echo "Fix Maliit"
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -pv /usr/lib/systemd/user/graphical-session.target.wants
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -sfv /usr/lib/systemd/user/maliit-server.service /usr/lib/systemd/user/graphical-session.target.wants/maliit-server.service
     fi
-    ### Lomiri Temporary service ends here 
+    ### Lomiri Temporary service ends here
 
     echo "Correcting permissions from overlay..."
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/etc
@@ -458,10 +458,11 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     if [[ -d $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d ]]; then
         chown 0:102 $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     fi
+
     if [[ -d $ROOTFS_IMG/rootfs_$ARCH/usr/share/polkit-1/rules.d ]]; then
         chown 0:102 $ROOTFS_IMG/rootfs_$ARCH/usr/share/polkit-1/rules.d
     fi
-    
+
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
         info "Adding btrfs support to system..."
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf ]; then
@@ -481,7 +482,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         sed -i '/^MODULES/{s/)/ btrfs)/}' $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     fi
-    
+
 	if [[ "$FACTORY" = "true" ]]; then
 	info "Making settings for factory specific image..."
         case "$EDITION" in
@@ -507,15 +508,18 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
 
     if [[ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/appstreamctl ]]; then
         echo "Update appstream DB"
-        NSPAWN $ROOTFS_IMG/rootfs_$ARCH appstreamcli refresh-cache --force
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH appstreamcli refresh-cache --force
     fi
+
+    echo "Generating ssh keys"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ssh-keygen -A
 
     msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Qr / > $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt 2>/dev/null
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH sed -i '1s/^[^l]*l//' /var/tmp/pkglist.txt
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH sed -i '$d' /var/tmp/pkglist.txt
     mv $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt "$IMGDIR/$IMGNAME-pkgs.txt"
-    
+
     info "Cleaning rootfs for unwanted files..."
     prune_cache
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
@@ -545,19 +549,19 @@ create_emmc_install() {
         cd $ROOTFS_IMG
         wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
-    #also fetch it, if it does not exist
+    # also fetch it, if it does not exist
     if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
         cd $ROOTFS_IMG
         wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
-    
+
     info "Extracting $ARCH rootfs..."
     bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $CHROOTDIR
-    
+
     info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init || abort
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm || abort
-    
+
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
     # Install device and editions specific packages
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
@@ -567,14 +571,14 @@ create_emmc_install() {
     info "Enabling services..."
     # Enable services
     $NSPAWN $CHROOTDIR systemctl enable getty.target haveged.service 1> /dev/null 2>&1
-    
+
     info "Setting up system settings..."
     # setting hostname
     echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
     # enable autologin
     mv $CHROOTDIR/usr/lib/systemd/system/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service
-    
+
     if [ -f $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz ]; then
         info "Copying local $DEVICE $EDITION image..."
         cp $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz $CHROOTDIR/var/tmp/Manjaro-ARM.img.xz
@@ -584,7 +588,7 @@ create_emmc_install() {
         cd $CHROOTDIR/var/tmp/
         wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://github.com/manjaro-arm/$DEVICE-images/releases/download/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
     fi
-    
+
     info "Cleaning rootfs for unwanted files..."
     prune_cache
     rm $CHROOTDIR/usr/bin/qemu-aarch64-static
@@ -614,6 +618,8 @@ create_img_halium() {
     mount $IMGDIR/$IMGNAME.img $TMPDIR/root
     cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
     cp -ra $ROOTFS_IMG/rootfs_$ARCH/.* $TMPDIR/root/
+    mkdir -p $TMPDIR/root/android
+    mkdir -p $TMPDIR/root/userdata
     mkdir -p $TMPDIR/root/mnt/vendor/persist $TMPDIR/root/mnt/vendor/efs
     ln -s /android/product $TMPDIR/root/product
     ln -s /android/metadata $TMPDIR/root/metadata
@@ -622,7 +628,7 @@ create_img_halium() {
 
     umount $TMPDIR/root/
     rm -r $TMPDIR/root/
-    
+
     chmod 666 $IMGDIR/$IMGNAME.img
 }
 
@@ -631,11 +637,11 @@ create_img() {
     info "Creating partitions..."
 
     ARCH='aarch64'
-    
+
     SIZE=$(du -s --block-size=MB $CHROOTDIR | awk '{print $1}' | sed -e 's/MB//g')
     EXTRA_SIZE=600
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
-    
+
     #making blank .img to be used
     dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE 1> /dev/null 2>&1
 
@@ -652,9 +658,9 @@ create_img() {
     case "$FILESYSTEM" in
         btrfs)
             # Create partitions
-            #Clear first 32mb
+            # Clear first 32mb
             dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-            #partition with boot and root
+            # partition with boot and root
             case "$DEVICE" in
                 oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|radxa-zero|gtking-pro|gsking-x|edgev|rpi3|rpi4|pinephone)
                     parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
@@ -671,8 +677,8 @@ create_img() {
                     partprobe $LDEV 1> /dev/null 2>&1
                     mkfs.vfat "${LDEV}p2" -n BOOT_MNJRO 1> /dev/null 2>&1
                     mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p3" 1> /dev/null 2>&1
-                
-                    #copy rootfs contents over to the FS
+
+                    # copy rootfs contents over to the FS
                     info "Creating subvolumes..."
                     mkdir -p $TMPDIR/root
                     mkdir -p $TMPDIR/boot
@@ -705,8 +711,8 @@ create_img() {
                 partprobe $LDEV 1> /dev/null 2>&1
                 mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
                 mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p2" 1> /dev/null 2>&1
-    
-                #copy rootfs contents over to the FS
+
+                # copy rootfs contents over to the FS
                 info "Creating subvolumes..."
                 mkdir -p $TMPDIR/root
                 mkdir -p $TMPDIR/boot
@@ -726,9 +732,9 @@ create_img() {
             ;;
         *)
             # Create partitions
-            #Clear first 32mb
+            # Clear first 32mb
             dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-            #partition with boot and root
+            # partition with boot and root
             case "$DEVICE" in
                 oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|radxa-zero|gtking-pro|gsking-x|edgev|rpi3|rpi4|pinephone)
                     parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
@@ -781,7 +787,7 @@ create_img() {
                 fi
             ;;
     esac
-        
+
     # Flash bootloader
     info "Flashing bootloader..."
     case "$DEVICE" in
@@ -821,7 +827,7 @@ create_img() {
             dd if=$TMPDIR/boot/uboot.img of=${LDEV}p1 conv=notrunc,fsync 1> /dev/null 2>&1
             ;;
     esac
-    
+
     info "Writing PARTUUIDs..."
     if [[ "$DEVICE" = "quartz64-bsp" ]]; then
         BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
@@ -849,7 +855,7 @@ create_img() {
         #   ./mkscr
         #   cd $HOME
     fi
-    
+
     if [[ "$DEVICE" = "rpi4" ]] && [[ "$FILESYSTEM" = "btrfs" ]]; then
         echo "===> Installing default btrfs RPi cmdline.txt /boot..."
         echo "rootflags=subvol=@ root=PARTUUID=$ROOT_PART rw rootwait console=serial0,115200 console=tty3 selinux=0 quiet splash plymouth.ignore-serial-consoles smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 kgdboc=serial0,115200 usbhid.mousepoll=8 audit=0" >  $TMPDIR/boot/cmdline.txt
@@ -857,6 +863,7 @@ create_img() {
         echo "===> Installing default ext4 RPi cmdline.txt /boot..."
         echo "root=PARTUUID=$ROOT_PART rw rootwait console=serial0,115200 console=tty3 selinux=0 quiet splash plymouth.ignore-serial-consoles smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 kgdboc=serial0,115200 usbhid.mousepoll=8 audit=0" >  $TMPDIR/boot/cmdline.txt
     fi
+
     if [[ "$DEVICE" = "rpi4" ]]; then
         echo "===> Installing default config.txt file to /boot/..."
         echo "# See /boot/overlays/README for all available options" > $TMPDIR/boot/config.txt
@@ -876,14 +883,13 @@ create_img() {
         echo "max_framebuffers=2"  >> $TMPDIR/boot/config.txt
         echo "disable_splash=1" >> $TMPDIR/boot/config.txt
     fi
-    
+
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
         sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
     else
         echo "PARTUUID=$ROOT_PART   /   $FILESYSTEM     defaults    0   1" >> $TMPDIR/root/etc/fstab
     fi
-    
-    
+
     # Clean up
     info "Cleaning up image..."
     if [[ "$FILESYSTEM" = "btrfs" ]]; then

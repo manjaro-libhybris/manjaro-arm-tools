@@ -4,8 +4,8 @@
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 ARCH="aarch64"
 
-#imports
-source $LIBDIR/functions.sh 
+# imports
+source $LIBDIR/functions.sh
 enable_colors
 
 # check if root
@@ -27,15 +27,15 @@ create_rootfs () {
     # cd to root_fs
     mkdir -p $BUILDDIR/$ARCH
 
-    #pacscrap the rootfs filesystem
+    # pacscrap the rootfs filesystem
     $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $BUILDDIR/$ARCH pacman
 
     # Enable cross architecture Chrooting
     cp /usr/bin/qemu-aarch64-static $BUILDDIR/$ARCH/usr/bin/
-    
+
     # fix SSL in the rootfs
     $NSPAWN $BUILDDIR/$ARCH update-ca-trust
-    
+
     rm -f $BUILDDIR/$ARCH/var/cache/pacman/pkg/*
     $NSPAWN $BUILDDIR/$ARCH pacman-mirrors -f5 1> /dev/null 2>&1
 }
@@ -47,7 +47,7 @@ compress_rootfs () {
     rm -rf $BUILDDIR/$ARCH
 }
 
-#Arguments 
+# Arguments
 opt=":a:h"
 
 while getopts "${opt}" arg; do
@@ -74,6 +74,7 @@ done
 if [ ! -d /var/log/manjaro-arm-tools ]; then
     mkdir -p /var/log/manjaro-arm-tools
 fi
+
 LOG=/var/log/manjaro-arm-tools/buildrootfs-$(date +%Y-%m-%d-%H.%M).log
 
 # Commands
