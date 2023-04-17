@@ -524,7 +524,10 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH plymouth-set-default-theme manjaro
 
     echo "Setting the correct locale"
-    localectl set-locale "en_US.UTF-8"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+    echo "Setting chassis mode"
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "CHASSIS=handset" > /etc/machine-info
 
     if [[ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/appstreamctl ]]; then
         echo "Update appstream DB"
