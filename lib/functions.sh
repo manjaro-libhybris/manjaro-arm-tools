@@ -189,6 +189,7 @@ checksum_img() {
     sha256sum $IMAGE > $IMAGE.sha256
     info "Creating signature for [$IMAGE]..."
     gpg --detach-sign -u $GPGMAIL "$IMAGE"
+
     if [ ! -f "$IMAGE.sig" ]; then
         echo "Image not signed. Aborting..."
         exit 1
@@ -210,6 +211,7 @@ create_rootfs_pkg() {
         info "Removing old rootfs..."
         rm -rf $CHROOTDIR
     fi
+
     msg "Creating rootfs..."
     # cd to rootfs
     mkdir -p $CHROOTDIR
@@ -219,6 +221,7 @@ create_rootfs_pkg() {
     $LIBDIR/pacstrap -G -M -C $LIBDIR/pacman.conf.$ARCH $CHROOTDIR fakeroot-qemu base-devel
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     sed -i s/"arm-$BRANCH"/"arm-stable"/g $LIBDIR/pacman.conf.$ARCH
+
     if [[ $CARCH != "aarch64" ]]; then
         # Enable cross architecture Chrooting
         cp /usr/bin/qemu-aarch64-static $CHROOTDIR/usr/bin/
@@ -230,6 +233,7 @@ create_rootfs_pkg() {
     cp $LIBDIR/makepkg $CHROOTDIR/usr/bin/
     $NSPAWN $CHROOTDIR chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
     $NSPAWN $CHROOTDIR update-ca-trust
+
     if [[ ! -z ${CUSTOM_REPO} ]]; then
         info "Adding repo [$CUSTOM_REPO] to rootfs"
 
@@ -242,6 +246,7 @@ create_rootfs_pkg() {
             sed -i "s/^\[core\]/\[$CUSTOM_REPO\]\nInclude = \/etc\/pacman.d\/mirrorlist\n\n\[core\]/" $CHROOTDIR/etc/pacman.conf
         fi
     fi
+
     sed -i s/'#PACKAGER="John Doe <john@doe.com>"'/"$PACKAGER"/ $CHROOTDIR/etc/makepkg.conf
     sed -i s/'#MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(nproc)"'/ $CHROOTDIR/etc/makepkg.conf
     sed -i s/'COMPRESSXZ=(xz -c -z -)'/'COMPRESSXZ=(xz -c -z - --threads=0)'/ $CHROOTDIR/etc/makepkg.conf
@@ -249,25 +254,30 @@ create_rootfs_pkg() {
 }
 
 create_rootfs_img() {
-    #Check if device file exists
+    # Check if device file exists
     if [ ! -f "$PROFILES/arm-profiles/devices/$DEVICE" ]; then
         echo 'Invalid device '$DEVICE', please choose one of the following'
         echo "$(ls $PROFILES/arm-profiles/devices/)"
         exit 1
     fi
-    #check if edition file exists
+
+    # check if edition file exists
     if [ ! -f "$PROFILES/arm-profiles/editions/$EDITION" ]; then
         echo 'Invalid edition '$EDITION', please choose one of the following'
         echo "$(ls $PROFILES/arm-profiles/editions/)"
         exit 1
     fi
+
     msg "Creating image of $EDITION for $DEVICE..."
+
     # Remove old rootfs if it exists
     if [ -d $ROOTFS_IMG/rootfs_$ARCH ]; then
         info "Removing old rootfs..."
         rm -rf $ROOTFS_IMG/rootfs_$ARCH
     fi
+
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
+
     if [[ "$KEEPROOTFS" = "false" ]]; then
         rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
         # fetch and extract rootfs
@@ -275,7 +285,8 @@ create_rootfs_img() {
         cd $ROOTFS_IMG
         wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
-    #also fetch it, if it does not exist
+
+    # also fetch it, if it does not exist
     if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
         cd $ROOTFS_IMG
         wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
@@ -307,6 +318,7 @@ create_rootfs_img() {
     msg "Installing packages for $EDITION edition on $DEVICE..."
     # Install device and editions specific packages
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
+
     case "$EDITION" in
         cubocore|phosh|plasma-mobile|plasma-mobile-dev|kde-bigscreen|nemomobile|cutie)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
@@ -324,10 +336,12 @@ create_rootfs_img() {
         cp -ap $ADD_PACKAGE $PKG_CACHE/
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm || abort
     fi
+
     info "Generating mirrorlist..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --protocols https --method random --api --set-branch $BRANCH 1> /dev/null 2>&1
 
     info "Enabling services..."
+
     # Enable services
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service pacman-init.service 1>/dev/null
     if [[ "$CUSTOM_REPO" = "kde-unstable" ]]; then
@@ -350,9 +364,10 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -6 'root')\"} 1" /etc/shadow 1> /dev/null 2>&1
 
     info "Setting up system settings..."
-    #system setup
+    # system setup
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust
     echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
+
     case "$EDITION" in
         cubocore|plasma-mobile|plasma-mobile-dev|kde-bigscreen)
             echo "No OEM setup!"
@@ -381,6 +396,7 @@ create_rootfs_img() {
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -m -g users -u 984 -G wheel,sys,audio,input,video,storage,lp,network,users,power,autologin -p $(openssl passwd -6 oem) -s /bin/bash oem
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "oem ALL=(ALL) NOPASSWD: ALL" > $ROOTFS_IMG/rootfs_$ARCH/etc/sudoers.d/g_oem
+
         case "$EDITION" in
             desq|wayfire|sway)
                 SESSION=$(ls $ROOTFS_IMG/rootfs_$ARCH/usr/share/wayland-sessions/ | head -1)
@@ -389,6 +405,7 @@ create_rootfs_img() {
                 SESSION=$(ls $ROOTFS_IMG/rootfs_$ARCH/usr/share/xsessions/ | head -1)
                 ;;
         esac
+
         # For sddm based systems
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/sddm ]; then
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /etc/sddm.conf.d
@@ -398,6 +415,7 @@ create_rootfs_img() {
 User=oem
 Session=$SESSION" > $ROOTFS_IMG/rootfs_$ARCH/etc/sddm.conf.d/90-autologin.conf
         fi
+
         # For lightdm based systems
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/lightdm ]; then
             SESSION=$(echo ${SESSION%.*})
@@ -414,6 +432,7 @@ autologin-session=i3" >> $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
                 sed -i s/"#autologin-session="/"autologin-session=$SESSION"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm.conf
             fi
         fi
+
         # For greetd based Sway edition
         if [ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/sway ]; then
             echo '[initial_session]
@@ -455,6 +474,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     echo "Correcting permissions from overlay..."
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/etc
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/usr/{local,share}
+
     if [[ -d $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d ]]; then
         chown 0:102 $ROOTFS_IMG/rootfs_$ARCH/etc/polkit-1/rules.d
     fi
@@ -483,7 +503,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
     fi
 
-	if [[ "$FACTORY" = "true" ]]; then
+    if [[ "$FACTORY" = "true" ]]; then
 	info "Making settings for factory specific image..."
         case "$EDITION" in
             kde-plasma)
@@ -536,11 +556,13 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
 
 create_emmc_install() {
     msg "Creating eMMC install image of $EDITION for $DEVICE..."
+
     # Remove old rootfs if it exists
     if [ -d $CHROOTDIR ]; then
         info "Removing old rootfs..."
         rm -rf $CHROOTDIR
     fi
+
     mkdir -p $CHROOTDIR
     if [[ "$KEEPROOTFS" = "false" ]]; then
         rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
@@ -549,6 +571,7 @@ create_emmc_install() {
         cd $ROOTFS_IMG
         wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
+
     # also fetch it, if it does not exist
     if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
         cd $ROOTFS_IMG
@@ -563,6 +586,7 @@ create_emmc_install() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm || abort
 
     msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
+
     # Install device and editions specific packages
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
@@ -575,6 +599,7 @@ create_emmc_install() {
     info "Setting up system settings..."
     # setting hostname
     echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
+
     # enable autologin
     mv $CHROOTDIR/usr/lib/systemd/system/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service.bak
     cp $LIBDIR/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service
@@ -599,7 +624,7 @@ create_emmc_install() {
 }
 
 create_img_halium() {
-	msg "Finishing image for $DEVICE $EDITION edition..."
+    msg "Finishing image for $DEVICE $EDITION edition..."
     info "Creating image..."
 
     ARCH='aarch64'
@@ -608,12 +633,13 @@ create_img_halium() {
     EXTRA_SIZE=300
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
 
-    #making blank .img to be used
+    # making blank .img to be used
     dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE 1> /dev/null 2>&1
 
-    #format it
+    # format it
     mkfs.ext4 $IMGDIR/$IMGNAME.img -L ROOT_MNJRO 1> /dev/null 2>&1
-	info "Copying files to image..."
+    info "Copying files to image..."
+
     mkdir -p $TMPDIR/root
     mount $IMGDIR/$IMGNAME.img $TMPDIR/root
     cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
@@ -625,6 +651,7 @@ create_img_halium() {
     ln -s /android/metadata $TMPDIR/root/metadata
     ln -s /android/system $TMPDIR/root/system
     ln -s /android/efs $TMPDIR/root/efs
+    touch $TMPDIR/root/.writable_image
 
     umount $TMPDIR/root/
     rm -r $TMPDIR/root/
@@ -642,17 +669,17 @@ create_img() {
     EXTRA_SIZE=600
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
 
-    #making blank .img to be used
+    # making blank .img to be used
     dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE 1> /dev/null 2>&1
 
-    #probing loop into the kernel
+    # probing loop into the kernel
     modprobe loop 1> /dev/null 2>&1
 
-    #set up loop device
+    # set up loop device
     LDEV=`losetup -f`
     DEV=`echo $LDEV | cut -d "/" -f 3`
 
-    #mount image to loop device
+    # mount image to loop device
     losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
 
     case "$FILESYSTEM" in
@@ -836,9 +863,11 @@ create_img() {
         BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p1" | awk '{print $2}')
         ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
     fi
+
     echo "Boot PARTUUID is $BOOT_PART..."
     sed -i "s/LABEL=BOOT_MNJRO/PARTUUID=$BOOT_PART/g" $TMPDIR/root/etc/fstab
     echo "Root PARTUUID is $ROOT_PART..."
+
     if [ -f $TMPDIR/boot/extlinux/extlinux.conf ]; then
         sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/extlinux/extlinux.conf
         elif [ -f $TMPDIR/boot/efi/extlinux/extlinux.conf ]; then
@@ -895,6 +924,7 @@ create_img() {
     if [[ "$FILESYSTEM" = "btrfs" ]]; then
         umount $TMPDIR/root/home
     fi
+
     umount $TMPDIR/root
     umount $TMPDIR/boot
     losetup -d $LDEV 1> /dev/null 2>&1
@@ -919,6 +949,7 @@ compress() {
         info "Removing existing compressed image file {$IMGNAME.img.xz}..."
         rm -rf $IMGDIR/$IMGNAME.img.xz
     fi
+
     info "Compressing $IMGNAME.img..."
     #compress img
     cd $IMGDIR
@@ -937,6 +968,7 @@ build_pkg() {
         cp -ap $ADD_PACKAGE $PKG_CACHE
         $NSPAWN $CHROOTDIR pacman -U /var/cache/pacman/pkg/$ADD_PACKAGE --noconfirm
     fi
+
     # Build the actual package
     msg "Copying build directory {$PACKAGE} to rootfs..."
     $NSPAWN $CHROOTDIR mkdir build 1> /dev/null 2>&1
@@ -944,6 +976,7 @@ build_pkg() {
     msg "Building {$PACKAGE}..."
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
     $NSPAWN $CHROOTDIR pacman -Syu 1> /dev/null 2>&1
+
     if [[ $INSTALL_NEW = true ]]; then
         $NSPAWN $CHROOTDIR --chdir=/build/ makepkg -Asci --noconfirm
     else
@@ -953,7 +986,7 @@ build_pkg() {
 
 export_and_clean() {
     if ls $CHROOTDIR/build/*.pkg.tar.* 1> /dev/null 2>&1; then
-        #pull package out of rootfs
+        # pull package out of rootfs
         msg "Package Succeeded..."
         info "Extracting finished package out of rootfs..."
         mkdir -p $PKGDIR/$ARCH
@@ -962,7 +995,7 @@ export_and_clean() {
         msg "Package saved as {$PACKAGE} in {$PKGDIR/$ARCH}..."
         umount $CHROOTDIR/build
 
-        #clean up rootfs
+        # clean up rootfs
         info "Cleaning build files from rootfs"
         rm -rf $CHROOTDIR/build/
     else
@@ -976,7 +1009,7 @@ export_and_clean() {
 
 clone_profiles() {
     cd $PROFILES
-    git clone --branch $1 https://gitlab.manjaro.org/manjaro-arm/applications/arm-profiles.git
+    git clone --branch $1 https://github.com/manjaro-libhybris/arm-profiles
 }
 
 clone_templates() {
@@ -987,6 +1020,7 @@ clone_templates() {
 get_profiles() {
     local branch=master
     [[ "$FACTORY" = "true" ]] && branch=pp-factory
+
     if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
         if [[ $(grep branch $PROFILES/arm-profiles/.git/config | cut -d\" -f2) = "$branch" ]]; then
             cd $PROFILES/arm-profiles
