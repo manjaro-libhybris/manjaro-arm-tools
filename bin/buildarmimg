@@ -113,7 +113,7 @@ cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>'${DEVICE//
 create_rootfs_img | tee --append "$LOG"
 
 case "$DEVICE" in
-    xiaomi-onclite|xiaomi-lavender|xiaomi-miatoll|xiaomi-dandelion|google-sargo|halium-9|halium-10|halium-11)
+    xiaomi-onclite|xiaomi-lavender|xiaomi-miatoll|xiaomi-dandelion|google-sargo|samsung-starqlte|halium-9|halium-10|halium-11)
         create_img_halium | tee --append "$LOG"
         ;;
     *)
