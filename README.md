@@ -15,12 +15,7 @@ These scripts rely on certain packages, other than what's in the `base` package 
 * systemd-nspawn with support for `--resolv-conf=copy-host` (arch repo)
 
 ### Optional Dependencies
-* gzip (arch repo) (for `builddockerimg`)
-* docker (arch repo) (for `builddockkerimg`)
-* mktorrent (arch repo) (for torrent support in `deployarmimg`)
-* rsync (arch repo) (for `deployarmimg`)
 * bmap-tools (AUR or manjaro repo) (for BMAP support in `buildarmimg`)
-* btrfs-progs (arch repo) (for btrfs support in `buildarmimg`)
 
 # Installation (Manjaro based distributions only)
 ## From github (tagged or GIT version)
