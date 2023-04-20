@@ -2,8 +2,8 @@
 
 # variables
 BRANCH='stable'
-DEVICE='rpi4'
-EDITION='minimal'
+DEVICE='halium-9'
+EDITION='phosh'
 VERSION=$(date +'%y'.'%m')
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 BUILDDIR=/var/lib/manjaro-arm-tools/pkg
@@ -36,21 +36,6 @@ source /etc/manjaro-arm-tools/manjaro-arm-tools.conf
 mkdir -p ${PKGDIR}/pkg-cache
 mkdir -p ${IMGDIR}
 
-usage_deploy_img() {
-    echo "Usage: ${0##*/} [options]"
-    echo "    -i <image>         Image to upload. Should be a .xz file."
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
-    echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
-    echo "    -v <version>       Version of the image. [Default = Current YY.MM]"
-    echo "    -k <gpg key ID>    Email address associated with the GPG key to use for signing"
-    echo "    -u <username>      Username of your OSDN user account with access to upload [Default = currently logged in local user]"
-    echo "    -t                 Create a torrent of the image"
-    echo '    -h                 This help'
-    echo ''
-    echo ''
-    exit $1
-}
-
 usage_build_pkg() {
     echo "Usage: ${0##*/} [options]"
     echo "    -a <arch>          Architecture. [Default = aarch64. Options = any or aarch64]"
@@ -68,8 +53,8 @@ usage_build_pkg() {
 
 usage_build_img() {
     echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
-    echo "    -e <edition>       Edition of the image. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
+    echo "    -d <device>        Device the image is for. [Default = halium-9. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
+    echo "    -e <edition>       Edition of the image. [Default = phosh. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
     echo "    -v <version>       Define the version the resulting image should be named. [Default is current YY.MM]"
     echo "    -k <repo>          Add overlay repo [Options = kde-unstable, mobile] or url https://server/path/custom_repo.db"
     echo "    -i <package>       Install local package into image rootfs."
@@ -79,23 +64,7 @@ usage_build_img() {
     echo "    -s <hostname>      Use custom hostname"
     echo "    -x                 Don't compress the image."
     echo "    -c                 Disable colors."
-    echo "    -f                 Create an image with factory settings."
-    echo "    -p <filesystem>    Filesystem to be used for the root partition. [Default = ext4. Options = ext4 or btrfs]"
-    echo '    -h                 This help'
-    echo ''
-    echo ''
-    exit $1
-}
-
-usage_build_emmcflasher() {
-    echo "Usage: ${0##*/} [options]"
-    echo "    -d <device>        Device the image is for. [Default = rpi4. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/devices/")]"
-    echo "    -e <edition>       Edition of the image to download. [Default = minimal. Options = $(ls -m --width=0 "$PROFILES/arm-profiles/editions/")]"
-    echo "    -v <version>       Define the version of the release to download. [Default is current YY.MM]"
-    echo "    -f <flash version> Version of the eMMC flasher image it self. [Default is current YY.MM]"
-    echo "    -i <package>       Install local package into image rootfs."
-    echo "    -n                 Force download of new rootfs."
-    echo "    -x                 Don't compress the image."
+    echo "    -p <filesystem>    Filesystem to be used for the root partition. [Default = ext4. Options = ext4]"
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -105,7 +74,6 @@ usage_build_emmcflasher() {
 usage_getarmprofiles() {
     echo "Usage: ${0##*/} [options]"
     echo '    -f                 Force download of current profiles from the git repository'
-    echo '    -p                 Use profiles from pp-factory branch'
     echo '    -h                 This help'
     echo ''
     echo ''
@@ -175,37 +143,9 @@ show_elapsed_time(){
     msg "Time %s: %s minutes..." "$1" "$(elapsed_time $2)"
 }
 
-create_torrent() {
-    info "Creating torrent of $IMAGE..."
-    cd $IMGDIR/
-    mktorrent -v -a udp://tracker.opentrackr.org:1337 -w https://osdn.net/dl/manjaro-arm/$IMAGE -o $IMAGE.torrent $IMAGE
-}
-
-checksum_img() {
-    # Create checksums for the image
-    info "Creating checksums for [$IMAGE]..."
-    cd $IMGDIR/
-    sha1sum $IMAGE > $IMAGE.sha1
-    sha256sum $IMAGE > $IMAGE.sha256
-    info "Creating signature for [$IMAGE]..."
-    gpg --detach-sign -u $GPGMAIL "$IMAGE"
-
-    if [ ! -f "$IMAGE.sig" ]; then
-        echo "Image not signed. Aborting..."
-        exit 1
-    fi
-}
-
-img_upload() {
-    # Upload image + checksums to image server
-    msg "Uploading image and checksums to server..."
-    info "Please use your server login details..."
-    img_name=${IMAGE%%.*}
-    rsync -raP $img_name* $STORAGE_USER@$OSDN/$DEVICE/$EDITION/$VERSION/
-}
-
 create_rootfs_pkg() {
     msg "Building $PACKAGE for $ARCH..."
+
     # Remove old rootfs if it exists
     if [ -d $CHROOTDIR ]; then
         info "Removing old rootfs..."
@@ -215,6 +155,7 @@ create_rootfs_pkg() {
     msg "Creating rootfs..."
     # cd to rootfs
     mkdir -p $CHROOTDIR
+
     # basescrap the rootfs filesystem
     info "Switching branch to $BRANCH..."
     sed -i s/"arm-stable"/"arm-$BRANCH"/g $LIBDIR/pacman.conf.$ARCH
@@ -483,42 +424,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         chown 0:102 $ROOTFS_IMG/rootfs_$ARCH/usr/share/polkit-1/rules.d
     fi
 
-    if [[ "$FILESYSTEM" = "btrfs" ]]; then
-        info "Adding btrfs support to system..."
-        if [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf ]; then
-            sed -i 's/APPEND/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/extlinux/extlinux.conf
-        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini ]; then
-            sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.ini
-        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini ]; then
-            sed -i 's/setenv bootargs "/&rootflags=subvol=@ /' $ROOTFS_IMG/rootfs_$ARCH/boot/uEnv.ini
-        #elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt ]; then
-        #    sed -i 's/^/rootflags=subvol=@ rootfstype=btrfs /' $ROOTFS_IMG/rootfs_$ARCH/boot/cmdline.txt
-        elif [ -f $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt ]; then
-            sed -i 's/setenv bootargs/& rootflags=subvol=@/' $ROOTFS_IMG/rootfs_$ARCH/boot/boot.txt
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkimage -A arm -O linux -T script -C none -n "U-Boot boot script" -d /boot/boot.txt /boot/boot.scr
-        fi
-        echo "LABEL=ROOT_MNJRO / btrfs  subvol=@,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
-        echo "LABEL=ROOT_MNJRO /home btrfs  subvol=@home,compress=zstd,defaults,noatime  0  0" >> $ROOTFS_IMG/rootfs_$ARCH/etc/fstab
-        sed -i '/^MODULES/{s/)/ btrfs)/}' $ROOTFS_IMG/rootfs_$ARCH/etc/mkinitcpio.conf
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkinitcpio -P 1> /dev/null 2>&1
-    fi
-
-    if [[ "$FACTORY" = "true" ]]; then
-	info "Making settings for factory specific image..."
-        case "$EDITION" in
-            kde-plasma)
-                sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
-                echo "$EDITION - $(date +'%y'.'%m'.'%d')" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/factory-version 1> /dev/null 2>&1
-                ;;
-            xfce)
-                sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
-                sed -i s/"manjaro-arm.png"/"manjaro-pine64-2b.png"/g $ROOTFS_IMG/rootfs_$ARCH/etc/lightdm/lightdm-gtk-greeter.conf
-                echo "$EDITION - $(date +'%y'.'%m'.'%d')" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/factory-version 1> /dev/null 2>&1
-                ;;
-        esac
-    else
-        echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
-    fi
+    echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
 
     echo "Setting the correct theme for plymouth"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH plymouth-set-default-theme manjaro
@@ -557,75 +463,6 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     msg "$DEVICE $EDITION rootfs complete"
 }
 
-create_emmc_install() {
-    msg "Creating eMMC install image of $EDITION for $DEVICE..."
-
-    # Remove old rootfs if it exists
-    if [ -d $CHROOTDIR ]; then
-        info "Removing old rootfs..."
-        rm -rf $CHROOTDIR
-    fi
-
-    mkdir -p $CHROOTDIR
-    if [[ "$KEEPROOTFS" = "false" ]]; then
-        rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
-        # fetch and extract rootfs
-        info "Downloading latest $ARCH rootfs..."
-        cd $ROOTFS_IMG
-        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
-    fi
-
-    # also fetch it, if it does not exist
-    if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
-        cd $ROOTFS_IMG
-        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
-    fi
-
-    info "Extracting $ARCH rootfs..."
-    bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $CHROOTDIR
-
-    info "Setting up keyrings..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init || abort
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm || abort
-
-    msg "Installing packages for eMMC installer edition of $EDITION on $DEVICE..."
-
-    # Install device and editions specific packages
-    echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $CHROOTDIR/etc/pacman.d/mirrorlist
-    mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
-    $NSPAWN $CHROOTDIR pacman -Syyu base manjaro-system manjaro-release manjaro-arm-emmc-flasher $PKG_EDITION $PKG_DEVICE --noconfirm
-
-    info "Enabling services..."
-    # Enable services
-    $NSPAWN $CHROOTDIR systemctl enable getty.target haveged.service 1> /dev/null 2>&1
-
-    info "Setting up system settings..."
-    # setting hostname
-    echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
-
-    # enable autologin
-    mv $CHROOTDIR/usr/lib/systemd/system/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service.bak
-    cp $LIBDIR/getty\@.service $CHROOTDIR/usr/lib/systemd/system/getty\@.service
-
-    if [ -f $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz ]; then
-        info "Copying local $DEVICE $EDITION image..."
-        cp $IMGDIR/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz $CHROOTDIR/var/tmp/Manjaro-ARM.img.xz
-        sync
-    else
-        info "Downloading $DEVICE $EDITION image..."
-        cd $CHROOTDIR/var/tmp/
-        wget -q --show-progress --progress=bar:force:noscroll -O Manjaro-ARM.img.xz https://github.com/manjaro-arm/$DEVICE-images/releases/download/$VERSION/Manjaro-ARM-$EDITION-$DEVICE-$VERSION.img.xz
-    fi
-
-    info "Cleaning rootfs for unwanted files..."
-    prune_cache
-    rm $CHROOTDIR/usr/bin/qemu-aarch64-static
-    rm -rf $CHROOTDIR/var/log/*
-    rm -rf $CHROOTDIR/etc/*.pacnew
-    rm -rf $CHROOTDIR/usr/lib/systemd/system/systemd-firstboot.service
-    rm -rf $CHROOTDIR/etc/machine-id
-}
-
 create_img_halium() {
     msg "Finishing image for $DEVICE $EDITION edition..."
     info "Creating image..."
@@ -659,280 +496,6 @@ create_img_halium() {
     umount $TMPDIR/root/
     rm -r $TMPDIR/root/
 
-    chmod 666 $IMGDIR/$IMGNAME.img
-}
-
-create_img() {
-    msg "Finishing image for $DEVICE $EDITION edition..."
-    info "Creating partitions..."
-
-    ARCH='aarch64'
-
-    SIZE=$(du -s --block-size=MB $CHROOTDIR | awk '{print $1}' | sed -e 's/MB//g')
-    EXTRA_SIZE=600
-    REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
-
-    # making blank .img to be used
-    dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE 1> /dev/null 2>&1
-
-    # probing loop into the kernel
-    modprobe loop 1> /dev/null 2>&1
-
-    # set up loop device
-    LDEV=`losetup -f`
-    DEV=`echo $LDEV | cut -d "/" -f 3`
-
-    # mount image to loop device
-    losetup $LDEV $IMGDIR/$IMGNAME.img 1> /dev/null 2>&1
-
-    case "$FILESYSTEM" in
-        btrfs)
-            # Create partitions
-            # Clear first 32mb
-            dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-            # partition with boot and root
-            case "$DEVICE" in
-                oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|radxa-zero|gtking-pro|gsking-x|edgev|rpi3|rpi4|pinephone)
-                    parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-                    ;;
-                quartz64-bsp)
-                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-                    parted -s $LDEV mkpart uboot fat32 8MiB 16MiB 1> /dev/null 2>&1
-                    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-                    START=`cat /sys/block/$DEV/${DEV}p2/start`
-                    SIZE=`cat /sys/block/$DEV/${DEV}p2/size`
-                    END_SECTOR=$(expr $START + $SIZE)
-                    parted -s $LDEV mkpart primary btrfs "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-                    parted -s $LDEV set 2 esp on
-                    partprobe $LDEV 1> /dev/null 2>&1
-                    mkfs.vfat "${LDEV}p2" -n BOOT_MNJRO 1> /dev/null 2>&1
-                    mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p3" 1> /dev/null 2>&1
-
-                    # copy rootfs contents over to the FS
-                    info "Creating subvolumes..."
-                    mkdir -p $TMPDIR/root
-                    mkdir -p $TMPDIR/boot
-                    mount ${LDEV}p2 $TMPDIR/boot
-                    # Do subvolumes
-                    mount -o compress=zstd "${LDEV}p3" $TMPDIR/root
-                    btrfs su cr $TMPDIR/root/@ 1> /dev/null 2>&1
-                    btrfs su cr $TMPDIR/root/@home 1> /dev/null 2>&1
-                    umount $TMPDIR/root
-                    mount -o compress=zstd,subvol=@ "${LDEV}p3" $TMPDIR/root
-                    mkdir -p $TMPDIR/root/home
-                    mount -o compress=zstd,subvol=@home "${LDEV}p3" $TMPDIR/root/home
-                    info "Copying files to image..."
-                    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-                    mv $TMPDIR/root/boot/* $TMPDIR/boot/
-                    ;;
-                *)
-                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-                    ;;
-            esac
-            if [[ "$DEVICE" != "quartz64-bsp" ]]; then
-                parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-                START=`cat /sys/block/$DEV/${DEV}p1/start`
-                SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-                END_SECTOR=$(expr $START + $SIZE)
-                parted -s $LDEV mkpart primary btrfs "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-                if [[ "$DEVICE" = "jetson-nano" ]]; then
-                    parted -s $LDEV set 1 esp on
-                fi
-                partprobe $LDEV 1> /dev/null 2>&1
-                mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
-                mkfs.btrfs -m single -L ROOT_MNJRO "${LDEV}p2" 1> /dev/null 2>&1
-
-                # copy rootfs contents over to the FS
-                info "Creating subvolumes..."
-                mkdir -p $TMPDIR/root
-                mkdir -p $TMPDIR/boot
-                mount ${LDEV}p1 $TMPDIR/boot
-                # Do subvolumes
-                mount -o compress=zstd "${LDEV}p2" $TMPDIR/root
-                btrfs su cr $TMPDIR/root/@ 1> /dev/null 2>&1
-                btrfs su cr $TMPDIR/root/@home 1> /dev/null 2>&1
-                umount $TMPDIR/root
-                mount -o compress=zstd,subvol=@ "${LDEV}p2" $TMPDIR/root
-                mkdir -p $TMPDIR/root/home
-                mount -o compress=zstd,subvol=@home "${LDEV}p2" $TMPDIR/root/home
-                info "Copying files to image..."
-                cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-                mv $TMPDIR/root/boot/* $TMPDIR/boot
-            fi
-            ;;
-        *)
-            # Create partitions
-            # Clear first 32mb
-            dd if=/dev/zero of=${LDEV} bs=1M count=32 1> /dev/null 2>&1
-            # partition with boot and root
-            case "$DEVICE" in
-                oc2|on2|on2-plus|oc4|ohc4|vim1|vim2|vim3|radxa-zero|gtking-pro|gsking-x|edgev|rpi3|rpi4|pinephone)
-                    parted -s $LDEV mklabel msdos 1> /dev/null 2>&1
-                    ;;
-                quartz64-bsp)
-                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-                    parted -s $LDEV mkpart uboot fat32 8M 16M 1> /dev/null 2>&1
-                    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-                    START=`cat /sys/block/$DEV/${DEV}p2/start`
-                    SIZE=`cat /sys/block/$DEV/${DEV}p2/size`
-                    END_SECTOR=$(expr $START + $SIZE)
-                    parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-                    parted -s $LDEV set 2 esp on
-                    partprobe $LDEV 1> /dev/null 2>&1
-                    mkfs.vfat "${LDEV}p2" -n BOOT_MNJRO 1> /dev/null 2>&1
-                    mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p3" -L ROOT_MNJRO 1> /dev/null 2>&1
-                    info "Copying files to image..."
-                    mkdir -p $TMPDIR/root
-                    mkdir -p $TMPDIR/boot
-                    mount ${LDEV}p2 $TMPDIR/boot
-                    mount ${LDEV}p3 $TMPDIR/root
-                    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-                    mv $TMPDIR/root/boot/* $TMPDIR/boot/
-                    ;;
-                *)
-                    parted -s $LDEV mklabel gpt 1> /dev/null 2>&1
-                    ;;
-            esac
-                if [[ "$DEVICE" != "quartz64-bsp" ]]; then
-                    parted -s $LDEV mkpart primary fat32 32M 256M 1> /dev/null 2>&1
-                    START=`cat /sys/block/$DEV/${DEV}p1/start`
-                    SIZE=`cat /sys/block/$DEV/${DEV}p1/size`
-                    END_SECTOR=$(expr $START + $SIZE)
-                    parted -s $LDEV mkpart primary ext4 "${END_SECTOR}s" 100% 1> /dev/null 2>&1
-                    if [[ "$DEVICE" = "jetson-nano" ]]; then
-                        parted -s $LDEV set 1 esp on
-                    fi
-                    partprobe $LDEV 1> /dev/null 2>&1
-                    mkfs.vfat "${LDEV}p1" -n BOOT_MNJRO 1> /dev/null 2>&1
-                    mkfs.ext4 -O ^metadata_csum,^64bit "${LDEV}p2" -L ROOT_MNJRO 1> /dev/null 2>&1
-
-                    #copy rootfs contents over to the FS
-                    info "Copying files to image..."
-                    mkdir -p $TMPDIR/root
-                    mkdir -p $TMPDIR/boot
-                    mount ${LDEV}p1 $TMPDIR/boot
-                    mount ${LDEV}p2 $TMPDIR/root
-                    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-                    mv $TMPDIR/root/boot/* $TMPDIR/boot
-                fi
-            ;;
-    esac
-
-    # Flash bootloader
-    info "Flashing bootloader..."
-    case "$DEVICE" in
-    # AMLogic uboots
-        oc2)
-            dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=1 count=442 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/bl1.bin.hardkernel of=${LDEV} conv=fsync bs=512 skip=1 seek=1 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/u-boot.gxbb of=${LDEV} conv=fsync bs=512 seek=97 1> /dev/null 2>&1
-            ;;
-        on2|on2-plus|oc4|ohc4)
-            dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 seek=1 1> /dev/null 2>&1
-            ;;
-        vim1|vim2|vim3|radxa-zero|gtking-pro|gsking-x|edgev)
-            dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=442 count=1 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/u-boot.bin of=${LDEV} conv=fsync,notrunc bs=512 skip=1 seek=1 1> /dev/null 2>&1
-            ;;
-        # Allwinner uboots
-        pinebook|pine64-lts|pine64|pinetab|pine-h64)
-            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE.bin of=${LDEV} conv=fsync bs=128k seek=1 1> /dev/null 2>&1
-            ;;
-        pinephone)
-            dd if=$TMPDIR/boot/u-boot-sunxi-with-spl-$DEVICE-528.bin of=${LDEV} conv=fsync bs=8k seek=1 1> /dev/null 2>&1
-            ;;
-        # Rockchip RK33XX uboots
-        pbpro|rockpro64|rockpi4b|rockpi4c|nanopc-t4|rock64|roc-cc|stationp1|pinephonepro)
-            dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/u-boot.itb of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
-            ;;
-        pbpro-bsp)
-            dd if=$TMPDIR/boot/idbloader.img of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/uboot.img of=${LDEV} seek=16384 conv=notrunc,fsync 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/trust.img of=${LDEV} seek=24576 conv=notrunc,fsync 1> /dev/null 2>&1
-            ;;
-        # Rockchip RK35XX uboots
-        quartz64-bsp)
-            dd if=$TMPDIR/boot/idblock.bin of=${LDEV} seek=64 conv=notrunc,fsync 1> /dev/null 2>&1
-            dd if=$TMPDIR/boot/uboot.img of=${LDEV}p1 conv=notrunc,fsync 1> /dev/null 2>&1
-            ;;
-    esac
-
-    info "Writing PARTUUIDs..."
-    if [[ "$DEVICE" = "quartz64-bsp" ]]; then
-        BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
-        ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p3" | awk '{print $2}')
-    else
-        BOOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p1" | awk '{print $2}')
-        ROOT_PART=$(lsblk -p -o NAME,PARTUUID | grep "${LDEV}p2" | awk '{print $2}')
-    fi
-
-    echo "Boot PARTUUID is $BOOT_PART..."
-    sed -i "s/LABEL=BOOT_MNJRO/PARTUUID=$BOOT_PART/g" $TMPDIR/root/etc/fstab
-    echo "Root PARTUUID is $ROOT_PART..."
-
-    if [ -f $TMPDIR/boot/extlinux/extlinux.conf ]; then
-        sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/extlinux/extlinux.conf
-        elif [ -f $TMPDIR/boot/efi/extlinux/extlinux.conf ]; then
-            sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/efi/extlinux/extlinux.conf
-        elif [ -f $TMPDIR/boot/boot.ini ]; then
-            sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.ini
-        elif [ -f $TMPDIR/boot/uEnv.ini ]; then
-            sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/uEnv.ini
-        #elif [ -f $TMPDIR/boot/cmdline.txt ]; then
-        #    sed -i "s/PARTUUID=/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/cmdline.txt
-        #elif [ -f $TMPDIR/boot/boot.txt ]; then
-        #   sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/boot/boot.txt
-        #   cd $TMPDIR/boot
-        #   ./mkscr
-        #   cd $HOME
-    fi
-
-    if [[ "$DEVICE" = "rpi4" ]] && [[ "$FILESYSTEM" = "btrfs" ]]; then
-        echo "===> Installing default btrfs RPi cmdline.txt /boot..."
-        echo "rootflags=subvol=@ root=PARTUUID=$ROOT_PART rw rootwait console=serial0,115200 console=tty3 selinux=0 quiet splash plymouth.ignore-serial-consoles smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 kgdboc=serial0,115200 usbhid.mousepoll=8 audit=0" >  $TMPDIR/boot/cmdline.txt
-    elif [[ "$DEVICE" = "rpi4" ]]; then
-        echo "===> Installing default ext4 RPi cmdline.txt /boot..."
-        echo "root=PARTUUID=$ROOT_PART rw rootwait console=serial0,115200 console=tty3 selinux=0 quiet splash plymouth.ignore-serial-consoles smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 kgdboc=serial0,115200 usbhid.mousepoll=8 audit=0" >  $TMPDIR/boot/cmdline.txt
-    fi
-
-    if [[ "$DEVICE" = "rpi4" ]]; then
-        echo "===> Installing default config.txt file to /boot/..."
-        echo "# See /boot/overlays/README for all available options" > $TMPDIR/boot/config.txt
-        echo "" >> $TMPDIR/boot/config.txt
-        echo "#gpu_mem=64" >> $TMPDIR/boot/config.txt
-        echo "initramfs initramfs-linux.img followkernel" >> $TMPDIR/boot/config.txt
-        echo "kernel=kernel8.img" >> $TMPDIR/boot/config.txt
-        echo "arm_64bit=1" >> $TMPDIR/boot/config.txt
-        echo "disable_overscan=1" >> $TMPDIR/boot/config.txt
-        echo "" >> $TMPDIR/boot/config.txt
-        echo "#enable sound" >> $TMPDIR/boot/config.txt
-        echo "dtparam=audio=on" >> $TMPDIR/boot/config.txt
-        echo "#hdmi_drive=2" >> $TMPDIR/boot/config.txt
-        echo "" >> $TMPDIR/boot/config.txt
-        echo "#enable vc4" >> $TMPDIR/boot/config.txt
-        echo "dtoverlay=vc4-fkms-v3d" >> $TMPDIR/boot/config.txt
-        echo "max_framebuffers=2"  >> $TMPDIR/boot/config.txt
-        echo "disable_splash=1" >> $TMPDIR/boot/config.txt
-    fi
-
-    if [[ "$FILESYSTEM" = "btrfs" ]]; then
-        sed -i "s/LABEL=ROOT_MNJRO/PARTUUID=$ROOT_PART/g" $TMPDIR/root/etc/fstab
-    else
-        echo "PARTUUID=$ROOT_PART   /   $FILESYSTEM     defaults    0   1" >> $TMPDIR/root/etc/fstab
-    fi
-
-    # Clean up
-    info "Cleaning up image..."
-    if [[ "$FILESYSTEM" = "btrfs" ]]; then
-        umount $TMPDIR/root/home
-    fi
-
-    umount $TMPDIR/root
-    umount $TMPDIR/boot
-    losetup -d $LDEV 1> /dev/null 2>&1
-    rm -r $TMPDIR/root $TMPDIR/boot
-    partprobe $LDEV 1> /dev/null 2>&1
     chmod 666 $IMGDIR/$IMGNAME.img
 }
 
@@ -1022,7 +585,6 @@ clone_templates() {
 
 get_profiles() {
     local branch=master
-    [[ "$FACTORY" = "true" ]] && branch=pp-factory
 
     if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
         if [[ $(grep branch $PROFILES/arm-profiles/.git/config | cut -d\" -f2) = "$branch" ]]; then

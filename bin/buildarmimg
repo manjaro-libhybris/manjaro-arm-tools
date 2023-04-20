@@ -1,10 +1,9 @@
-#! /bin/bash
+#!/bin/bash
 
 # Set globals
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 KEEPROOTFS=true
 EXTRACTED=false
-FACTORY=false
 BMAP=false
 CUSTOM_REPO=
 
@@ -20,7 +19,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 # Arguments
-opt=":e:d:v:i:b:nfxhk:mos:p:c"
+opt=":e:d:v:i:b:nxhk:mos:p:c"
 
 while getopts "${opt}" arg; do
   case $arg in
@@ -47,9 +46,6 @@ while getopts "${opt}" arg; do
       ;;
     b)
       BRANCH="${OPTARG}"
-      ;;
-    f)
-      FACTORY=true
       ;;
     m)
       BMAP=true
@@ -104,7 +100,6 @@ fi
 timer_start=$(get_timer)
 
 # Package lists
-# remove ">pinephone " prefix for pinephones and remove lines starting with ">" for other devices, remove everything after #
 PKG_DEVICE=$(grep "^[^#;]" $PROFILES/arm-profiles/devices/$DEVICE | awk '{print $1}')
 PKG_EDITION=$(grep "^[^#;]" $PROFILES/arm-profiles/editions/$EDITION | sed -e 's/>'${DEVICE//pro/}' //' -e '/^>/d' -e 's/#.*//' )
 cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>'${DEVICE//pro/}' //' -e '/^>/d' -e 's/#.*//' >$srv_list
@@ -112,14 +107,7 @@ cat $PROFILES/arm-profiles/services/$EDITION | sed -e '/^#/d' -e 's/>'${DEVICE//
 # Creating the rootfs used for the image.
 create_rootfs_img | tee --append "$LOG"
 
-case "$DEVICE" in
-    xiaomi-onclite|xiaomi-lavender|xiaomi-miatoll|xiaomi-dandelion|google-sargo|samsung-starqlte|halium-9|halium-10|halium-11)
-        create_img_halium | tee --append "$LOG"
-        ;;
-    *)
-        create_img | tee --append "$LOG"
-        ;;
-esac
+create_img_halium | tee --append "$LOG"
 
 if [ ${BMAP} = true ]; then
     create_bmap | tee --append "$LOG"

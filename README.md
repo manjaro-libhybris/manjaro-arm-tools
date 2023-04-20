@@ -1,10 +1,6 @@
 # Manjaro ARM Tools
 Contains scripts and files needed to build and manage manjaro-arm packages and images.
 
-This software is available in the Manjaro repository.
-
-*These tools only work on Manjaro based distributions!*
-
 ## Dependencies
 These scripts rely on certain packages, other than what's in the `base` package group, to be able to function. These packages are:
 * parted (arch repo)
@@ -27,11 +23,8 @@ These scripts rely on certain packages, other than what's in the `base` package 
 * btrfs-progs (arch repo) (for btrfs support in `buildarmimg`)
 
 # Installation (Manjaro based distributions only)
-## From Manjaro repositories (both x64 and aarch64)
-Simply run `sudo pacman -S manjaro-arm-tools`.
-
-## From gitlab (tagged or GIT version)
-* Download the `.zip` or `.tar.gz` file from https://gitlab.manjaro.org/manjaro-arm/applications/manjaro-arm-tools.
+## From github (tagged or GIT version)
+* Download the `.zip` or `.tar.gz` file from https://github.com/manjaro-libhybris/manjaro-arm-tools.
 * Extract it.
 * Copy the contents of `lib/` to `/usr/share/manjaro-arm-tools/lib/`.
 * Copy the contents of `bin/` to `/usr/bin/`. Remember to make them executable.
@@ -70,14 +63,6 @@ sudo buildarmpkg -p package -a any
 The built packages will be copied to `$PKGDIR` as specified in `/usr/share/manjaro-arm-tools/lib/manjaro-arm-tools.conf` and placed in a subdirectory for the respective architecture.
 Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 
-## signarmpkgs
-This script uses the GPG identity you have setup in your /etc/makepkg.conf to sign the packages in the current folder.
-
-```
-cd <folder with built packages>
-signarmpkgs
-```
-
 ## buildarmimg
 **Supported devices:**
 * halium-9
@@ -88,22 +73,11 @@ signarmpkgs
 * xiaomi-miatoll
 * xiaomi-dandelion
 * google-sargo
+* samsung-starqlte
 
 **Supported editions:**
 * minimal
-* lxqt
-* kde-plasma
-* mate
-* xfce
-* i3
-* sway
-* gnome (experimental)
-* budgie (experimental)
-* plasma-mobile (experimental)
-* phosh (experimental)
-* cubocore (not complete yet)
-* jade (not comlete yet)
-* server (not complete yet, unmaintained)
+* phosh
 
 This script will compress the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
@@ -129,33 +103,6 @@ sudo buildrootfs
 ```
 
 A log is located at /var/log/manjaro-arm-tools/buildrootfs-$(date +%Y-%m-%d-%H.%M).log
-
-## builddockerimg
-This script is similar to `buildrootfs`, except that it builds a rootfs ready for package building and turns it into a docker image, that can be uploaded to DockerHub.
-
-**Syntax**
-```
-sudo builddockerimg
-```
-This uploads the docker file directly to the Manjaro ARM acccount on DockerHub.
-
-A log is located at /var/log/manjaro-arm-tools/builddockerimg-$(date +%Y-%m-%d-%H.%M).log
-
-## deployarmimg (depricated)
-This script will create checksums for and upload the newly generated image. It assumes you have upload access to our OSDN server.
-If you don't, you can't use this.
-
-**Syntax**
-
-```
-deployarmimg -i image [-d device] [-e edition] [-v version] -k email@server.org [-t] [-u osdn-username]
-```
-
-To upload an image to the raspberry pi minimal 18.07 folder use with torrent:
-
-```
-deployarmimg -i Manjaro-ARM-minimal-rpi3-18.07.img.xz -d rpi3 -e minimal -v 18.07 -k email@server.org -t
-```
 
 ## getarmprofiles
 This script will just clone or update the current profile list in `/usr/share/manjaro-arm-tools/profiles/`.

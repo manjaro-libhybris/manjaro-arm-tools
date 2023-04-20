@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 LIBDIR=/usr/share/manjaro-arm-tools/lib
 source $LIBDIR/functions.sh
@@ -10,17 +10,13 @@ if [ "$EUID" -ne 0 ]
 fi
 
 # Arguments
-opt="fhp"
+opt="fh"
 
 while getopts "${opt}" arg; do
   case $arg in
     f)
       echo "Forcing git update..."
       rm -rf $PROFILES/arm-profiles/
-      ;;
-    p)
-      echo "Using branch 'pp-factory'..."
-      FACTORY=true
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
