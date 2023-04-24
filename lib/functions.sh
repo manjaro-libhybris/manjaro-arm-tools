@@ -262,13 +262,13 @@ create_rootfs_img() {
 
     case "$EDITION" in
         cubocore|phosh|plasma-mobile|plasma-mobile-dev|kde-bigscreen|nemomobile|cutie)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release which $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
         minimal|server)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release which $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
         *)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs calamares-arm-oem manjaro-system manjaro-release $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs calamares-arm-oem manjaro-system manjaro-release which $PKG_EDITION $PKG_DEVICE --noconfirm || abort
             ;;
     esac
 
