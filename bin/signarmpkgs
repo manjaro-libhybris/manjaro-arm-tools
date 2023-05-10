@@ -26,4 +26,3 @@ for f in $PKGS
 do
    signfile $f
 done
-
