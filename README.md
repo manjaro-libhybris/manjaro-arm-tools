@@ -1,5 +1,5 @@
-# Manjaro ARM Tools
-Contains scripts and files needed to build and manage manjaro-arm packages and images.
+# Manjaro libhybris Tools
+Contains scripts and files needed to build and manage manjaro libhybris packages and images.
 
 ## Dependencies
 These scripts rely on certain packages, other than what's in the `base` package group, to be able to function. These packages are:
@@ -73,6 +73,7 @@ Default package destination is `/var/cache/manjaro-arm-tools/pkg/`.
 **Supported editions:**
 * minimal
 * phosh
+* nemomobile
 
 This script will compress the image file and place it in `/var/cache/manjaro-arm-tools/img/`
 
@@ -85,7 +86,7 @@ sudo buildarmimg [-d device] [-e edition] [-v version] [-n] [-x] [-i package-fil
 ```
 
 ## buildrootfs
-This script does exactly what it says it does. It builds a very small rootfs, to be used by the Manjaro ARM Installer and `buildarmimg`. Right now only supports `aarch64`.
+This script does exactly what it says it does. It builds a very small rootfs, to be used by `buildarmimg`. Right now only supports `aarch64`.
 
 **Syntax**
 ```

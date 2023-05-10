@@ -240,6 +240,10 @@ create_rootfs_img() {
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1>/dev/null || abort
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
 
+    if [ "$EDITION" == "nemomobile" ]; then
+        CUSTOM_REPO="https://img.nemomobile.net/manjaro/05.2023/stable/aarch64/nemomobile.db"
+    fi
+
     if [[ ! -z ${CUSTOM_REPO} ]]; then
         info "Adding repo [$CUSTOM_REPO] to rootfs"
 
