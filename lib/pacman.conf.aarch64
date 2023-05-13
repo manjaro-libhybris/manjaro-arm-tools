@@ -66,6 +66,10 @@ LocalFileSigLevel = Optional
 # uncommented to enable the repo.
 #
 
+[manjaro-libhybris]
+SigLevel = Optional TrustAll
+Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64
+
 [core]
 #Include = /etc/pacman.d/mirrorlist
 Server = https://repo.manjaro.org/repo/arm-stable/$repo/$arch
@@ -83,3 +87,4 @@ Server = https://repo.manjaro.org/repo/arm-stable/$repo/$arch
 #[custom]
 #SigLevel = Optional TrustAll
 #Server = file:///home/custompkgs
+

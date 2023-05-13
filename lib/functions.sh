@@ -169,10 +169,10 @@ create_rootfs_pkg() {
     fi
 
     msg "Configuring rootfs for building..."
-    $NSPAWN $CHROOTDIR pacman-key --init 1> /dev/null 2>&1
-    $NSPAWN $CHROOTDIR pacman-key --populate archlinuxarm manjaro manjaro-arm 1> /dev/null 2>&1
+    $NSPAWN $CHROOTDIR pacman-key --init
+    $NSPAWN $CHROOTDIR pacman-key --populate archlinuxarm manjaro manjaro-arm
     cp $LIBDIR/makepkg $CHROOTDIR/usr/bin/
-    $NSPAWN $CHROOTDIR chmod +x /usr/bin/makepkg 1> /dev/null 2>&1
+    $NSPAWN $CHROOTDIR chmod +x /usr/bin/makepkg
     $NSPAWN $CHROOTDIR update-ca-trust
 
     if [[ ! -z ${CUSTOM_REPO} ]]; then
@@ -224,21 +224,27 @@ create_rootfs_img() {
         # fetch and extract rootfs
         info "Downloading latest $ARCH rootfs..."
         cd $ROOTFS_IMG
-        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
+        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-libhybris/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
 
     # also fetch it, if it does not exist
     if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
         cd $ROOTFS_IMG
-        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-arm/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
+        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-libhybris/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
     fi
 
     info "Extracting $ARCH rootfs..."
     bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
 
     info "Setting up keyrings..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init 1>/dev/null || abort
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm 1>/dev/null || abort
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init  || abort
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm  || abort
+
+    info "Adding the repo for manjaro libhybris"
+    sed -i '/\[core\]/i \
+[manjaro-libhybris]\
+SigLevel = Optional TrustAll\
+Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.conf
 
     if [ "$EDITION" == "nemomobile" ]; then
         CUSTOM_REPO="https://img.nemomobile.net/manjaro/05.2023/stable/aarch64/nemomobile.db"
@@ -283,18 +289,18 @@ create_rootfs_img() {
     fi
 
     info "Generating mirrorlist..."
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --protocols https --method random --api --set-branch $BRANCH 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --protocols https --method random --api --set-branch $BRANCH
 
     info "Enabling services..."
 
     # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service pacman-init.service 1>/dev/null
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service pacman-init.service
     if [[ "$CUSTOM_REPO" = "kde-unstable" ]]; then
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sshd.service 1>/dev/null
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sshd.service
     fi
 
     while read service; do
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service 1>/dev/null
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service
     done < $srv_list
 
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -s /usr/lib/systemd/user/audiosystem-passthrough.service /etc/systemd/user/default.target.wants/audiosystem-passthrough.service
@@ -302,18 +308,18 @@ create_rootfs_img() {
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
 
-    echo "Creating all the users"
+    info "Creating all the users"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd autologin
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd --gid 32011 manjaro
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH useradd -G autologin,wheel,sys,audio,input,video,storage,lp,network,users,power,rfkill,system,radio,android_input,android_graphics,android_audio \
-	--uid 32011 --gid 32011 -m -g users -p $(openssl passwd -6 "123456") -s /bin/bash manjaro 1> /dev/null 2>&1
+	--uid 32011 --gid 32011 -m -g users -p $(openssl passwd -6 "123456") -s /bin/bash manjaro
 
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -6 'root')\"} 1" /etc/shadow 1> /dev/null 2>&1
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH awk -i inplace -F: "BEGIN {OFS=FS;} \$1 == \"root\" {\$2=\"$(openssl passwd -6 'root')\"} 1" /etc/shadow
 
     info "Setting up system settings..."
     # system setup
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH update-ca-trust
-    echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname 1> /dev/null 2>&1
+    echo "$HOSTNAME" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/hostname
 
     case "$EDITION" in
         cubocore|plasma-mobile|plasma-mobile-dev|kde-bigscreen)
@@ -418,7 +424,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     fi
     ### Lomiri Temporary service ends here
 
-    echo "Correcting permissions from overlay..."
+    info "Correcting permissions from overlay..."
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/etc
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/usr/{local,share}
 
@@ -430,15 +436,15 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         chown 0:102 $ROOTFS_IMG/rootfs_$ARCH/usr/share/polkit-1/rules.d
     fi
 
-    echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version 1> /dev/null 2>&1
+    echo "$DEVICE - $EDITION - $VERSION" | tee --append $ROOTFS_IMG/rootfs_$ARCH/etc/manjaro-arm-version
 
-    echo "Setting the correct theme for plymouth"
+    info "Setting the correct theme for plymouth"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH plymouth-set-default-theme manjaro
 
-    echo "Setting the correct locale"
+    info "Setting the correct locale"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "LANG=en_US.UTF-8" > /etc/locale.conf
 
-    echo "Setting chassis mode"
+    info "Setting chassis mode"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH echo "CHASSIS=handset" > /etc/machine-info
 
     if [[ -f $ROOTFS_IMG/rootfs_$ARCH/usr/bin/appstreamctl ]]; then
@@ -446,25 +452,19 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH appstreamcli refresh-cache --force
     fi
 
-    echo "Generating ssh keys"
+    info "Generating ssh keys"
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ssh-keygen -A
-
-    msg "Creating package list: [$IMGDIR/$IMGNAME-pkgs.txt]"
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Qr / > $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt 2>/dev/null
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH sed -i '1s/^[^l]*l//' /var/tmp/pkglist.txt
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH sed -i '$d' /var/tmp/pkglist.txt
-    mv $ROOTFS_IMG/rootfs_$ARCH/var/tmp/pkglist.txt "$IMGDIR/$IMGNAME-pkgs.txt"
 
     info "Cleaning rootfs for unwanted files..."
     prune_cache
     rm $ROOTFS_IMG/rootfs_$ARCH/usr/bin/qemu-aarch64-static
-    rm -f $ROOTFS_IMG/rootfs_$ARCH/var/log/* 1> /dev/null 2>&1
+    rm -f $ROOTFS_IMG/rootfs_$ARCH/var/log/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/var/log/journal/*
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/*.pacnew
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/gnupg
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/Manjaro-ARM-aarch64-latest.tar.gz
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/Manjaro-ARM-$ARCH-latest.tar.gz
 
     msg "$DEVICE $EDITION rootfs complete"
 }
@@ -480,10 +480,10 @@ create_img_halium() {
     REAL_SIZE=`echo "$(($SIZE+$EXTRA_SIZE))"`
 
     # making blank .img to be used
-    dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE 1> /dev/null 2>&1
+    dd if=/dev/zero of=$IMGDIR/$IMGNAME.img bs=1M count=$REAL_SIZE
 
     # format it
-    mkfs.ext4 $IMGDIR/$IMGNAME.img -L ROOT_MNJRO 1> /dev/null 2>&1
+    mkfs.ext4 $IMGDIR/$IMGNAME.img -L ROOT_MNJRO
     info "Copying files to image..."
 
     mkdir -p $TMPDIR/root
@@ -511,7 +511,7 @@ create_bmap() {
     else
         info "Creating bmap."
         cd ${IMGDIR}
-        rm ${IMGNAME}.img.bmap 2>/dev/null
+        rm ${IMGNAME}.img.bmap
         bmaptool create -o ${IMGNAME}.img.bmap ${IMGNAME}.img
     fi
 }
@@ -543,11 +543,11 @@ build_pkg() {
 
     # Build the actual package
     msg "Copying build directory {$PACKAGE} to rootfs..."
-    $NSPAWN $CHROOTDIR mkdir build 1> /dev/null 2>&1
+    $NSPAWN $CHROOTDIR mkdir build
     mount -o bind "$PACKAGE" $CHROOTDIR/build
     msg "Building {$PACKAGE}..."
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
-    $NSPAWN $CHROOTDIR pacman -Syu 1> /dev/null 2>&1
+    $NSPAWN $CHROOTDIR pacman -Syu
 
     if [[ $INSTALL_NEW = true ]]; then
         $NSPAWN $CHROOTDIR --chdir=/build/ makepkg -Asci --noconfirm
@@ -557,7 +557,7 @@ build_pkg() {
 }
 
 export_and_clean() {
-    if ls $CHROOTDIR/build/*.pkg.tar.* 1> /dev/null 2>&1; then
+    if ls $CHROOTDIR/build/*.pkg.tar.* ; then
         # pull package out of rootfs
         msg "Package Succeeded..."
         info "Extracting finished package out of rootfs..."
@@ -592,7 +592,7 @@ clone_templates() {
 get_profiles() {
     local branch=master
 
-    if ls $PROFILES/arm-profiles/* 1> /dev/null 2>&1; then
+    if ls $PROFILES/arm-profiles/* ; then
         if [[ $(grep branch $PROFILES/arm-profiles/.git/config | cut -d\" -f2) = "$branch" ]]; then
             cd $PROFILES/arm-profiles
             git pull
@@ -607,7 +607,7 @@ get_profiles() {
 
 get_templates() {
     local branch=master
-    if ls $TEMPLATES/android-recovery-flashing-template/* 1> /dev/null 2>&1; then
+    if ls $TEMPLATES/android-recovery-flashing-template/* ; then
         if [[ $(grep branch $TEMPLATES/android-recovery-flashing-template/.git/config | cut -d\" -f2) = "$branch" ]]; then
             cd $TEMPLATES/android-recovery-flashing-template
             git pull
