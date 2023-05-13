@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# variables
+# Default variables
 BRANCH='stable'
 DEVICE='halium-9'
 EDITION='phosh'
@@ -17,7 +17,6 @@ IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 TEMPLATES=/usr/share/manjaro-arm-tools/templates
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
-OSDN='storage.osdn.net:/storage/groups/m/ma/manjaro-arm'
 STORAGE_USER=$(whoami)
 FLASHVERSION=$(date +'%y'.'%m')
 ARCH='aarch64'
@@ -153,7 +152,6 @@ create_rootfs_pkg() {
     fi
 
     msg "Creating rootfs..."
-    # cd to rootfs
     mkdir -p $CHROOTDIR
 
     # basescrap the rootfs filesystem
@@ -266,19 +264,25 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
     info "Setting branch to $BRANCH..."
     echo "Server = $BUILDSERVER/arm-$BRANCH/\$repo/\$arch" > $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/mirrorlist
 
-    msg "Installing packages for $EDITION edition on $DEVICE..."
-    # Install device and editions specific packages
+    msg "Installing packages for $DEVICE"
+
+    # Install device specific packages
     mount -o bind $PKGDIR/pkg-cache $PKG_CACHE
 
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd pacutils systemd-libs manjaro-system manjaro-release which $PKG_DEVICE --noconfirm || abort
+
+    msg "Installing packages for edition $EDITION"
+
+    # Install edition specific packages
     case "$EDITION" in
         cubocore|phosh|plasma-mobile|plasma-mobile-dev|kde-bigscreen|nemomobile|cutie)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs manjaro-system manjaro-release which $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
             ;;
         minimal|server)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs dialog manjaro-arm-oem-install manjaro-system manjaro-release which $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all dialog manjaro-arm-oem-install $PKG_EDITION || abort
             ;;
         *)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd systemd-libs calamares-arm-oem manjaro-system manjaro-release which $PKG_EDITION $PKG_DEVICE --noconfirm || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all calamares-arm-oem $PKG_EDITION || abort
             ;;
     esac
 
