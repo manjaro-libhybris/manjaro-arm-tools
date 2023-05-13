@@ -492,8 +492,10 @@ create_img_halium() {
 
     mkdir -p $TMPDIR/root
     mount $IMGDIR/$IMGNAME.img $TMPDIR/root
-    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/
-    cp -ra $ROOTFS_IMG/rootfs_$ARCH/.* $TMPDIR/root/
+    cp -ra $ROOTFS_IMG/rootfs_$ARCH/* $TMPDIR/root/ || true
+    cp -ra $ROOTFS_IMG/rootfs_$ARCH/.* $TMPDIR/root/ || true
+
+    info "Creating Android directories and symlinks"
     mkdir -p $TMPDIR/root/android
     mkdir -p $TMPDIR/root/userdata
     mkdir -p $TMPDIR/root/mnt/vendor/persist $TMPDIR/root/mnt/vendor/efs
