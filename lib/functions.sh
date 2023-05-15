@@ -309,6 +309,11 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
 
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -s /usr/lib/systemd/user/audiosystem-passthrough.service /etc/systemd/user/default.target.wants/audiosystem-passthrough.service
 
+    if [ "$EDITION" = "nemomobile" ]; then
+        msg "Masking connman"
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask connman
+    fi
+
     info "Applying overlay for $EDITION edition..."
     cp -ap $PROFILES/arm-profiles/overlays/$EDITION/* $ROOTFS_IMG/rootfs_$ARCH/
 
