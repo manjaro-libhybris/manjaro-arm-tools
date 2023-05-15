@@ -279,10 +279,10 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
             ;;
         minimal|server)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all dialog manjaro-arm-oem-install $PKG_EDITION || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
             ;;
         *)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all calamares-arm-oem $PKG_EDITION || abort
+            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
             ;;
     esac
 
