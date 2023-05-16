@@ -296,26 +296,22 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-mirrors --protocols https --method random --api --set-branch $BRANCH
 
     info "Enabling services..."
-
-    # Enable services
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service pacman-init.service
-    if [[ "$CUSTOM_REPO" = "kde-unstable" ]]; then
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable sshd.service
-    fi
-
     while read service; do
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable $service
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl enable getty.target haveged.service pacman-init.service $service
     done < $srv_list
 
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -s /usr/lib/systemd/user/audiosystem-passthrough.service /etc/systemd/user/default.target.wants/audiosystem-passthrough.service
 
     if [ "$EDITION" = "nemomobile" ]; then
-        msg "Masking connman"
+        msg "Applying nemomobile specific hacks"
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask connman
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask connman-vpn
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask connman-wait-online
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask iwd
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask ead
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask nemo-devicelock
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask start-user-session.service
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -s /usr/lib/libglacierapp.so.1 /usr/lib/libglacierapp.so.0
     fi
 
     info "Applying overlay for $EDITION edition..."
