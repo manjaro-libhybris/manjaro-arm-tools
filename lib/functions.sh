@@ -311,6 +311,7 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask ead
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask nemo-devicelock
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask start-user-session.service
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask dsme
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -s /usr/lib/libglacierapp.so.1 /usr/lib/libglacierapp.so.0
     fi
 
