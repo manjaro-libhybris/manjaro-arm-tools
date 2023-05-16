@@ -304,11 +304,6 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
 
     if [ "$EDITION" = "nemomobile" ]; then
         msg "Applying nemomobile specific hacks"
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask connman
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask connman-vpn
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask connman-wait-online
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask iwd
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask ead
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask nemo-devicelock
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask start-user-session.service
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask dsme
