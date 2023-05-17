@@ -304,10 +304,12 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
 
     if [ "$EDITION" = "nemomobile" ]; then
         msg "Applying nemomobile specific hacks"
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S python-pip
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask nemo-devicelock
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask start-user-session.service
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask dsme
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -s /usr/lib/libglacierapp.so.1 /usr/lib/libglacierapp.so.0
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pip install ofonoctl
     fi
 
     info "Applying overlay for $EDITION edition..."
