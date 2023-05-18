@@ -13,7 +13,7 @@ PKGDIR=/var/cache/manjaro-arm-tools/pkg
 ROOTFS_IMG=/var/lib/manjaro-arm-tools/img
 TMPDIR=/var/lib/manjaro-arm-tools/tmp
 IMGDIR=/var/cache/manjaro-arm-tools/img
-IMGNAME=Manjaro-ARM-$EDITION-$DEVICE-$VERSION
+IMGNAME=Manjaro-libhybris-$EDITION-$DEVICE-$VERSION
 PROFILES=/usr/share/manjaro-arm-tools/profiles
 TEMPLATES=/usr/share/manjaro-arm-tools/templates
 NSPAWN='systemd-nspawn -q --resolv-conf=copy-host --timezone=off -D'
@@ -218,25 +218,25 @@ create_rootfs_img() {
     mkdir -p $ROOTFS_IMG/rootfs_$ARCH
 
     if [[ "$KEEPROOTFS" = "false" ]]; then
-        rm -rf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz*
+        rm -rf $ROOTFS_IMG/Manjaro-libhybris-$ARCH-latest.tar.gz*
         # fetch and extract rootfs
         info "Downloading latest $ARCH rootfs..."
         cd $ROOTFS_IMG
-        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-libhybris/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
+        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-libhybris/rootfs/releases/latest/download/Manjaro-libhybris-$ARCH-latest.tar.gz
     fi
 
     # also fetch it, if it does not exist
     if [ ! -f "$ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz" ]; then
         cd $ROOTFS_IMG
-        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-libhybris/rootfs/releases/latest/download/Manjaro-ARM-$ARCH-latest.tar.gz
+        wget -q --show-progress --progress=bar:force:noscroll https://github.com/manjaro-libhybris/rootfs/releases/latest/download/Manjaro-libhybris-$ARCH-latest.tar.gz
     fi
 
     info "Extracting $ARCH rootfs..."
-    bsdtar -xpf $ROOTFS_IMG/Manjaro-ARM-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
+    bsdtar -xpf $ROOTFS_IMG/Manjaro-libhybris-$ARCH-latest.tar.gz -C $ROOTFS_IMG/rootfs_$ARCH
 
     info "Setting up keyrings..."
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --init  || abort
-    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm  || abort
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman-key --populate archlinuxarm manjaro manjaro-arm || abort
 
     info "Adding the repo for manjaro libhybris"
     sed -i '/\[core\]/i \
@@ -304,7 +304,6 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
 
     if [ "$EDITION" = "nemomobile" ]; then
         msg "Applying nemomobile specific hacks"
-        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S python-pip --noconfirm
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask nemo-devicelock
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask start-user-session.service
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask dsme
@@ -471,7 +470,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/gnupg
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/Manjaro-ARM-$ARCH-latest.tar.gz
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/Manjaro-libhybris-$ARCH-latest.tar.gz
 
     msg "$DEVICE $EDITION rootfs complete"
 }

@@ -43,7 +43,7 @@ create_rootfs () {
 compress_rootfs () {
     msg "Compressing rootfs..."
     cd $BUILDDIR/$ARCH
-    tar -czf $IMGDIR/Manjaro-ARM-$ARCH-latest.tar.gz .
+    tar -czf $IMGDIR/Manjaro-libhybris-$ARCH-latest.tar.gz .
     rm -rf $BUILDDIR/$ARCH
 }
 
