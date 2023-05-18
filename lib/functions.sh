@@ -304,6 +304,7 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
 
     if [ "$EDITION" = "nemomobile" ]; then
         msg "Applying nemomobile specific hacks"
+        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -S pulseaudio-module-keepalive --noconfirm || abort
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask nemo-devicelock
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask start-user-session.service
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH systemctl mask dsme
