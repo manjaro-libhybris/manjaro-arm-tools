@@ -248,6 +248,10 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
         CUSTOM_REPO="https://img.nemomobile.net/manjaro/05.2023/stable/aarch64/nemomobile.db"
     fi
 
+    if [ "$EDITION" == "lomiri" ]; then
+        CUSTOM_REPO="http://mirror.bardia.tech/lomiri/aarch64/lomiri.db"
+    fi
+
     if [[ ! -z ${CUSTOM_REPO} ]]; then
         info "Adding repo [$CUSTOM_REPO] to rootfs"
 
