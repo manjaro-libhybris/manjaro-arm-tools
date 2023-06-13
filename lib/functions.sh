@@ -275,20 +275,35 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
 
     $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacman -Syyu base systemd pacutils systemd-libs manjaro-system manjaro-release which $PKG_DEVICE --noconfirm || abort
 
+    ### Add extensions to make everything more mobile friendly
+    if [ "$EDITION" = "gnome" ]; then
+       echo "Installing gnome extensions"
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/overview_cleanergonza.com.v4.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/just-perfection-desktopjust-perfection.v24.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/clear-top-barsuperterran.net.v6.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/desktop-cubeschneegans.github.com.v17.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force overview_cleanergonza.com.v4.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force just-perfection-desktopjust-perfection.v24.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force clear-top-barsuperterran.net.v6.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force desktop-cubeschneegans.github.com.v17.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mv /root/.local/share/gnome-shell/extensions/* /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod -R 755 /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH rm -f /*.zip /*.tar.gz
+    fi
+
     msg "Installing packages for edition $EDITION"
 
     # Install edition specific packages
-    case "$EDITION" in
-        cubocore|phosh|plasma-mobile|plasma-mobile-dev|kde-bigscreen|nemomobile|cutie)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
-            ;;
-        minimal|server)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
-            ;;
-        *)
-            $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
-            ;;
-    esac
+    $NSPAWN $ROOTFS_IMG/rootfs_$ARCH pacinstall --no-confirm --resolve-conflicts=all $PKG_EDITION || abort
 
     if [[ ! -z "$ADD_PACKAGE" ]]; then
         info "Installing local package {$ADD_PACKAGE} to rootfs..."
@@ -434,35 +449,6 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
         $NSPAWN $ROOTFS_IMG/rootfs_$ARCH ln -sfv /usr/lib/systemd/user/maliit-server.service /usr/lib/systemd/user/graphical-session.target.wants/maliit-server.service
     fi
     ### Lomiri Temporary service ends here
-
-    ### Add extensions to make everything more mobile friendly
-    if [ "$EDITION" = "gnome" ]; then
-       echo "Installing gnome extensions"
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/overview_cleanergonza.com.v4.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/just-perfection-desktopjust-perfection.v24.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/clear-top-barsuperterran.net.v6.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/desktop-cubeschneegans.github.com.v17.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force overview_cleanergonza.com.v4.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force just-perfection-desktopjust-perfection.v24.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force clear-top-barsuperterran.net.v6.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force desktop-cubeschneegans.github.com.v17.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mv /root/.local/share/gnome-shell/extensions/* /usr/share/gnome-shell/extensions/
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell disable-extension-version-validation 'true'"
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface text-scaling-factor 1.5"
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface scaling-factor 1"
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell enabled-extensions \"['user-theme@gnome-shell-extensions.gcampax.github.com','transparent-window-moving@noobsai.github.com','windowIsReady_Remover@nunofarruca@gmail.com','overview_cleaner@gonza.com','just-perfection-desktop@just-perfection','AlphabeticalAppGrid@stuarthayhurst','clear-top-bar@superterran.net','desktop-cube@schneegans.github.com','dash-to-dock@micxgx.gmail.com']\""
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod -R 755 /usr/share/gnome-shell/extensions/
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH rm -f /*.zip /*.tar.gz
-    fi
 
     info "Correcting permissions from overlay..."
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/etc
