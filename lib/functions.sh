@@ -461,6 +461,8 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mv ~/.local/share/extenions/* /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell disable-extension-version-validation 'true'"
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface text-scaling-factor 1.5"
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface scaling-factor 1"
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell enabled-extensions \"['user-theme@gnome-shell-extensions.gcampax.github.com','transparent-window-moving@noobsai.github.com','windowIsReady_Remover@nunofarruca@gmail.com','overview_cleaner@gonza.com','just-perfection-desktop@just-perfection','AlphabeticalAppGrid@stuarthayhurst','clear-top-bar@superterran.net','desktop-cube@schneegans.github.com','improvedosk@luebke.io','dash-to-dock@micxgx.gmail.com']\""
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod -R 755 /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH rm -f *.zip
