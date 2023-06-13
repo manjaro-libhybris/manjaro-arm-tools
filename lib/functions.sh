@@ -459,7 +459,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force improvedosknick-shmyrev.dev.v18.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mv ~/.local/share/extenions/* /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mv ~/.local/share/extensions/* /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell disable-extension-version-validation 'true'"
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface text-scaling-factor 1.5"
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface scaling-factor 1"
