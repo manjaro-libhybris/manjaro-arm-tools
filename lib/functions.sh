@@ -338,7 +338,7 @@ Server = https://mirror.bardia.tech/manjaro-libhybris/aarch64\n' $ROOTFS_IMG/roo
             # Lock root user
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH passwd --lock root
             ;;
-        phosh|lomiri|nemomobile|cutie)
+        phosh|lomiri|nemomobile|cutie|gnome)
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH groupadd -r autologin
             $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gpasswd -a "manjaro" autologin
             # Lock root user
@@ -435,6 +435,37 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     fi
     ### Lomiri Temporary service ends here
 
+    ### Add extensions to make everything more mobile friendly
+    if [ "$EDITION" = "gnome" ]; then
+       echo "Installing gnome extensions"
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/user-themegnome-shell-extensions.gcampax.github.com.v51.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/overview_cleanergonza.com.v4.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/just-perfection-desktopjust-perfection.v24.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/clear-top-barsuperterran.net.v6.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/desktop-cubeschneegans.github.com.v17.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/improvedosknick-shmyrev.dev.v18.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force user-themegnome-shell-extensions.gcampax.github.com.v51.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force overview_cleanergonza.com.v4.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force just-perfection-desktopjust-perfection.v24.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force clear-top-barsuperterran.net.v6.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force desktop-cubeschneegans.github.com.v17.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force improvedosknick-shmyrev.dev.v18.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mv ~/.local/share/extenions/* /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell disable-extension-version-validation 'true'"
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell enabled-extensions \"['user-theme@gnome-shell-extensions.gcampax.github.com','transparent-window-moving@noobsai.github.com','windowIsReady_Remover@nunofarruca@gmail.com','overview_cleaner@gonza.com','just-perfection-desktop@just-perfection','AlphabeticalAppGrid@stuarthayhurst','clear-top-bar@superterran.net','desktop-cube@schneegans.github.com','improvedosk@luebke.io','dash-to-dock@micxgx.gmail.com']\""
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod -R 755 /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH rm -f *.zip
+    fi
+
     info "Correcting permissions from overlay..."
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/etc
     chown -R 0:0 $ROOTFS_IMG/rootfs_$ARCH/usr/{local,share}
@@ -475,7 +506,8 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/usr/lib/systemd/system/systemd-firstboot.service
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/machine-id
     rm -rf $ROOTFS_IMG/rootfs_$ARCH/etc/pacman.d/gnupg
-    rm -rf $ROOTFS_IMG/rootfs_$ARCH/Manjaro-libhybris-$ARCH-latest.tar.gz
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/Manjaro-libhybris-aarch64-latest.tar.gz
+    rm -rf $ROOTFS_IMG/rootfs_$ARCH/overlay.txt
 
     msg "$DEVICE $EDITION rootfs complete"
 }
