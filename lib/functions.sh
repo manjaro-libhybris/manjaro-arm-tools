@@ -445,7 +445,6 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/clear-top-barsuperterran.net.v6.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/desktop-cubeschneegans.github.com.v17.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/improvedosknick-shmyrev.dev.v18.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
@@ -454,14 +453,13 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force AlphabeticalAppGridstuarthayhurst.v30.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force clear-top-barsuperterran.net.v6.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force desktop-cubeschneegans.github.com.v17.shell-extension.zip
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force improvedosknick-shmyrev.dev.v18.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mv /root/.local/share/gnome-shell/extensions/* /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell disable-extension-version-validation 'true'"
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface text-scaling-factor 1.5"
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.desktop.interface scaling-factor 1"
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell enabled-extensions \"['user-theme@gnome-shell-extensions.gcampax.github.com','transparent-window-moving@noobsai.github.com','windowIsReady_Remover@nunofarruca@gmail.com','overview_cleaner@gonza.com','just-perfection-desktop@just-perfection','AlphabeticalAppGrid@stuarthayhurst','clear-top-bar@superterran.net','desktop-cube@schneegans.github.com','improvedosk@luebke.io','dash-to-dock@micxgx.gmail.com']\""
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH su - manjaro -c "gsettings set org.gnome.shell enabled-extensions \"['user-theme@gnome-shell-extensions.gcampax.github.com','transparent-window-moving@noobsai.github.com','windowIsReady_Remover@nunofarruca@gmail.com','overview_cleaner@gonza.com','just-perfection-desktop@just-perfection','AlphabeticalAppGrid@stuarthayhurst','clear-top-bar@superterran.net','desktop-cube@schneegans.github.com','dash-to-dock@micxgx.gmail.com']\""
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod -R 755 /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH rm -f /*.zip /*.tar.gz
     fi
