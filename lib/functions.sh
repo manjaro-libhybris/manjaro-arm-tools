@@ -419,6 +419,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force desktop-cubeschneegans.github.com.v17.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH git clone https://gitlab.gnome.org/gnumdk/move-shell-clock.git /usr/share/gnome-shell/extensions/move-clock@gnumdk.org
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH find /root/.local/share/gnome-shell/extensions/ -maxdepth 1 -type d -exec mv -t "/usr/share/gnome-shell/extensions/" {} +
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod -R 755 /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chown manjaro:manjaro -R /usr/share/gnome-shell/extensions/
