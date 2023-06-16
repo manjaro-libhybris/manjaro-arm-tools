@@ -410,6 +410,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/clear-top-barsuperterran.net.v6.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/desktop-cubeschneegans.github.com.v17.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH wget https://extensions.gnome.org/extension-data/RemoveAppMenuDragon8oy.com.v12.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force transparent-window-movingnoobsai.github.com.v13.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force windowIsReady_Removernunofarrucagmail.com.v19.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force overview_cleanergonza.com.v4.shell-extension.zip
@@ -418,6 +419,7 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force clear-top-barsuperterran.net.v6.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force desktop-cubeschneegans.github.com.v17.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force dash-to-dockmicxgx.gmail.com.v82.shell-extension.zip
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force RemoveAppMenuDragon8oy.com.v12.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH git clone https://gitlab.gnome.org/gnumdk/move-shell-clock.git /usr/share/gnome-shell/extensions/move-clock@gnumdk.org
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH find /root/.local/share/gnome-shell/extensions/ -maxdepth 1 -type d -exec mv -t "/usr/share/gnome-shell/extensions/" {} +
