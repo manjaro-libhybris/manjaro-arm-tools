@@ -424,12 +424,11 @@ user = "oem"' >> $ROOTFS_IMG/rootfs_$ARCH/etc/greetd/config.toml
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH gnome-extensions install --force removeaccesibility@lomegor.v16.shell-extension.zip
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH mkdir -p /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH git clone https://gitlab.gnome.org/gnumdk/move-shell-clock.git /usr/share/gnome-shell/extensions/move-clock@gnumdk.org
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH find /root/.local/share/gnome-shell/extensions/ -maxdepth 1 -type d -exec mv -t "/usr/share/gnome-shell/extensions/" {} +
+       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH find /root/.local/share/gnome-shell/extensions/ -mindepth 1 -maxdepth 1 -type d -exec mv -t "/usr/share/gnome-shell/extensions/" {} +
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chmod -R 755 /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH chown manjaro:manjaro -R /usr/share/gnome-shell/extensions/
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH glib-compile-schemas /usr/share/glib-2.0/schemas
        $NSPAWN $ROOTFS_IMG/rootfs_$ARCH find / -maxdepth 1 -type f -name "*.zip" -delete
-       $NSPAWN $ROOTFS_IMG/rootfs_$ARCH find / -maxdepth 1 -type f -name "*.tar.gz" -delete
     fi
 
     # Lomiri services Temporary in function until it is moved to an individual package.
